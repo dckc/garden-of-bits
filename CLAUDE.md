@@ -19,6 +19,7 @@ The garden is a library of agent **roles** and **skills** for working across man
 - `journal/` — a git worktree of this repo on the orphan branch `journal`. Holds the garden's transcript and acts as the message bus between agents. See [WORKTREES.md](WORKTREES.md).
 - `worktrees/<owner>-<repo>.git/` — bare clones of upstream forks.
 - `worktrees/<owner>-<repo>/<name>/` — fork worktrees the garden is currently working in. Naming and lifecycle in [WORKTREES.md](WORKTREES.md).
+- `references/` — read-only shelves of roles and skills imported from other gardens. Browsed by the liaison when a user prompt has no obvious fit in the active library, never auto-loaded by subagents. See [references/README.md](references/README.md).
 
 Files are named `AGENT.md` / `SKILL.md` / `COMMON.md` (not `CLAUDE.md`) on purpose: we do **not** want Claude Code to auto-load them into a subagent's context. They are loaded explicitly by the dispatched subagent.
 

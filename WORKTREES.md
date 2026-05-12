@@ -39,6 +39,12 @@ After bootstrap:
 git clone --bare https://github.com/<owner>/<repo>.git \
   /Users/kris/garden/worktrees/<owner>-<repo>.git
 
+# Once per bare clone: tell git to ignore our metadata directory in every
+# worktree created from it. The per-worktree `.git` is a *file* (worktree
+# pointer), not a directory, so the usual `<worktree>/.git/info/exclude`
+# trick does not work; append to the bare clone's shared exclude instead.
+echo '.garden/' >> /Users/kris/garden/worktrees/<owner>-<repo>.git/info/exclude
+
 # For each working checkout:
 NAME="<purpose-slug>--<role>--$(date -u +%Y%m%d-%H%M%S)"
 git -C /Users/kris/garden/worktrees/<owner>-<repo>.git worktree add \

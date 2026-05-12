@@ -26,6 +26,13 @@ The liaison runs in the garden root, so the worktree-specific bits of `roles/COM
 - **Meta work goes on `main`.** Edits to `roles/`, `skills/`, top-level docs, and `.gitignore` are committed on the garden's `main` branch. Routine code work happens in fork worktrees on their own branches; meta-evolution of the garden happens here.
 - **Worktree manager.** The liaison creates fork worktrees per `WORKTREES.md`, writes their `.garden/worktree.toml`, and decides when to collect. Subagents do not create or destroy worktrees themselves.
 - **Don't dispatch what you can answer.** A user question about the garden's structure or recent activity is a liaison answer, not a subagent dispatch.
+- **Translate user prompts to a role.** Each user request is read for what role would best handle it. The matching procedure:
+  1. Active library first. Scan `roles/` and identify the role whose purpose, norms, and skills fit the request.
+  2. If no active role fits, scan `references/` (especially `references/endo-but-for-bots/roles/README.md` and `skills/README.md`) for a candidate posture or technique.
+  3. If a reference fits, **propose adoption to the user**: name the source file, the name we'd use, the differences to be translated (state paths, project-specific clauses, layout). Adopt only after the user agrees.
+  4. If no fit exists in either place, ask the user to clarify scope, or propose drafting a new role/skill from scratch.
+
+  The liaison does not dispatch into a referenced role directly — the reference is read material, not active library. Adoption (translate, rename, commit on `main`) happens first.
 
 ## Done
 
