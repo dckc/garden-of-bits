@@ -1,3 +1,9 @@
+---
+created: 2026-05-12
+updated: 2026-05-12
+author: liaison
+---
+
 # Subagent standing instructions
 
 These apply to every dispatched subagent regardless of role. Read this first, then your role file at `roles/<role>/AGENT.md`. Your cwd is your assigned worktree, not the garden — always reference garden artifacts by absolute path.
@@ -23,6 +29,28 @@ If the lesson generalizes beyond this engagement, fold it into the relevant file
 **Cost-benefit applies.** Every line in a role or skill file is loaded into every future invocation of that role. Before adding, ask: is this a pattern others will hit, or a single observation? Roles should stay focused — if a role's responsibilities are growing, propose splitting it via a `message` to `liaison` rather than letting it sprawl. Skills should stay procedural — if a skill is accreting more behavior than procedure, that behavior probably belongs in a role.
 
 Commit role/skill changes on `main` with a message that names the lesson, not just the file changed.
+
+## Document frontmatter
+
+Every persistent document in the garden — role files, skill files, top-level docs — carries YAML frontmatter at the top with creation, last-updated, and author fields:
+
+```yaml
+---
+created: 2026-05-12          # ISO date the document was first written
+updated: 2026-05-12          # ISO date of the most recent meaningful edit
+author: liaison              # role that last meaningfully revised it; comma-separated for joint work
+---
+```
+
+When you edit a document, update `updated`. If your authorship changes the document's center of gravity, prepend yourself to `author`. Trivial fixes (typos, link repair) do not warrant an authorship change.
+
+The journal does **not** use this frontmatter — entries already carry `ts:` and `role:`, and they are append-only so `updated` is moot.
+
+## Project context
+
+Project specifics (repo URLs, fork ownership, account/credential conventions, project-specific preferences) live in the **journal**, not in role or skill files. The garden's role/skill layer is project-agnostic and stays small; per-project facts accumulate as `message` entries with a `project:` slug.
+
+To find what the garden knows about a project: `grep -rl '^project: <slug>' /Users/kris/garden/journal/entries/`. The most recent matching entry is the current source of truth; older entries are history.
 
 ## Where things are
 
@@ -54,6 +82,7 @@ kind: tick                          # dispatch | tick | message | result | workt
 role: monitor                       # role producing the entry
 worktree: worktrees/anthropics-claude-code/watch-main--monitor--20260512-142345
 repo: anthropics/claude-code        # upstream, when applicable
+project: endo                       # optional, short slug — lets agents grep entries by project
 to: "*"                             # for messages: target role, or "*" for broadcast
 refs:
   - entries/2026/05/12/142200Z-dispatch-coordinator-a7f2c1.md
@@ -61,6 +90,8 @@ refs:
 
 <one paragraph or short structured body>
 ```
+
+The `project:` field is optional but recommended whenever an entry is about a specific project. Search by `grep -l '^project: <slug>' ...` to recover all entries for a project. Project slugs are short kebab-case names that match the canonical upstream repo name (e.g. `endo`, `agoric-sdk`), not the fork owner.
 
 ### Writing an entry
 

@@ -1,3 +1,9 @@
+---
+created: 2026-05-12
+updated: 2026-05-12
+author: liaison
+---
+
 # Worktree management
 
 All worktrees the garden uses live under the garden root. Two kinds:

@@ -1,3 +1,9 @@
+---
+created: 2026-05-12
+updated: 2026-05-12
+author: liaison
+---
+
 # Garden
 
 You are the **liaison**. When a user is standing in `/Users/kris/garden`, they are talking to you in that role. Read `roles/liaison/AGENT.md` for your operating instructions. The rest of this file is the garden's layout and the dispatch contract you use to send work to subagents.
@@ -55,4 +61,4 @@ Create `skills/<name>/SKILL.md`. Sections: purpose, inputs, state (if any), proc
 ## Current inventory
 
 - Roles: `liaison`, `monitor`
-- Skills: `journal-sync`, `github-activity-poll`
+- Skills: `journal-sync`, `github-activity-poll`, `pr-ci-watch`

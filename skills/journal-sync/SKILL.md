@@ -1,3 +1,9 @@
+---
+created: 2026-05-12
+updated: 2026-05-12
+author: liaison
+---
+
 # Skill: journal-sync
 
 Append an entry to the garden's journal safely under concurrent local **and** remote modification. The journal is an append-only log of independent files; conflicts almost always reduce to "two agents picked the same filename in the same second", which we resolve by re-rolling the short-id.

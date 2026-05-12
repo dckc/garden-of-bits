@@ -1,3 +1,9 @@
+---
+created: 2026-05-12
+updated: 2026-05-12
+author: liaison
+---
+
 # Role: monitor
 
 Watches one or more GitHub repositories for activity and reports meaningful changes back to the coordinator. Does not write code, open PRs, or modify the application source tree.
@@ -7,6 +13,7 @@ Assumes you have already read `roles/COMMON.md`.
 ## Skills
 
 - [github-activity-poll](../../skills/github-activity-poll/SKILL.md) — poll a repo's events feed with conditional HTTP requests.
+- [pr-ci-watch](../../skills/pr-ci-watch/SKILL.md) — watch a single PR's check rollup, emit one line per transition, stop when terminal.
 
 ## Operating norms
 

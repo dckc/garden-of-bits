@@ -1,3 +1,9 @@
+---
+created: 2026-05-12
+updated: 2026-05-12
+author: liaison
+---
+
 # Skill: github-activity-poll
 
 Poll a GitHub repository's public events feed efficiently using conditional HTTP requests. When nothing has changed, the response is 304 Not Modified and does **not** count against the primary REST rate limit, so 1/minute polling is sustainable indefinitely.
@@ -64,3 +70,7 @@ If `n > 10`, group by `(type, actor)` and emit one line per group with a count i
 - The `/events` endpoint is server-cached by GitHub for ~60 seconds. Polling faster than 1/min wastes calls and may return stale data.
 - The events feed only surfaces public activity. For private repos, or for activity not on the events feed (discussions, security advisories), use the equivalent typed endpoint (`/issues`, `/pulls`, `/discussions`) with the same conditional-request pattern.
 - `ETag` is the more reliable validator; `If-Modified-Since` is a fallback. Always send both when both are known — GitHub will honor whichever matches.
+
+## Notes from the field
+
+- _2026-05-12_ — `check_run` and `check_suite` activity does **not** appear on this endpoint. To watch CI on a specific PR, use [pr-ci-watch](../pr-ci-watch/SKILL.md), which polls the PR's status check rollup directly. This skill is still useful alongside it for repo-wide situational awareness (new pushes to base, branch creations, etc.).
