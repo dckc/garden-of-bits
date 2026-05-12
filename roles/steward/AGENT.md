@@ -29,7 +29,7 @@ What the steward **may** do:
 
 - Read the journal and any garden file.
 - Write `dispatch`, `tick`, `result`, and `worktree` journal entries via [journal-sync](../../skills/journal-sync/SKILL.md). Journal pushes go directly to `origin/journal`; the garden does not use PR workflows for itself (see `CLAUDE.md` § Conventions).
-- Create, update heartbeats on, and collect fork worktrees per `WORKTREES.md`. Each lifecycle event (create, status change, PR binding, collect) updates both the per-worktree `.garden/worktree.toml` and the journal worktree index at `journal/worktrees/<host>/<name>.md`.
+- Create, update heartbeats on, and collect fork worktrees per `WORKTREES.md`. Each lifecycle event (create, heartbeat, status change, PR binding, collect) edits the worktree's journal index entry at `journal/worktrees/<host>/<name>.md`, the single authoritative state file.
 - Dispatch any active role whose dispatch contract the steward can satisfy (see *Subordinate roles* below).
 - Schedule its own next wakeup.
 
@@ -57,7 +57,7 @@ Each invocation is one cycle. Wake, survey, dispatch, journal, schedule, exit. N
 1. **Sync the journal.** Run step 1 of journal-sync (fetch / rebase if a remote is configured) so the cycle reads current state.
 2. **Survey.**
    - Recent journal entries since the prior steward cycle (use `kind:` filters: tick, result, message, worktree).
-   - Worktree inventory (`git worktree list` plus `.garden/worktree.toml` per fork worktree). Note collectable worktrees per `WORKTREES.md` for the cycle's housekeeping pass.
+   - Worktree inventory (`git worktree list` plus the per-host directory under `journal/worktrees/`). Note collectable worktrees per `WORKTREES.md` for the cycle's housekeeping pass.
    - Pending `message` entries addressed to `steward` or to `*`.
 3. **Dispatch.** For each piece of in-flight work that needs a tick (a monitor for a tracked repo, a boatman for a pre-authorized handoff), write a `dispatch` entry then invoke the `Agent` tool. Dispatches are independent and may run in parallel.
 4. **Aggregate.** When subagents return, write a `result` entry per dispatch.

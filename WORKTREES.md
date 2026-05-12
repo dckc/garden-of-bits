@@ -54,7 +54,8 @@ NAME="<purpose-slug>--<role>--$(date -u +%Y%m%d-%H%M%S)"
 git --git-dir=worktrees/<owner>-<repo>.git worktree add \
   worktrees/<owner>-<repo>/$NAME <branch>
 
-# Then the dispatcher writes .garden/worktree.toml (see below).
+# Then the dispatcher writes the journal index entry at
+# journal/worktrees/<host>/<name>.md (see "Worktree state lives in the journal" below).
 ```
 
 ## Naming convention
@@ -72,43 +73,28 @@ Example: `worktrees/anthropics-claude-code/watch-main--monitor--20260512-142345/
 
 The `--` separators are deliberate: filenames contain no other double-dashes, so a quick `awk -F'--'` parses fields cleanly.
 
-## Metadata file
+## Worktree state lives in the journal
 
-Every fork worktree has `.garden/worktree.toml` written by the creator:
-
-```toml
-purpose        = "Watch main for new commits"
-role           = "monitor"
-repo           = "anthropics/claude-code"
-branch         = "main"                       # upstream branch this worktree tracks
-created_at     = "2026-05-12T14:23:45Z"
-created_by     = "<dispatching session id>"
-status         = "active"                     # active | idle | collectable | reserved
-last_heartbeat = "2026-05-12T14:25:00Z"       # updated by the occupying agent
-```
-
-Add `.garden/` to the worktree's local-only excludes (`.git/info/exclude`) so the role-private metadata never lands in an upstream PR.
-
-## Journal index
-
-The per-worktree toml is a fast in-worktree cache, not the cross-machine record. Every fork worktree also has a corresponding entry in the journal index at:
+Every fork worktree has a single authoritative state file: an entry in the journal index at:
 
 ```
 journal/worktrees/<hostname>/<worktree-name>.md
 ```
 
-The journal index is the authoritative cross-machine view of every worktree the garden manages. See `journal/worktrees/README.md` for the schema, the lifecycle events that touch it, and the convention for batching heartbeat-only updates (the toml is high-frequency; the journal entry is event-driven plus periodic).
+There is no per-worktree TOML. Agents read and update the journal entry directly, fetch / rebase / push per `skills/journal-sync/SKILL.md`. Concurrent edits from different machines merge cleanly because each worktree has its own file.
 
-When a worktree is created, the dispatcher writes both the toml *and* the journal index entry, then commits and pushes the index entry per `skills/journal-sync/SKILL.md`. Collection sets the index entry's `status: collected`; the entry is retained for historical lookup.
+See `journal/worktrees/README.md` for the schema (path, repo, branch, role, status, heartbeat, task, prs across multiple repos) and the lifecycle (create / heartbeat / status change / PR binding / collect). Collection sets `status: collected`; the entry is retained for historical lookup.
+
+Inside the worktree itself, `.garden/` may still hold role-private high-frequency state (e.g., the `.garden-monitor/<repo>/` polling state used by the github-activity-poll skill). That state stays local to the worktree, never committed upstream, never authoritative for cross-machine state. Add `.garden/` to the bare clone's `info/exclude` (per the bare-clone setup above) so the role-private state is invisible to the upstream's working tree.
 
 ## Lifecycle and collection
 
 A worktree is **collectable** when ALL of:
 
-- `status` is not `active` and not `reserved`,
+- The journal index entry's `status` is not `active` and not `reserved`,
 - `git -C <worktree> status --porcelain` is empty (no uncommitted changes),
 - `git -C <worktree> log @{u}..` is empty, or the branch is local-only and has been merged or abandoned,
-- `last_heartbeat` is older than 1 hour (default idle threshold; tunable per role).
+- The journal index entry's `last_heartbeat` is older than 1 hour (default idle threshold; tunable per role).
 
 Collection procedure:
 
@@ -120,6 +106,6 @@ If `worktree remove` complains about uncommitted changes you did not expect, sto
 
 ## Reservation
 
-An agent that wants exclusive access to a worktree sets `status = "reserved"` in the metadata before it begins work, and back to `active` or `idle` when done. Other agents skip reserved worktrees when looking for collectable candidates or when they would otherwise consider piggybacking on an existing checkout.
+An agent that wants exclusive access to a worktree sets `status: reserved` in its journal index entry before it begins work, and back to `active` or `idle` when done. Other agents skip reserved worktrees when looking for collectable candidates or when they would otherwise consider piggybacking on an existing checkout.
 
 Reservation is cooperative (no lock), so reserve only as long as you need.

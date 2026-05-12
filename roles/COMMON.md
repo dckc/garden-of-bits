@@ -8,7 +8,7 @@ author: liaison
 
 These apply to every dispatched subagent regardless of role. Read this first, then your role file at `roles/<role>/AGENT.md`. Your cwd is your assigned worktree, not the garden. Always reference garden artifacts by absolute path.
 
-The §_Improving your role and skills_ section below is common to **every** role including the liaison; the worktree-specific sections (heartbeat, `.garden/worktree.toml`) only apply to subagents dispatched into a fork worktree.
+The §_Improving your role and skills_ section below is common to **every** role including the liaison; the worktree-specific sections (heartbeat, journal index entry) only apply to subagents dispatched into a fork worktree.
 
 ## Improving your role and skills
 
@@ -102,9 +102,14 @@ Follow `skills/journal-sync/SKILL.md`. It handles the local commit retry loop an
 
 Full doc in `/Users/kris/garden/WORKTREES.md`. Minimum you need to know:
 
-- Your worktree contains `.garden/worktree.toml` with metadata (purpose, role, repo, status, heartbeat).
-- Read it on start. Update `last_heartbeat` once per tick if you are a long-lived role; update `status` if you change state (`active` → `idle` when done, `reserved` if you need exclusive access).
-- Role-private state goes under `<worktree>/.garden/` or a role-specific dotfolder (e.g. `.garden-monitor/`). Never commit it to the upstream branch.
+- Your worktree's authoritative state lives in the journal at:
+
+  ```
+  /Users/kris/garden/journal/worktrees/$(hostname -s)/$(basename "$(pwd)").md
+  ```
+
+  Read it on start to learn your purpose, role, repo, branch, and any PRs you are bound to. Update `last_heartbeat` and `status` there per the lifecycle in `/Users/kris/garden/journal/worktrees/README.md`; the journal-sync skill handles the commit and push.
+- Role-private high-frequency state (polling caches, scratch files) lives inside the worktree under `.garden/` (e.g., `.garden-monitor/<repo>/`) and is never committed to the upstream branch. It is not authoritative for cross-machine state; only the journal index is.
 - Do not rename, move, or remove your worktree. Lifecycle is the liaison's and reaper's job.
 
 ## Reporting
