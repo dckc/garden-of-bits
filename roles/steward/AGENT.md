@@ -46,10 +46,44 @@ The skill set will grow as the steward learns to drive more roles. Today's set i
 
 Active roles the steward can dispatch as of 2026-05-12:
 
-- [monitor](../monitor/AGENT.md): per-repo cadence polling. The steward fires one per repo it watches, on an interval the journal records.
+- [monitor](../monitor/AGENT.md): per-repo events watcher. The steward keeps one poll daemon alive per standing repo (see *Standing monitors* below) and dispatches a monitor subagent for any repo whose daemon log carries `NEW` lines since the prior cycle.
+- [review-queue](../review-queue/AGENT.md): polls kriskowal's pending review-request queue across all of GitHub and reconciles the journal bulletin's *Pending kriskowal reviews* section. The steward keeps its daemon alive on the same standing-monitors discipline.
 - [boatman](../boatman/AGENT.md): only when a journal `message` entry from `liaison` carries `identity_switch_authorized: true` for the specific source PR and target upstream. The steward forwards the authorization in the dispatch prompt; it never originates one.
 
 Roles the steward will likely grow into when adopted from `references/`: `director` (per-PR dispatch sweeper), `marshal` (design pick-next), `groom` (roadmap maintenance), `conductor` (merge queue drain), `weaver` (rebase/merge resolution), `shepherd` (CI healing). Until those exist in our active library, the steward's matrix stays narrow.
+
+## Standing monitors
+
+The steward keeps five long-lived poll daemons alive on this host, restarting any that have died. The daemons' contracts and state layout are in `roles/monitor/AGENT.md` § Architecture and `roles/review-queue/AGENT.md`; this section is the operational truth for which daemons should be running and how to start them.
+
+| Slug              | Upstream                                  | Worktree directory (`worktrees/<owner>-<repo>/watch-<slug>--monitor--*`) | Cadence |
+| ----------------- | ----------------------------------------- | ------------------------------------------------------------------------ | ------- |
+| endo              | endojs/endo                               | endojs-endo                                                              | 60s     |
+| endo-but-for-bots | endojs/endo-but-for-bots                  | endojs-endo-but-for-bots                                                 | 30s     |
+| agoric-sdk        | agoric/agoric-sdk                         | agoric-agoric-sdk                                                        | 60s     |
+| cosgov            | dcfoundation/cosmos-proposal-builder      | dcfoundation-cosmos-proposal-builder                                     | 60s     |
+| review-queue      | (kriskowal's pending review-request set)  | (no worktree; state under `/tmp/garden-review-queue/`)                   | 120s    |
+
+The exact worktree basename is `watch-<slug>--monitor--<UTC-YYYYMMDD-HHMMSS>`; the timestamp is created once per worktree and persists for that worktree's lifetime. Look it up from the journal index at `journal/worktrees/<host>/` rather than guessing.
+
+Liveness check per cycle: for each daemon, `kill -0 $(cat /tmp/garden-monitor-<owner>-<name>.pid 2>/dev/null) 2>/dev/null` (for the review-queue, the pid file is `/tmp/garden-review-queue.pid`). If the check fails, respawn:
+
+```sh
+# repo monitor
+nohup bash scripts/monitor-poll.sh <owner>/<name> \
+  worktrees/<owner>-<name>/watch-main--monitor--<ts> <cadence> \
+  > /tmp/garden-monitor-<owner>-<name>.log \
+  2> /tmp/garden-monitor-<owner>-<name>.err &
+echo $! > /tmp/garden-monitor-<owner>-<name>.pid
+
+# review-queue
+nohup bash scripts/review-queue-poll.sh /tmp/garden-review-queue 120 \
+  > /tmp/garden-review-queue.log \
+  2> /tmp/garden-review-queue.err &
+echo $! > /tmp/garden-review-queue.pid
+```
+
+Event consumption per cycle: for each daemon, `tail -200 /tmp/garden-monitor-<owner>-<name>.log` (or the review-queue equivalent) and find any `NEW` (monitor) or `ADD`/`REMOVE` (review-queue) line newer than the prior cycle's close timestamp. For each repo with new lines, write a `dispatch` entry and invoke `Agent` for the monitor role; for the review-queue, do the same with the review-queue role. Empty tails are silent (no dispatch, no journal entry).
 
 ## Per-cycle procedure
 
@@ -60,7 +94,7 @@ Each invocation is one cycle. Wake, survey, dispatch, journal, schedule, exit. N
    - Recent journal entries since the prior steward cycle (use `kind:` filters: tick, result, message, worktree).
    - Worktree inventory (`git worktree list` plus the per-host directory under `journal/worktrees/`). Note collectable worktrees per `WORKTREES.md` for the cycle's housekeeping pass.
    - Pending `message` entries addressed to `steward` or to `*`.
-3. **Dispatch.** For each piece of in-flight work that needs a tick (a monitor for a tracked repo, a boatman for a pre-authorized handoff), write a `dispatch` entry then invoke the `Agent` tool. Dispatches are independent and may run in parallel.
+3. **Dispatch.** Run the *Standing monitors* liveness check above and respawn any dead daemons. Then scan each daemon's log tail since the prior cycle's close; for each repo with `NEW` lines (or the review-queue with `ADD`/`REMOVE` lines), write a `dispatch` entry and invoke the corresponding role's `Agent`. Forward any pre-authorized boatman handoff that arrived as a `message` from `liaison`. Dispatches are independent and may run in parallel.
 4. **Aggregate.** When subagents return, write a `result` entry per dispatch.
 5. **Housekeep.** Collect any worktree the survey flagged as collectable. Update heartbeats on worktrees the steward itself is using. Refresh the *Ongoing work* section of `journal/README.md` so it reflects current worktree status. Maintain the bulletin board: promote attention-worthy results into the relevant section (PRs ready for review, decisions needed), and clear existing items whose underlying condition is now resolved (the PR has a maintainer review, the decision was made in upstream comments, the staged authorization was forwarded into a dispatch, the surplus-authority condition was fixed). The maintainer never edits the bulletin; they act in the upstream system and the next cycle picks up the change.
 6. **Self-improvement.** Scan the cycle for lessons; write any that generalize as `message` entries to `liaison`. Do not edit roles or skills.
