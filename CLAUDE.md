@@ -63,4 +63,4 @@ Create `skills/<name>/SKILL.md`. Sections: purpose, inputs, state (if any), proc
 ## Current inventory
 
 - Roles: `liaison`, `monitor`, `boatman`
-- Skills: `journal-sync`, `github-activity-poll`, `pr-ci-watch`
+- Skills: `journal-sync`, `self-improvement`, `github-activity-poll`, `pr-ci-watch`

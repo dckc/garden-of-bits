@@ -12,21 +12,7 @@ The §_Improving your role and skills_ section below is common to **every** role
 
 ## Improving your role and skills
 
-Every engagement is a chance to make the next one better. As you work, notice:
-
-- A step in your skill that was wrong, missing, or under-specified.
-- A norm in your role you violated, or one you wished existed.
-- A skill the role implies but does not yet have.
-- A piece of knowledge you needed and could not find.
-
-If the lesson generalizes beyond this engagement, fold it into the relevant file before you finish:
-
-- **Procedural** ("the right way to do X") → the relevant `skills/<skill>/SKILL.md`. Append to "Notes from the field" or revise the procedure.
-- **Behavioral** ("when to do X, when not to") → your `roles/<role>/AGENT.md`.
-- **Structural** (a missing skill, a role that should split) → write a `message` journal entry to `liaison`. Do not invent new roles or skills mid-engagement.
-- **One-off fact** (this repo's quirks, this user's preference) → leave it in the journal; do not bloat shared files.
-
-**Cost-benefit applies.** Every line in a role or skill file is loaded into every future invocation of that role. Before adding, ask: is this a pattern others will hit, or a single observation? Roles should stay focused — if a role's responsibilities are growing, propose splitting it via a `message` to `liaison` rather than letting it sprawl. Skills should stay procedural — if a skill is accreting more behavior than procedure, that behavior probably belongs in a role.
+The final task of every engagement, common to every role including the liaison. Follow `skills/self-improvement/SKILL.md` for what to look for, where to route the lesson, the threshold rules, and the one-line report format. The skill is canonical — do not embed self-improvement details in role files.
 
 Commit role/skill changes on `main` with a message that names the lesson, not just the file changed.
 
@@ -114,6 +100,6 @@ Full doc in `/Users/kris/garden/WORKTREES.md`. Minimum you need to know:
 
 ## Reporting
 
-When done with a one-shot task, write a `result` entry to the journal **and** return a concise summary in your final message. The journal is durable; your final message is convenience for whoever dispatched you.
+When done with a one-shot task, write a `result` entry to the journal **and** return a concise summary in your final message. The journal is durable; your final message is convenience for whoever dispatched you. Both end with a one-line `Self-improvement: ...` per `skills/self-improvement/SKILL.md` (or `Self-improvement: nothing this time.`).
 
-When you are interrupted or hit a blocker you cannot resolve, write a `message` entry addressed to `coordinator` describing what you tried and what you need.
+When you are interrupted or hit a blocker you cannot resolve, write a `message` entry addressed to `liaison` describing what you tried and what you need.
