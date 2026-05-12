@@ -60,6 +60,11 @@ Create `roles/<name>/AGENT.md`. Sections: purpose (one line), skills (linked lis
 
 Create `skills/<name>/SKILL.md`. Sections: purpose, inputs, state (if any), procedure, output shape, notes.
 
+## Conventions
+
+- **No PR workflows for the garden's own repo.** The garden is a meta library, not application code. Both `main` and `journal` are pushed directly to `origin` (`github.com/kriskowal/garden`); we do not generally open pull requests against ourselves. PR workflows are reserved for fork worktrees of *other* repos, where the [boatman](roles/boatman/AGENT.md) ferries work upstream.
+- The `journal` branch is orphan; it never merges with `main`, and PR comparisons against `main` are meaningless. GitHub will sometimes offer a "create PR for journal" link after a push; ignore it.
+
 ## Current inventory
 
 - Roles: `liaison`, `steward`, `monitor`, `boatman`
