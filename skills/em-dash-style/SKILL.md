@@ -52,4 +52,4 @@ For a single file, use `grep -nP "\xe2\x80\x94" path/to/file.md`.
 
 (Terse and dated. Append; do not rewrite history.)
 
-- _2026-05-12_: adopted from `../../references/endo-but-for-bots/skills/em-dash-style-rule.md`. The source's table-cell sentinel exception (`| — | — |` placeholders in a project-specific README) was dropped (we have no such tables). Adoption included a one-time sweep of every garden-authored document at commit `<filled in by sweep commit>`.
+- _2026-05-12_: adopted from `../../references/endo-but-for-bots/skills/em-dash-style-rule.md`. The source's table-cell sentinel exception (`| — | — |` placeholders in a project-specific README) was dropped (we have no such tables). Adoption included a one-time sweep of every garden-authored document at commit `422a15a`.

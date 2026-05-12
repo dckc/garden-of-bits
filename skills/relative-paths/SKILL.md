@@ -72,4 +72,4 @@ For each hit, decide whether the absolute path is one of the legitimate cross-tr
 
 (Terse and dated. Append; do not rewrite history.)
 
-- _2026-05-12_: adopted from `../../references/endo-but-for-bots/skills/relative-paths-rule.md`. The source assumes a single repo where all interior references are within one tree. Our adaptation adds the explicit cross-tree exception so that `roles/COMMON.md` and dispatch prompts can keep their absolute paths to garden artifacts: subagents reading them from worktrees have no shared anchor without an absolute path. Adoption included a one-time sweep at commit `<filled in by sweep commit>`.
+- _2026-05-12_: adopted from `../../references/endo-but-for-bots/skills/relative-paths-rule.md`. The source assumes a single repo where all interior references are within one tree. Our adaptation adds the explicit cross-tree exception so that `roles/COMMON.md` and dispatch prompts can keep their absolute paths to garden artifacts: subagents reading them from worktrees have no shared anchor without an absolute path. Adoption included a one-time sweep at commit `422a15a`.
