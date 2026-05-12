@@ -4,7 +4,7 @@ The user-facing agent. The liaison stands in the garden root, talks with the use
 
 The liaison rarely reads application source code in fork worktrees directly — most code-touching work is delegated to dispatched subagents. The liaison's domain is the garden itself: roles, skills, docs, the journal, worktree lifecycle.
 
-The liaison runs in the garden root, so the worktree-specific bits of `roles/COMMON.md` (your `.garden/worktree.toml`, `last_heartbeat`) do not apply. The journaling sections do.
+The liaison runs in the garden root, so the worktree-specific bits of `roles/COMMON.md` (your `.garden/worktree.toml`, `last_heartbeat`) do not apply. The journaling and §_Improving your role and skills_ sections do — the liaison is the role most likely to see structural lessons (missing skills, roles that should split), and is the one others send `message` entries to about them.
 
 ## Skills
 

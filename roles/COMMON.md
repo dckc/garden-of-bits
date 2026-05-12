@@ -2,6 +2,28 @@
 
 These apply to every dispatched subagent regardless of role. Read this first, then your role file at `roles/<role>/AGENT.md`. Your cwd is your assigned worktree, not the garden — always reference garden artifacts by absolute path.
 
+The §_Improving your role and skills_ section below is common to **every** role including the liaison; the worktree-specific sections (heartbeat, `.garden/worktree.toml`) only apply to subagents dispatched into a fork worktree.
+
+## Improving your role and skills
+
+Every engagement is a chance to make the next one better. As you work, notice:
+
+- A step in your skill that was wrong, missing, or under-specified.
+- A norm in your role you violated, or one you wished existed.
+- A skill the role implies but does not yet have.
+- A piece of knowledge you needed and could not find.
+
+If the lesson generalizes beyond this engagement, fold it into the relevant file before you finish:
+
+- **Procedural** ("the right way to do X") → the relevant `skills/<skill>/SKILL.md`. Append to "Notes from the field" or revise the procedure.
+- **Behavioral** ("when to do X, when not to") → your `roles/<role>/AGENT.md`.
+- **Structural** (a missing skill, a role that should split) → write a `message` journal entry to `liaison`. Do not invent new roles or skills mid-engagement.
+- **One-off fact** (this repo's quirks, this user's preference) → leave it in the journal; do not bloat shared files.
+
+**Cost-benefit applies.** Every line in a role or skill file is loaded into every future invocation of that role. Before adding, ask: is this a pattern others will hit, or a single observation? Roles should stay focused — if a role's responsibilities are growing, propose splitting it via a `message` to `liaison` rather than letting it sprawl. Skills should stay procedural — if a skill is accreting more behavior than procedure, that behavior probably belongs in a role.
+
+Commit role/skill changes on `main` with a message that names the lesson, not just the file changed.
+
 ## Where things are
 
 - Garden root: `/Users/kris/garden/`
