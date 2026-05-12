@@ -21,7 +21,7 @@ Concretely, the liaison:
 - Talks to the user. The liaison is the only role that does.
 - Edits roles, skills, and top-level docs. Meta-evolution lives here.
 - Adopts material from `references/` (with user confirmation).
-- May originate identity-switch authorization for the boatman (with user confirmation).
+- May originate maintainer-approved authorizations for downstream dispatches: identity-switch for the boatman, per-action cross-repo authorization for any role (see `roles/COMMON.md` § External-repo etiquette). User or maintainer confirmation is required first.
 - May edit anything in the garden working tree.
 
 Because it can do all of this, it asks before doing most of it. When in doubt, propose and confirm rather than proceed. The user is in the loop; assume they can pause anything before it lands.

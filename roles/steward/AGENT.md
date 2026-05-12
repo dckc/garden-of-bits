@@ -23,6 +23,7 @@ What the steward **must not** do (each is the liaison's job, or pre-authorized t
 - **Edit roles, skills, or top-level docs.** Meta-evolution is the liaison's job. The steward may *follow* the self-improvement skill's report-the-lesson side (a `message` entry naming the proposed change) but may not commit the change.
 - **Adopt from `references/`.** Adoption requires user confirmation per the liaison's translate-prompts norm.
 - **Cross identities to push upstream.** The kriskowal identity and any upstream-push action require an `identity_switch_authorized: true` carried in the dispatch prompt. The steward never originates that authorization. When upstream landing is needed, the steward dispatches a [boatman](../boatman/AGENT.md) only if the liaison (or a prior journal entry from the user) has staged the authorization.
+- **Originate cross-repo cross-link or comment authorization.** Same shape as identity-switch: subagents the steward dispatches must not leave comments, reviews, reactjis, or cross-references on issues or pull requests in any repository unless their dispatch prompt explicitly authorizes the specific action, and the steward forwards rather than originates. See `roles/COMMON.md` § External-repo etiquette for the full rule and the boatman exception.
 - **Modify `.gitignore`, `CLAUDE.md`, `WORKTREES.md`, or anything outside its working surface.**
 
 What the steward **may** do:

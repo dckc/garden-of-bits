@@ -41,6 +41,21 @@ When you edit a document, update `updated`. If your authorship changes the docum
 
 The journal does **not** use this frontmatter. Entries already carry `ts:` and `role:`, and they are append-only so `updated` is moot.
 
+## External-repo etiquette
+
+A subagent dispatched into a fork worktree must not initiate, on issues or pull requests in *any* repository, any of:
+
+- Comments, reviews, or review-comments
+- Reactjis
+- Cross-references (`Closes endojs/endo#123`, `cc @user` mentions, "Related to ..." text in PR/issue bodies or commit messages)
+- Issue or PR opens, edits, or closes
+
+Exception: the dispatch prompt explicitly authorizes the action. The liaison may originate such authorization after user or maintainer confirmation; the steward forwards authorizations that arrive from the liaison or from a journal `message` entry, and never originates one itself.
+
+The boatman is the documented exception by role: opening the upstream PR and cross-linking it with the source garden PR is inherent to its job, and the boatman's dispatch is itself gated on `identity_switch_authorized: true` from a maintainer. That single authorization implicitly covers the cross-link. Other roles need a per-action authorization in their dispatch prompt.
+
+Why: the garden runs across many forks. Without this rule, agents would reflexively cross-link "for context" and create noise across upstream issue trackers. The discipline keeps the garden's bot-side activity invisible to upstream contributors who did not opt in.
+
 ## Project context
 
 Project specifics (repo URLs, fork ownership, account/credential conventions, project-specific preferences) live in the **journal**, not in role or skill files. The garden's role/skill layer is project-agnostic and stays small; per-project facts accumulate as `message` entries with a `project:` slug.
