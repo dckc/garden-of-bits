@@ -76,6 +76,8 @@ The journal is the garden's transcript and message bus. It is a worktree of the 
 
 The journal's top-level `README.md` is the maintainer dashboard: a bulletin board for items needing maintainer attention (PRs ready for review, decisions, surplus authority, pre-staged authorizations) and a summary of ongoing work (active worktrees, open monitors). Agents own the bulletin entirely: they post when an item arises and they clear it once the underlying condition is resolved (typically during the steward's per-cycle close). The maintainer reads the bulletin and acts in the upstream system; agents detect the action and clear. See `/Users/kris/garden/journal/README.md` for the structure.
 
+The journal also archives terminated long-living subagents under `agents/`, indexed by date / role / subject matter for future consultation. The dispatcher writes a termination report per `skills/agent-termination/SKILL.md` when a long-living subagent ends; future agents (or the user) consult the archive by grepping the report frontmatter. See `/Users/kris/garden/journal/agents/README.md` for browse recipes.
+
 ### Entry layout
 
 ```
