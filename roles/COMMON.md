@@ -74,6 +74,8 @@ To find what the garden knows about a project: `grep -rl '^project: <slug>' /Use
 
 The journal is the garden's transcript and message bus. It is a worktree of the garden repo on an orphan branch. Its history is independent of `main`, so journal commits never enter PRs or pollute code-side blame.
 
+The journal's top-level `README.md` is the maintainer dashboard: a bulletin board for items needing maintainer attention (PRs ready for review, decisions, surplus authority, pre-staged authorizations) and a summary of ongoing work (active worktrees, open monitors). Any agent may post bulletin items via journal-sync; the maintainer clears them. See `/Users/kris/garden/journal/README.md` for the structure.
+
 ### Entry layout
 
 ```
