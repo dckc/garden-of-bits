@@ -38,7 +38,7 @@ while true; do
   TMP_OUT=$(mktemp)
   TMP_ERR=$(mktemp)
 
-  if gh search prs --review-requested=kriskowal --state=open --limit=100 \
+  if gh search prs --review-requested=kriskowal --state=open --limit=1000 \
        --json number,repository,title,url,author,isDraft,updatedAt \
        > "$TMP_OUT" 2> "$TMP_ERR"; then
 

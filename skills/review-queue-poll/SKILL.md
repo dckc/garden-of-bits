@@ -25,7 +25,7 @@ Inside `state_dir`, atomic via `*.tmp` + `mv`:
 
 ## Procedure (daemon)
 
-1. `gh search prs --review-requested=kriskowal --state=open --limit=100 --json number,repository,title,url,author,isDraft,updatedAt`.
+1. `gh search prs --review-requested=kriskowal --state=open --limit=1000 --json number,repository,title,url,author,isDraft,updatedAt`. The `gh search` command paginates transparently up to `--limit`; 1000 is the CLI's hard cap. The full GitHub search API caps at 1000 results regardless, so a queue larger than that is undetectable from this skill; if the count ever hits 1000, that itself is the signal to raise a `message` to liaison about refining the filter.
 2. Normalize each row into the canonical-set shape:
 
    ```json
@@ -79,5 +79,6 @@ Inside `state_dir`, atomic via `*.tmp` + `mv`:
 ## Notes from the field
 
 - _2026-05-12_: `gh search prs --review-requested=USERNAME` returns PRs across all visible repos in one call. Cost is one search-rate-limit point per call (30/min budget). 120s cadence ≈ 30/hr, comfortable.
+- _2026-05-12_: `gh search`'s `--limit` is the *hard* page-walk ceiling, not the per-call cap (gh handles pagination internally). The GitHub search API itself stops responding past the 1000-result mark, so 1000 is both the CLI's documented max and the API's practical max; a queue larger than 1000 is invisible to this skill.
 - _2026-05-12_: the search endpoint does not include `requestedAt` or the per-PR review history. To populate tiers (1) (`CHANGES_REQUESTED` then pushed) and (2) (explicit re-request), the daemon needs a follow-up `gh api repos/<repo>/pulls/<n>/timeline` per PR in the result set. Cost: one REST call per PR per tick (the 5000/hr REST budget absorbs this for the queue sizes we expect, but it does mean the daemon stops being purely cheap). Land this as a follow-up; until then, every item is tier (3).
 - _2026-05-12_: `gh search prs --json updatedAt` returns the *PR's* last-update timestamp, not the last *review-request* timestamp. For tier (3) sort ("newest request first"), `updatedAt` is a usable proxy when the PR was just opened, but not when an old PR re-requests review. The timeline query (above) is the right fix.
