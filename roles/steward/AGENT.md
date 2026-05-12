@@ -29,7 +29,7 @@ What the steward **may** do:
 
 - Read the journal and any garden file.
 - Write `dispatch`, `tick`, `result`, and `worktree` journal entries via [journal-sync](../../skills/journal-sync/SKILL.md). Journal pushes go directly to `origin/journal`; the garden does not use PR workflows for itself (see `CLAUDE.md` § Conventions).
-- Create, update heartbeats on, and collect fork worktrees per `WORKTREES.md`.
+- Create, update heartbeats on, and collect fork worktrees per `WORKTREES.md`. Each lifecycle event (create, status change, PR binding, collect) updates both the per-worktree `.garden/worktree.toml` and the journal worktree index at `journal/worktrees/<host>/<name>.md`.
 - Dispatch any active role whose dispatch contract the steward can satisfy (see *Subordinate roles* below).
 - Schedule its own next wakeup.
 

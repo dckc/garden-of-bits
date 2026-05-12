@@ -89,6 +89,18 @@ last_heartbeat = "2026-05-12T14:25:00Z"       # updated by the occupying agent
 
 Add `.garden/` to the worktree's local-only excludes (`.git/info/exclude`) so the role-private metadata never lands in an upstream PR.
 
+## Journal index
+
+The per-worktree toml is a fast in-worktree cache, not the cross-machine record. Every fork worktree also has a corresponding entry in the journal index at:
+
+```
+journal/worktrees/<hostname>/<worktree-name>.md
+```
+
+The journal index is the authoritative cross-machine view of every worktree the garden manages. See `journal/worktrees/README.md` for the schema, the lifecycle events that touch it, and the convention for batching heartbeat-only updates (the toml is high-frequency; the journal entry is event-driven plus periodic).
+
+When a worktree is created, the dispatcher writes both the toml *and* the journal index entry, then commits and pushes the index entry per `skills/journal-sync/SKILL.md`. Collection sets the index entry's `status: collected`; the entry is retained for historical lookup.
+
 ## Lifecycle and collection
 
 A worktree is **collectable** when ALL of:
