@@ -34,7 +34,7 @@ Route the lesson by what kind of change it implies:
 - **Structural** (a new role is warranted, a role should split, a skill should be retired) → write a `message` journal entry addressed to `liaison`. Do not invent or rename roles/skills mid-engagement; let the liaison gather the proposal and act with the user's confirmation.
 - **One-off fact** (a quirk of a specific repo, a user preference, a credential mechanic) → a `message` journal entry tagged with the relevant `project:` slug. Never bloat a shared role or skill with a one-project fact.
 
-Cross-cutting documents (`CLAUDE.md`, `WORKTREES.md`, `roles/COMMON.md`) are touched only when a role is added/removed/renamed, or when a standing instruction itself changes — and the latter case needs explicit user direction.
+Cross-cutting documents (`CLAUDE.md`, `WORKTREES.md`, `roles/COMMON.md`) are touched only when a role is added/removed/renamed, or when a standing instruction itself changes; the latter case needs explicit user direction.
 
 ## Threshold for landing a change
 
@@ -44,7 +44,7 @@ Cross-cutting documents (`CLAUDE.md`, `WORKTREES.md`, `roles/COMMON.md`) are tou
 
 ## Cost-benefit framing
 
-Every line in a role or skill file is loaded into every future invocation of that role. Before adding, ask: is this a pattern others will hit, or a single observation? Roles should stay focused — if responsibilities are growing, propose splitting via a `message` to `liaison` rather than letting the role sprawl. Skills should stay procedural — if a skill is accreting behavior rather than procedure, that behavior probably belongs in a role.
+Every line in a role or skill file is loaded into every future invocation of that role. Before adding, ask: is this a pattern others will hit, or a single observation? Roles should stay focused: if responsibilities are growing, propose splitting via a `message` to `liaison` rather than letting the role sprawl. Skills should stay procedural: if a skill is accreting behavior rather than procedure, that behavior probably belongs in a role.
 
 ## How to write the change
 
@@ -67,7 +67,7 @@ If nothing was learned, write:
 Self-improvement: nothing this time.
 ```
 
-The "nothing this time" line is intentional. It signals that the role considered self-improvement and decided no change was warranted — meaningfully different from forgetting the step.
+The "nothing this time" line is intentional. It signals that the role considered self-improvement and decided no change was warranted, meaningfully different from forgetting the step.
 
 ## Pitfalls
 
@@ -81,4 +81,4 @@ The "nothing this time" line is intentional. It signals that the role considered
 
 (Terse and dated. Append; do not rewrite history.)
 
-- _2026-05-12_ — Adopted from `references/endo-but-for-bots/skills/self-improvement.md` at commit `cc79140a6`. Carried over: the six "what to look for" cases, the threshold rules, the "nothing this time" meta-signal, the pitfalls list. Adapted for our garden: routing extended with the journal `message` pattern for structural and one-off lessons; the output line is now expected in the `result` journal entry as well as the report; the source's project-specific style rules (em-dash, relative-paths) were not generalized and remain endo-only.
+- _2026-05-12_: adopted from `../../references/endo-but-for-bots/skills/self-improvement.md` at commit `cc79140a6`. Carried over: the six "what to look for" cases, the threshold rules, the "nothing this time" meta-signal, the pitfalls list. Adapted for our garden: routing extended with the journal `message` pattern for structural and one-off lessons; the output line is now expected in the `result` journal entry as well as the report. The source's em-dash and relative-paths style rules were *not* generalized at the time of this adoption; they were adopted separately later the same day as `skills/em-dash-style/SKILL.md` and `skills/relative-paths/SKILL.md`.

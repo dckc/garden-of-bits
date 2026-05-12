@@ -8,7 +8,7 @@ author: liaison
 
 A shelf of reference material from other gardens and adjacent systems. **These files are not part of the active library.** They are kept here so the liaison can browse them when a user prompt has no obvious fit among our active roles and skills.
 
-Each subdirectory is a snapshot from one source — see its own `README.md` for the source repo, branch, commit, and import date.
+Each subdirectory is a snapshot from one source. See its own `README.md` for the source repo, branch, commit, and import date.
 
 ## How references are used
 
@@ -24,5 +24,5 @@ Each subdirectory is a snapshot from one source — see its own `README.md` for 
 
 ## Current shelves
 
-- [`endo-but-for-bots/`](./endo-but-for-bots/README.md) — the canonical
+- [`endo-but-for-bots/`](./endo-but-for-bots/README.md): the canonical
   endojs/endo-but-for-bots garden as of 2026-05-12.

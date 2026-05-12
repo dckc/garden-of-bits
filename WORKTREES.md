@@ -8,47 +8,51 @@ author: liaison
 
 All worktrees the garden uses live under the garden root. Two kinds:
 
-1. **Journal** — `journal/`. A worktree of *this* repo on the orphan branch `journal`. Created once per machine. Never delete unless intentionally archiving the garden's history.
-2. **Fork worktrees** — `worktrees/<owner>-<repo>/<name>/`. Worktrees added from a bare clone at `worktrees/<owner>-<repo>.git/`. Created and collected on demand.
+1. **Journal** (`journal/`). A worktree of *this* repo on the orphan branch `journal`. Created once per machine. Never delete unless intentionally archiving the garden's history.
+2. **Fork worktrees** (`worktrees/<owner>-<repo>/<name>/`). Worktrees added from a bare clone at `worktrees/<owner>-<repo>.git/`. Created and collected on demand.
 
 ## Bootstrap (run once)
 
+Run from the garden root:
+
 ```sh
 # Initial commit on garden main (if not already present), needed before adding worktrees.
-git -C /Users/kris/garden add -A
-git -C /Users/kris/garden commit -m "garden: initial scaffold"
+git add -A
+git commit -m "garden: initial scaffold"
 
 # Create the journal as an orphan-branch worktree.
-git -C /Users/kris/garden worktree add --detach /Users/kris/garden/journal
-git -C /Users/kris/garden/journal checkout --orphan journal
-git -C /Users/kris/garden/journal rm -rf . 2>/dev/null || true
-mkdir -p /Users/kris/garden/journal/entries
-git -C /Users/kris/garden/journal commit --allow-empty -m "journal: initialized"
+git worktree add --detach journal
+git -C journal checkout --orphan journal
+git -C journal rm -rf . 2>/dev/null || true
+mkdir -p journal/entries
+git -C journal commit --allow-empty -m "journal: initialized"
 ```
 
 After bootstrap:
 
 - `journal/` is at the orphan branch `journal`, sharing zero history with `main`.
-- `git -C /Users/kris/garden branch` shows both `main` and `journal`.
-- `git -C /Users/kris/garden worktree list` shows both checkouts.
+- `git branch` shows both `main` and `journal`.
+- `git worktree list` shows both checkouts.
 
 ## Adding a fork worktree
+
+Run from the garden root:
 
 ```sh
 # Clone bare once per fork:
 git clone --bare https://github.com/<owner>/<repo>.git \
-  /Users/kris/garden/worktrees/<owner>-<repo>.git
+  worktrees/<owner>-<repo>.git
 
 # Once per bare clone: tell git to ignore our metadata directory in every
 # worktree created from it. The per-worktree `.git` is a *file* (worktree
 # pointer), not a directory, so the usual `<worktree>/.git/info/exclude`
 # trick does not work; append to the bare clone's shared exclude instead.
-echo '.garden/' >> /Users/kris/garden/worktrees/<owner>-<repo>.git/info/exclude
+echo '.garden/' >> worktrees/<owner>-<repo>.git/info/exclude
 
 # For each working checkout:
 NAME="<purpose-slug>--<role>--$(date -u +%Y%m%d-%H%M%S)"
-git -C /Users/kris/garden/worktrees/<owner>-<repo>.git worktree add \
-  /Users/kris/garden/worktrees/<owner>-<repo>/$NAME <branch>
+git --git-dir=worktrees/<owner>-<repo>.git worktree add \
+  worktrees/<owner>-<repo>/$NAME <branch>
 
 # Then the dispatcher writes .garden/worktree.toml (see below).
 ```
@@ -60,9 +64,9 @@ worktrees/<owner>-<repo>/<purpose-slug>--<role>--<YYYYMMDD-HHMMSS>
 ```
 
 - `<owner>-<repo>` mirrors the upstream slug, e.g. `anthropics-claude-code`.
-- `<purpose-slug>` — kebab-case, what this worktree exists for: `fix-pagination`, `watch-main`, `try-rewrite`.
-- `<role>` — primary occupying role: `monitor`, `implementer`, `reviewer`.
-- timestamp — UTC, ensures uniqueness across concurrent dispatchers without coordination.
+- `<purpose-slug>`: kebab-case, what this worktree exists for (`fix-pagination`, `watch-main`, `try-rewrite`).
+- `<role>`: primary occupying role (`monitor`, `implementer`, `reviewer`).
+- timestamp: UTC, ensures uniqueness across concurrent dispatchers without coordination.
 
 Example: `worktrees/anthropics-claude-code/watch-main--monitor--20260512-142345/`.
 
@@ -97,13 +101,13 @@ A worktree is **collectable** when ALL of:
 Collection procedure:
 
 1. Write a `worktree` journal entry (`kind: worktree`, body: "collected `<name>`, last activity `<ts>`, reason `<...>`").
-2. `git -C /Users/kris/garden/worktrees/<owner>-<repo>.git worktree remove <path>`.
-   Never `rm -rf` — git tracks the worktree in its admin tree and `worktree remove` keeps that consistent.
+2. From the garden root: `git --git-dir=worktrees/<owner>-<repo>.git worktree remove <path>`.
+   Never `rm -rf`. Git tracks the worktree in its admin tree, and `worktree remove` keeps that consistent.
 
-If `worktree remove` complains about uncommitted changes you did not expect, stop and investigate — that may be in-progress work the metadata is wrong about.
+If `worktree remove` complains about uncommitted changes you did not expect, stop and investigate. That may be in-progress work the metadata is wrong about.
 
 ## Reservation
 
 An agent that wants exclusive access to a worktree sets `status = "reserved"` in the metadata before it begins work, and back to `active` or `idle` when done. Other agents skip reserved worktrees when looking for collectable candidates or when they would otherwise consider piggybacking on an existing checkout.
 
-Reservation is cooperative — there is no lock — so reserve only as long as you need.
+Reservation is cooperative (no lock), so reserve only as long as you need.

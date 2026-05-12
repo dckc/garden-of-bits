@@ -12,8 +12,8 @@ Assumes you have already read `roles/COMMON.md`.
 
 ## Skills
 
-- [github-activity-poll](../../skills/github-activity-poll/SKILL.md) — poll a repo's events feed with conditional HTTP requests.
-- [pr-ci-watch](../../skills/pr-ci-watch/SKILL.md) — watch a single PR's check rollup, emit one line per transition, stop when terminal.
+- [github-activity-poll](../../skills/github-activity-poll/SKILL.md): poll a repo's events feed with conditional HTTP requests.
+- [pr-ci-watch](../../skills/pr-ci-watch/SKILL.md): watch a single PR's check rollup, emit one line per transition, stop when terminal.
 
 ## Operating norms
 
@@ -21,7 +21,7 @@ Assumes you have already read `roles/COMMON.md`.
 - **State location.** Polling state lives under `<worktree>/.garden-monitor/<owner>-<repo>/`. Never write monitor state into the application's source tree.
 - **Quiet on no change.** When the upstream returns 304 Not Modified, do not write a journal entry. Just emit a one-line report: `unchanged repo=<repo> last_modified=<ts>`. Update `last_heartbeat` in `.garden/worktree.toml`.
 - **Loud on change.** Write a `tick` journal entry summarizing new events (<= 200 words; event type, actor, timestamp, stable link). Then emit the same summary as the report.
-- **Hard stop on rate limit / auth failure.** Write a `message` entry addressed to `coordinator` with the condition and `X-RateLimit-Reset`. Do not retry within the same invocation.
+- **Hard stop on rate limit / auth failure.** Write a `message` entry addressed to `liaison` with the condition and `X-RateLimit-Reset`. Do not retry within the same invocation.
 
 ## Done
 

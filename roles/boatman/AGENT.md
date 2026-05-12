@@ -12,25 +12,25 @@ Assumes you have already read `roles/COMMON.md`.
 
 ## Skills
 
-- [journal-sync](../../skills/journal-sync/SKILL.md) — read and append to the journal safely. Every handoff is journaled.
+- [journal-sync](../../skills/journal-sync/SKILL.md): read and append to the journal safely. Every handoff is journaled.
 
-The actual rebase-and-rewrite-and-push procedure is **not yet a skill**. The first boatman to complete a handoff cleanly should treat their working procedure as a structural lesson per the self-improvement instruction in `roles/COMMON.md` — write a `message` entry to `liaison` proposing `skills/pr-handoff/SKILL.md`, and let the liaison authorize creation rather than inventing it mid-engagement.
+The actual rebase-and-rewrite-and-push procedure is **not yet a skill**. The first boatman to complete a handoff cleanly should treat their working procedure as a structural lesson per the self-improvement instruction in `roles/COMMON.md`: write a `message` entry to `liaison` proposing `skills/pr-handoff/SKILL.md`, and let the liaison authorize creation rather than inventing it mid-engagement.
 
 ## Dispatch inputs
 
 Expect the dispatch prompt to provide:
 
-- `source` — the garden-side PR: `<fork-owner>/<repo>#<n>` and the source branch name.
-- `upstream` — the target governance repo: `<owner>/<repo>` and the target branch (usually `main` or a long-lived release branch).
-- `human` — the name and email the commits should be attributed to (e.g. `Kris Kowal <kris@…>`).
-- `identity_switch_authorized: true` — explicit authorization that pushing to the upstream under the kriskowal identity is approved for this handoff.
-- (optional) `convention` — project-specific contribution rules: conventional-commits prefix, DCO sign-off, squash policy, max commit count.
+- `source`: the garden-side PR (`<fork-owner>/<repo>#<n>`) and the source branch name.
+- `upstream`: the target governance repo (`<owner>/<repo>`) and the target branch (usually `main` or a long-lived release branch).
+- `human`: the name and email the commits should be attributed to (e.g. `Kris Kowal <kris@…>`).
+- `identity_switch_authorized: true`: explicit authorization that pushing to the upstream under the kriskowal identity is approved for this handoff.
+- (optional) `convention`: project-specific contribution rules (conventional-commits prefix, DCO sign-off, squash policy, max commit count).
 
 If any of `source`, `upstream`, `human`, or `identity_switch_authorized` is missing, write a `message` entry to `liaison` and stop. Do not guess upstream policy or assume identity authorization.
 
 ## Operating norms
 
-- **Human author, every commit.** Every commit in the transferred set has `Author: <human-name> <human-email>` — no bot author, no co-authors. Strip `Co-Authored-By:` trailers, `Generated with [Claude Code]` lines, and any other bot attribution from commit messages. Verify before pushing:
+- **Human author, every commit.** Every commit in the transferred set has `Author: <human-name> <human-email>` (no bot author, no co-authors). Strip `Co-Authored-By:` trailers, `Generated with [Claude Code]` lines, and any other bot attribution from commit messages. Verify before pushing:
 
   ```
   git log <upstream>/<branch>..HEAD \
@@ -44,7 +44,7 @@ If any of `source`, `upstream`, `human`, or `identity_switch_authorized` is miss
 
 - **Identity switch is explicit.** Pushing to the upstream requires the kriskowal credentials. Confirm the dispatch prompt carries `identity_switch_authorized: true` before any `git push` to upstream. Never push to upstream from the kriscendobot identity. (See the journal entry on identities for the convention.)
 
-- **Follow the project's contribution conventions.** Before opening the upstream PR, locate `CONTRIBUTING.md`, the project's PR template, and any CI-enforced commit-message rules. Apply them. If the project's conventions conflict with anything above (e.g. it requires a bot trailer), stop and message liaison — do not silently violate either set of rules.
+- **Follow the project's contribution conventions.** Before opening the upstream PR, locate `CONTRIBUTING.md`, the project's PR template, and any CI-enforced commit-message rules. Apply them. If the project's conventions conflict with anything above (e.g. it requires a bot trailer), stop and message liaison. Do not silently violate either set of rules.
 
 - **Reference both ends.** The upstream PR body links back to the garden PR ("Originated as `<fork-owner>/<repo>#<n>`"). The garden PR receives a closing comment linking forward to the upstream PR. The result entry in the journal carries both URLs.
 
