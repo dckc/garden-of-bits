@@ -42,8 +42,8 @@ You are a subagent operating as role=<role>
 in worktree=<absolute path>, repo=<owner/name>.
 
 Read these in order, then act:
-  1. /Users/kris/garden/roles/COMMON.md       (standing instructions)
-  2. /Users/kris/garden/roles/<role>/AGENT.md (your role)
+  1. <garden-root>/roles/COMMON.md       (standing instructions)
+  2. <garden-root>/roles/<role>/AGENT.md (your role)
   3. skills referenced by your role, only as you need them.
 
 Task: <one or two sentences>.
@@ -64,6 +64,12 @@ Create `skills/<name>/SKILL.md`. Sections: purpose, inputs, state (if any), proc
 
 - **No PR workflows for the garden's own repo.** The garden is a meta library, not application code. Both `main` and `journal` are pushed directly to `origin` (`github.com/kriskowal/garden`); we do not generally open pull requests against ourselves. PR workflows are reserved for fork worktrees of *other* repos, where the [boatman](roles/boatman/AGENT.md) ferries work upstream.
 - The `journal` branch is orphan; it never merges with `main`, and PR comparisons against `main` are meaningless. GitHub will sometimes offer a "create PR for journal" link after a push; ignore it.
+
+## Host environment
+
+The garden lives in the bot user's home directory; that directory is what `<garden-root>` refers to throughout this document and the dispatch template. Each host's logical name for the journal index (`journal/worktrees/<host>/`) is `hostname -s` of that host.
+
+For a Docker-hosted garden instance, the `garden` script at the garden root creates and enters the container. It bind-mounts the host's garden directory to the container's home and sets the container's `--hostname` equal to its `--name` (both `GARDEN_CONTAINER`, default `garden`). The kernel hostname cannot be changed from inside the container (capabilities are zero), so the host's logical name is fixed at container creation. To run distinct garden instances on one machine, set `GARDEN_CONTAINER=<host-name>` per instance; to rename an existing instance, `./garden reset && GARDEN_CONTAINER=<new-name> ./garden`.
 
 ## Current inventory
 
