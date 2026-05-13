@@ -1,0 +1,36 @@
+---
+created: 2026-05-13
+updated: 2026-05-13
+author: liaison
+---
+
+# Skill: review-feedback-followup-commits
+
+Adopted from `references/endo-but-for-bots/skills/review-feedback-followup-commits.md`.
+
+Shape and structure of fix-up commits in response to PR review feedback.
+
+## Triggers
+
+Inline review comments, top-level review feedback, or maintainer "please address X" asks on an open PR.
+
+## Core rules
+
+- **Add a follow-up commit on top; do not amend.** Amending forces the reviewer to recompute the diff between the prior PR state and the current one. A follow-up makes the new-since-last-review diff trivial. Amend only the just-rebased tip when nobody else has pushed since.
+- **One concern per commit.** Conventional-commit message, parenthesized PR number. A reviewer who agrees with three points and disagrees with the fourth can request the fourth be dropped without unwinding the others. Examples: `fix(ci): restore line accidentally regressed in rebase (#NNN)`, `refactor(pkg): clarify mock transport's pair-of-pipes (#NNN)`.
+- **Rebase before applying fix-ups.** See [rebase-before-followup](../rebase-before-followup/SKILL.md). Even an apparently no-op rebase matters.
+- **Lockfile changes ship in their own commit** per [yarn-lock-separate-commit](../yarn-lock-separate-commit/SKILL.md).
+- **Reply on each thread after the push** citing SHAs per [pr-review-thread-replies](../pr-review-thread-replies/SKILL.md), then post a top-level summary.
+
+## Patterns that trigger a deeper read
+
+Each line below is a trigger. If the pattern matches, the cited reference (or a future ported skill) carries the full handling.
+
+- **Reviewer asks to pin an external dependency.** Capture the actual sha256 from a fresh download. See [verify-upstream-state-before-pinning](../verify-upstream-state-before-pinning/SKILL.md).
+- **A review item demands a major rewrite.** Land the rewrite as commit A; treat any subsequent follow-ups as additive sharpenings that a reviewer could request be dropped without unwinding A. Don't split the rewrite into theatrical phases.
+- **The dispatch summarizes review threads with line numbers and suggested actions.** Treat the line number as authoritative and the action summary as a hint. Read the file at the line yourself before applying; dispatchers can mismatch a line to the wrong file or identifier.
+- **A package rename.** Sweep the cascade across package directory, `package.json`, AVA test files, `.changeset/*.md`, error-message strings, design docs, and `yarn.lock`. After the sweep, `grep -rn '<old-name>'` should return only intentional historical references.
+
+## Notes from the field
+
+- _2026-05-13_: adopted from the reference. The per-pattern skill files (`package-rename-cascade`, `ses-intrinsic-naming`) were not ported here; their lore is in the reference and can come over if a future engagement needs them as active library.
