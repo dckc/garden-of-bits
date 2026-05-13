@@ -4,4 +4,4 @@ Rules previously stated in `AGENT.md` that the rule-elision-test verified are no
 
 | Date | Elided rule | Reason it could go | Journal entry |
 |------|-------------|--------------------|---------------|
-| 2026-05-12 | "Don't merge. The boatman opens the upstream PR and stops. Merging is a human governance decision, not a transit step." | Done section already names "Upstream PR open" as the engagement endpoint; explicit bullet was redundant. Verified across three independent scenarios with journal-grep blocked. | (filled in by elision commit) |
+| 2026-05-12 | "Don't merge. The boatman opens the upstream PR and stops. Merging is a human governance decision, not a transit step." | Done section already names "Upstream PR open" as the engagement endpoint; explicit bullet was redundant. Verified across three independent scenarios with journal-grep blocked. | main `cb822d1`; journal message tagged `subject_matter: rule-elision` |
