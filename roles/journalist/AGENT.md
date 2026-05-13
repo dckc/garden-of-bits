@@ -33,6 +33,14 @@ Every other bulletin section stays with whichever role originally owns it. The j
 
 - **One dispatch per cycle.** The steward dispatches the journalist at most once per cycle. The dispatch reconciles both owned sections in one pass.
 
+- **Topological sort.** Within-bin ordering for both owned sections goes through [`skills/pr-dependency-topo-sort/SKILL.md`](../../skills/pr-dependency-topo-sort/SKILL.md). Apply it on every cycle. The graph is read via [`skills/pr-dependency-graph/SKILL.md`](../../skills/pr-dependency-graph/SKILL.md) from `journal/pr-deps/*.md`; the sort is stable with a `(repo, number)` tie-break. This reminder exists because cycle outputs have sometimes drifted to the earlier first-come or three-tier orderings; the topo sort is the canonical within-bin rule and supersedes both.
+
+- **The bulletin sections this role maintains carry no procedural prose.** `journal/README.md`'s *Pending kriskowal reviews* and *PR backlog* sections are heading + delimited body only; the "how this section is maintained" prose lives here, in this role file, not in the bulletin. The maintainer reading the bulletin should see PRs, not workflow documentation.
+
+  - *Pending kriskowal reviews* sources: the review-queue daemon's canonical set at `/tmp/garden-review-queue/current.json` (the source of truth for the row set); the review-queue role records ADD/REMOVE deltas in its `tick` entry but no longer rewrites this section. The journalist's rewrite cadence: once per cycle when the review-queue daemon log carries any `ADD` or `REMOVE` line since the prior cycle's close (after the review-queue's own `tick` has landed).
+
+  - *PR backlog* sources: existing rows between the `pr-backlog` delimiters, posted by the steward and per-PR roles. The journalist reorganizes; it does not invent or retire rows. Rows clear when their underlying PR transitions out of the waiting state (merge, close, review-state change); that clearing is the steward's housekeeping, not the journalist's. The journalist's rewrite cadence: each cycle's housekeeping pass when the *PR backlog* row set or the `endo-but-for-bots@llm:designs/` roadmap reference has moved.
+
 - **Source of truth for milestones: `endojs/endo-but-for-bots@llm:designs/`.** The journalist's project worktree is on the `llm` branch. The roadmap is `designs/README.md`. Within that file:
   - The **Per-Design Estimates** table (`### Per-Design Estimates`) is the authoritative design → milestone map. Each row carries a design slug (the bare filename without `.md`), a milestone integer (0 through 6), and notes that frequently cite the active PR number(s).
   - The **Milestones** section (`### Milestones`, with per-milestone subheadings `#### Milestone N: <name>`) is the human-readable description used in section headings the journalist writes.
