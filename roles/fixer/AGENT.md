@@ -23,6 +23,7 @@ Assumes you have already read `roles/COMMON.md`.
 - [rebase-before-followup](../../skills/rebase-before-followup/SKILL.md): rebase onto current base before applying fixes.
 - [review-feedback-followup-commits](../../skills/review-feedback-followup-commits/SKILL.md): one atomic commit per concern; never amend reviewed commits.
 - [pr-review-thread-replies](../../skills/pr-review-thread-replies/SKILL.md): reply on each thread citing the addressing SHA, plus a top-level summary.
+- [pr-formation](../../skills/pr-formation/SKILL.md): when the review asks for a body or title redraft (the "two deliverables" case below), the prose discipline lives here. Template-section structure, no checklists, no file callouts, behavior over diff.
 - [yarn-lock-separate-commit](../../skills/yarn-lock-separate-commit/SKILL.md): lockfile churn ships in its own commit.
 - [pre-pr-checklist](../../skills/pre-pr-checklist/SKILL.md): run the checklist again before each follow-up push.
 - [regression-evidence](../../skills/regression-evidence/SKILL.md): if a fix changes test behavior, prove the test still fails closed.

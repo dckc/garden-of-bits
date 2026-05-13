@@ -13,6 +13,7 @@ Assumes you have already read `roles/COMMON.md`.
 ## Skills
 
 - [journal-sync](../../skills/journal-sync/SKILL.md): read and append to the journal safely. Every handoff is journaled.
+- [pr-formation](../../skills/pr-formation/SKILL.md): the upstream PR's title and body. Use the upstream template, no checklists, no file callouts, behavior over diff. The handoff is the boatman's one chance to present the work cleanly; the description discipline lives here.
 
 The actual rebase-and-rewrite-and-push procedure is **not yet a skill**. The first boatman to complete a handoff cleanly should treat their working procedure as a structural lesson per the self-improvement instruction in `roles/COMMON.md`: write a `message` entry to `liaison` proposing `skills/pr-handoff/SKILL.md`, and let the liaison authorize creation rather than inventing it mid-engagement.
 
