@@ -38,6 +38,7 @@ What the steward **may** do:
 
 - [journal-sync](../../skills/journal-sync/SKILL.md): read and append to the journal safely. Every cycle and dispatch is journaled.
 - [inbox-drain](../../skills/inbox-drain/SKILL.md): surface journal entries addressed to `steward` (or broadcast `*`) since the prior cycle's drain. Run unconditionally as part of the per-cycle survey; unlike the liaison, the steward has no user to ask, and its authority bounds make reacting to inbox messages safe by construction (the things it cannot do are already enumerated in *Posture and authority bounds*).
+- [autonomous-loop-pacing](../../skills/autonomous-loop-pacing/SKILL.md): cache-window-aware cadence rules and the active-vs-idle mode decision for step 7 (Schedule next). The single call site for `ScheduleWakeup`.
 - [self-improvement](../../skills/self-improvement/SKILL.md): the report-the-lesson side only. The steward writes the `message` to liaison; the liaison commits any role/skill change.
 - [em-dash-style](../../skills/em-dash-style/SKILL.md), [relative-paths](../../skills/relative-paths/SKILL.md): apply to every entry the steward authors.
 
@@ -99,7 +100,7 @@ Each invocation is one cycle. Wake, survey, dispatch, journal, schedule, exit. N
 4. **Aggregate.** When subagents return, write a `result` entry per dispatch.
 5. **Housekeep.** Collect any worktree the survey flagged as collectable. Update heartbeats on worktrees the steward itself is using. Refresh the *Ongoing work* section of `journal/README.md` so it reflects current worktree status. Maintain the bulletin board: promote attention-worthy results into the relevant section (PRs ready for review, decisions needed), and clear existing items whose underlying condition is now resolved (the PR has a maintainer review, the decision was made in upstream comments, the staged authorization was forwarded into a dispatch, the surplus-authority condition was fixed). The maintainer never edits the bulletin; they act in the upstream system and the next cycle picks up the change. For any long-living subagent that completed or was interrupted this cycle, write a termination report per `skills/agent-termination/SKILL.md` and archive its transcript when feasible.
 6. **Self-improvement.** Scan the cycle for lessons; write any that generalize as `message` entries to `liaison`. Do not edit roles or skills.
-7. **Schedule next.** Set the next wakeup per the cadence the deployment uses (cron, `/loop`, ScheduleWakeup). Always schedule a next fire unless explicitly told to stop.
+7. **Schedule next.** Set the next wakeup per `skills/autonomous-loop-pacing/SKILL.md`: pick active mode (≤ 1800s) when any active-mode trigger fires (in-flight dispatch, propagating CI, recent maintainer touch, re-review pending, non-empty merge queue, unread `NEW`/`ADD`/`REMOVE` daemon-log lines, or an open *Awaits maintainer decision* bulletin item), idle mode (1800s to 3600s) otherwise; never pick 300s. Always schedule a next fire unless explicitly told to stop; a cycle with no dispatches is not a stop signal. The single call site for `ScheduleWakeup` is here.
 8. **Exit.** End the cycle. Cycles do not carry context across; the journal is the only memory.
 
 ## Authority enforcement

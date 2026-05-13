@@ -91,7 +91,7 @@ For a Docker-hosted garden instance, the `garden` script at the garden root crea
 
 ## Current inventory
 
-- Roles: `liaison`, `steward`, `monitor`, `boatman`
-- Skills: `journal-sync`, `self-improvement`, `em-dash-style`, `relative-paths`, `agent-termination`, `rule-elision-test`, `inbox-drain`, `github-activity-poll`, `pr-ci-watch`
+- Roles: `liaison`, `steward`, `monitor`, `review-queue`, `boatman`
+- Skills: `journal-sync`, `self-improvement`, `em-dash-style`, `relative-paths`, `agent-termination`, `rule-elision-test`, `inbox-drain`, `autonomous-loop-pacing`, `github-activity-poll`, `pr-ci-watch`, `review-queue-poll`. Per-project monitor reaction skills (`monitor-endo`, `monitor-endo-but-for-bots`, `monitor-agoric-sdk`, `monitor-cosgov`) live alongside but are configuration for the `monitor` role rather than independently reusable procedures.
 
 The `liaison` and `steward` are the two top-level orchestrator postures. When a user is in the loop (this terminal session), the liaison runs with excess authority and asks before acting. When the garden runs in the bot sandbox under safe bot credentials with no user present, the steward runs with bounded authority and may act on its own. See `roles/liaison/AGENT.md` § Posture and `roles/steward/AGENT.md` § Posture for the contract.
