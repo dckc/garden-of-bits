@@ -48,8 +48,6 @@ If any of `source`, `upstream`, `human`, or `identity_switch_authorized` is miss
 
 - **Reference both ends.** The upstream PR body links back to the garden PR ("Originated as `<fork-owner>/<repo>#<n>`"). The garden PR receives a closing comment linking forward to the upstream PR. The result entry in the journal carries both URLs.
 
-- **Don't merge.** The boatman opens the upstream PR and stops. Merging is a human governance decision, not a transit step.
-
 ## Done
 
 - One upstream PR is open, attributed to the named human, with no bot authors or co-authors on any commit.
