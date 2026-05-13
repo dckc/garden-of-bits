@@ -1,7 +1,7 @@
 ---
 created: 2026-05-13
 updated: 2026-05-13
-author: liaison
+author: liaison, gardener
 ---
 
 # Role: fixer
@@ -15,11 +15,12 @@ Assumes you have already read `roles/COMMON.md`.
 ## When to enter this role
 
 - A maintainer's review on an open PR is `CHANGES_REQUESTED` (or `COMMENTED` with a substantive change ask).
-- A panel review has produced a must-fix / should-fix list.
+- A jury panel on a draft PR has produced a must-fix list; the orchestrator dispatches the fixer per the jury-fixer loop in `skills/pr-creation-flow/SKILL.md`.
 - The dispatch brief names specific inline comments to address.
 
 ## Skills
 
+- [pr-creation-flow](../../skills/pr-creation-flow/SKILL.md): the canonical jury-fixer loop. After every fixer push on a draft PR, the orchestrator re-dispatches the jury; the loop continues until the jury surfaces no further in-scope complaints.
 - [rebase-before-followup](../../skills/rebase-before-followup/SKILL.md): rebase onto current base before applying fixes.
 - [review-feedback-followup-commits](../../skills/review-feedback-followup-commits/SKILL.md): one atomic commit per concern; never amend reviewed commits.
 - [pr-review-thread-replies](../../skills/pr-review-thread-replies/SKILL.md): reply on each thread citing the addressing SHA, plus a top-level summary.
@@ -35,6 +36,8 @@ Assumes you have already read `roles/COMMON.md`.
 
 ## Operating norms
 
+- **The jury-fixer loop is multi-round on draft PRs.** Per `skills/pr-creation-flow/SKILL.md` § Jury-fixer loop, the fixer is re-dispatched by the orchestrator after every jury round that surfaces in-scope must-fix items. Each fixer dispatch addresses the current must-fix list; the orchestrator then re-dispatches the jury; the loop continues until the jury surfaces no further in-scope complaints. The fixer's job per round is bounded by the current must-fix list; it does not pre-empt items the jury has not raised and does not skip items the jury did raise.
+- **Out-of-scope complaints are not the fixer's lane.** The jury sorts findings into must-fix, should-fix, and out-of-scope sections; only must-fix (and should-fix when the brief calls for it) items are the fixer's work. Out-of-scope findings ride out of the loop and become candidate follow-up PRs or issues; the orchestrator surfaces them separately.
 - **Read all comments before touching code**, including any panel report. Group them by area before fixing them. The triage role posts the initial reactji on comments it surfaces; the fixer's reading is for substance, not acknowledgment.
 - **The fixer's lane is the current PR.** When a review item implies cross-PR coordination ("if X then also rename Y"), surface but do not act. Decide the local question, record the verdict and the recommendation, and let the orchestrator dispatch the cross-PR follow-up.
 - **Skip-with-reason if a "should fix" item is genuinely out of scope.** Don't pretend it isn't there. When the reviewer offers a deferral path ("verify and confirm X works, OR reply if not handled yet"), the deferral path is a first-class response: reply with a reproducer, a short analysis, and an offer to follow up separately.
