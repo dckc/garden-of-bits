@@ -19,8 +19,9 @@ This skill is the operational contract the daemon at `skills/review-queue-poll/r
 
 Inside `state_dir`, atomic via `*.tmp` + `mv`:
 
-- `current.json`: canonical snapshot of the queue. One object per pending PR with at least `repo`, `number`, `title`, `url`, `isDraft`, `updatedAt`, `author`, `baseRefName`, `requestedAt` (best-effort). `baseRefName` is the upstream branch the PR targets (e.g., `master`, `llm`, `main`); consumers (notably the journalist's *Pending kriskowal reviews* renderer) use it to partition rows by target branch before the milestone-bin pass. The daemon fetches `baseRefName` via a per-row REST call and reuses the prior cycle's value to keep the per-cycle REST budget proportional to the ADD rate, not the queue size; see *Procedure (daemon)* step 2.
+- `current.json`: canonical snapshot of the queue. One object per pending PR with at least `repo`, `number`, `title`, `url`, `isDraft`, `updatedAt`, `author`, `baseRefName`, `isArchived`, `requestedAt` (best-effort). `baseRefName` is the upstream branch the PR targets (e.g., `master`, `llm`, `main`); consumers (notably the journalist's *Pending kriskowal reviews* renderer) use it to partition rows by target branch before the milestone-bin pass. The daemon fetches `baseRefName` via a per-row REST call and reuses the prior cycle's value to keep the per-cycle REST budget proportional to the ADD rate, not the queue size; see *Procedure (daemon)* step 2. `isArchived` is the boolean GitHub `isArchived` flag for the row's repository, replayed onto every row from the per-repo cache (`archived.json`); the journalist's renderer drops `isArchived: true` rows before classification.
 - `prev.json`: the previous tick's snapshot, used to compute the diff. Rolled forward atomically before `current.json` is replaced.
+- `archived.json`: per-repo cache of GitHub's `isArchived` flag, keyed by `owner/name`. One JSON object: `{"<repo>": {"isArchived": <bool>, "fetchedAt": "<UTC-iso>"}, ...}`. TTL is 24 hours; archived state changes rarely, so the steady-state per-cycle REST cost for this field is zero. On cache miss, the daemon fetches via `gh repo view <owner>/<repo> --json isArchived --jq .isArchived`. The cache retains entries for repos that have left the queue (they may return), and a fetch failure preserves the prior known value rather than overwriting it.
 - `etag.txt`: present only if the daemon switches to a conditional-fetch transport later; not used by the search API today.
 
 ## Procedure (daemon)
@@ -38,11 +39,12 @@ Inside `state_dir`, atomic via `*.tmp` + `mv`:
      "updatedAt": "2026-05-12T20:00:00Z",
      "author": "<login>",
      "baseRefName": "master",
+     "isArchived": false,
      "requestedAt": null
    }
    ```
 
-   `requestedAt` is left `null` until the per-PR timeline query is added; see *Notes from the field*. `baseRefName` is not a `gh search prs --json` field (the GitHub search API does not expose it); the daemon fetches it per row with `gh api repos/<repo>/pulls/<n> --jq .base.ref` and caches the result by `(repo, number)` from the previous `current.json`. Steady-state cost is one REST call per ADD line, not per row. The cache invalidates only when a row leaves and re-enters the canonical set; base branches rarely change after PR open, so this is correct in practice.
+   `requestedAt` is left `null` until the per-PR timeline query is added; see *Notes from the field*. `baseRefName` is not a `gh search prs --json` field (the GitHub search API does not expose it); the daemon fetches it per row with `gh api repos/<repo>/pulls/<n> --jq .base.ref` and caches the result by `(repo, number)` from the previous `current.json`. Steady-state cost is one REST call per ADD line, not per row. The cache invalidates only when a row leaves and re-enters the canonical set; base branches rarely change after PR open, so this is correct in practice. `isArchived` is also not exposed by `gh search prs`; the daemon fetches it per repo with `gh repo view <repo> --json isArchived --jq .isArchived` and caches the result in `archived.json` with a 24-hour TTL. Steady-state cost is zero; the worst case (first poll after a daemon restart) is one REST call per distinct repo in the queue.
 
 3. Atomically write `current.json.tmp` and rename to `current.json`. Before the rename, copy the previous `current.json` to `prev.json` (also atomic).
 

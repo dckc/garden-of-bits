@@ -58,6 +58,46 @@ if os.path.exists(cur_path):
     except Exception:
         prev = []
 prev_base = {(r.get('repo'), r.get('number')): r.get('baseRefName','') for r in prev}
+# Per-repo cache of GitHub's `isArchived` flag, keyed by `owner/name`. Archived
+# state is a property of the repository, not the PR, and changes rarely; a
+# 24-hour TTL keeps the per-cycle REST budget at zero in steady state and
+# bounded by the number of distinct repos in the queue on first poll.
+archived_path = os.path.join(state, 'archived.json')
+archived_cache = {}
+if os.path.exists(archived_path):
+    try:
+        archived_cache = json.load(open(archived_path))
+    except Exception:
+        archived_cache = {}
+ARCHIVED_TTL_SECONDS = 24 * 60 * 60
+now = datetime.datetime.utcnow()
+def archived_for(repo):
+    entry = archived_cache.get(repo)
+    if entry and entry.get('fetchedAt'):
+        try:
+            fetched = datetime.datetime.strptime(entry['fetchedAt'], '%Y-%m-%dT%H:%M:%SZ')
+            if (now - fetched).total_seconds() < ARCHIVED_TTL_SECONDS:
+                return bool(entry.get('isArchived', False))
+        except Exception:
+            pass
+    # Stale or missing: fetch. One REST call per cache miss; the daily miss
+    # rate equals the count of distinct repos in the queue divided by 1 day.
+    try:
+        out = subprocess.check_output(
+            ['gh', 'repo', 'view', repo, '--json', 'isArchived', '--jq', '.isArchived'],
+            stderr=subprocess.DEVNULL,
+            text=True, timeout=20,
+        ).strip()
+        is_archived = (out == 'true')
+    except Exception:
+        # On failure, preserve the prior known value if any; otherwise assume
+        # not archived so the row stays visible until the next successful fetch.
+        is_archived = bool((entry or {}).get('isArchived', False))
+    archived_cache[repo] = {
+        'isArchived': is_archived,
+        'fetchedAt': now.strftime('%Y-%m-%dT%H:%M:%SZ'),
+    }
+    return is_archived
 canon = []
 for row in raw:
     repo_obj = row.get('repository') or {}
@@ -85,6 +125,7 @@ for row in raw:
         "updatedAt": row.get('updatedAt',''),
         "author": (row.get('author') or {}).get('login','?'),
         "baseRefName": base,
+        "isArchived": archived_for(repo),
         "requestedAt": None,
     })
 canon.sort(key=lambda r: (r['repo'], r['number']))
@@ -113,6 +154,14 @@ with open(tmp, 'w') as f:
     json.dump(canon, f, indent=2)
     f.write('\n')
 os.replace(tmp, cur_path)
+# Persist the archived cache (atomic). Entries for repos no longer in the
+# queue are kept; they may return on a future poll, and a stale entry simply
+# refreshes on its next TTL boundary.
+atmp = archived_path + '.tmp'
+with open(atmp, 'w') as f:
+    json.dump(archived_cache, f, indent=2, sort_keys=True)
+    f.write('\n')
+os.replace(atmp, archived_path)
 PY
 
   else
