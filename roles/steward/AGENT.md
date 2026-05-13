@@ -1,7 +1,7 @@
 ---
 created: 2026-05-12
 updated: 2026-05-13
-author: liaison
+author: liaison, gardener
 ---
 
 # Role: steward
@@ -65,7 +65,7 @@ Roles the steward will likely grow into when adopted from `references/`: `direct
 
 ## Standing monitors
 
-The steward keeps five long-lived poll daemons alive on this host, restarting any that have died. The daemons' contracts and state layout are in `roles/monitor/AGENT.md` § Architecture and `roles/review-queue/AGENT.md`; this section is the operational truth for which daemons should be running and how to start them.
+The steward keeps six long-lived poll daemons alive on this host, restarting any that have died. The daemons' contracts and state layout are in `roles/monitor/AGENT.md` § Architecture and `roles/review-queue/AGENT.md`; this section is the operational truth for which daemons should be running and how to start them.
 
 | Slug              | Upstream                                  | Worktree directory (`worktrees/<owner>-<repo>/watch-<slug>--monitor--*`) | Cadence |
 | ----------------- | ----------------------------------------- | ------------------------------------------------------------------------ | ------- |
@@ -73,9 +73,12 @@ The steward keeps five long-lived poll daemons alive on this host, restarting an
 | endo-but-for-bots | endojs/endo-but-for-bots                  | endojs-endo-but-for-bots                                                 | 30s     |
 | agoric-sdk        | agoric/agoric-sdk                         | agoric-agoric-sdk                                                        | 60s     |
 | cosgov            | dcfoundation/cosmos-proposal-builder      | dcfoundation-cosmos-proposal-builder                                     | 60s     |
+| garden [^liaison] | kriskowal/garden                          | kriskowal-garden                                                         | 60s     |
 | review-queue      | (kriskowal's pending review-request set)  | (no worktree; state under `/tmp/garden-review-queue/`)                   | 120s    |
 
-The exact worktree basename is `watch-<slug>--monitor--<UTC-YYYYMMDD-HHMMSS>`; the timestamp is created once per worktree and persists for that worktree's lifetime. Look it up from the journal index at `journal/worktrees/<host>/` rather than guessing.
+[^liaison]: The `garden` row is the lone asymmetric monitor: on a `NEW` line from its daemon the steward dispatches a `liaison` subagent (purpose slug `react-to-garden-issue-<N>`), not a `monitor` subagent. Reason: issue activity on `kriskowal/garden` is meta-evolution work and routes to the liaison's authority directly. See `skills/monitor-garden/SKILL.md` § Dispatch role asymmetry for the full rationale.
+
+The exact worktree basename is `watch-<slug>--monitor--<UTC-YYYYMMDD-HHMMSS>`; the timestamp is created once per worktree and persists for that worktree's lifetime. Look it up from the journal index at `journal/worktrees/<host>/` rather than guessing. For the `garden` row, the worktree basename and the daemon's state directory follow the same naming as the other four repo monitors even though the dispatched role on a `NEW` line is `liaison` rather than `monitor`; the asymmetry is purely in the dispatch step, not in the daemon's filesystem layout.
 
 Liveness check per cycle: for each daemon, `kill -0 $(cat /tmp/garden-monitor-<owner>-<name>.pid 2>/dev/null) 2>/dev/null` (for the review-queue, the pid file is `/tmp/garden-review-queue.pid`). If the check fails, respawn:
 
@@ -94,7 +97,7 @@ nohup bash scripts/review-queue-poll.sh /tmp/garden-review-queue 120 \
 echo $! > /tmp/garden-review-queue.pid
 ```
 
-Event consumption per cycle: for each daemon, `tail -200 /tmp/garden-monitor-<owner>-<name>.log` (or the review-queue equivalent) and find any `NEW` (monitor) or `ADD`/`REMOVE` (review-queue) line newer than the prior cycle's close timestamp. For each repo with new lines, write a `dispatch` entry and invoke `Agent` for the monitor role; for the review-queue, do the same with the review-queue role. Empty tails are silent (no dispatch, no journal entry).
+Event consumption per cycle: for each daemon, `tail -200 /tmp/garden-monitor-<owner>-<name>.log` (or the review-queue equivalent) and find any `NEW` (monitor) or `ADD`/`REMOVE` (review-queue) line newer than the prior cycle's close timestamp. For each repo with new lines, write a `dispatch` entry and invoke `Agent` for the monitor role, except that the `garden` row dispatches a `liaison` subagent instead (see the table's footnote and `skills/monitor-garden/SKILL.md`); for the review-queue, do the same with the review-queue role. Empty tails are silent (no dispatch, no journal entry).
 
 ## Per-cycle procedure
 
