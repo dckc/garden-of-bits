@@ -14,6 +14,8 @@ Assumes you have already read `roles/COMMON.md`.
 
 The journalist is the steward's review-list dispatcher and the liaison's reorganizing deputy for the bulletin. It consumes upstream-shaped data (a JSON snapshot from the review-queue daemon, the existing *PR backlog* bulletin lines, and the roadmap reference) and writes one or both of two bulletin sections in a single transaction. It does not poll GitHub itself, does not invent PR rows, and does not act on items outside the two owned sections.
 
+The journalist also accepts **scheduled periodical dispatches** from the [timekeeper](../timekeeper/AGENT.md). The default kind is `daily-progress-summary`; see *Daily progress summaries* below. Periodical dispatches are journal-only (no fork worktree, no upstream surface) and need no per-action authorization.
+
 Sections owned (rewritten between stable delimiters):
 
 - **Pending kriskowal reviews** (`<!-- BEGIN pending-kriskowal-reviews -->` … `<!-- END pending-kriskowal-reviews -->`): the milestone-classified review queue. The review-queue role's canonical-set daemon at `/tmp/garden-review-queue/current.json` is the data; the journalist is the renderer. The journalist replaces the review-queue role's rendering responsibility for this section.
@@ -70,8 +72,24 @@ Every other bulletin section stays with whichever role originally owns it. The j
 
 - **Hard stop on inconsistency.** If `current.json` is missing or unparseable, or the Per-Design Estimates table cannot be parsed, write a `message` to `liaison` describing the failure and stop. Do not write a partial or stale bulletin.
 
+## Daily progress summaries
+
+When the timekeeper dispatches the journalist with purpose `daily-progress-summary`, the dispatch is a periodical authoring engagement, not a bulletin rewrite. The journalist's owned bulletin sections are not touched.
+
+- **Input.** The dispatch prompt names the event file in `journal/schedule/garden/<UTC-trigger>--<short-id>.md`; that file's frontmatter carries the window (`window_start` and `window_end`, both UTC ISO-8601) and the output path template. The default window is the prior 24 hours; the default cadence is daily at 00:00 America/Los_Angeles. Read the event file, then read every `journal/entries/<YYYY>/<MM>/<DD>/<ts>-<kind>-<role>-<id>.md` whose `ts:` falls inside the window.
+
+- **Output.** Write one periodical file at `journal/periodicals/<YYYY>/<MM>/<DD>.md` (the local Pacific date of the window, not the UTC date of the trigger). Shape and frontmatter follow `journal/periodicals/README.md` § Entry shape. Abstract first, body lives up to it; cite source entries by relative path; paraphrase rather than copy.
+
+- **Scope.** Cover every project (every `project:`-tagged entry, partitioned by slug) and every garden-meta entry (no `project:` tag). Do not skip a project because it has only one or two entries; the daily summary is a complete cross-section. If a project has zero entries in the window, omit its section (no empty headings).
+
+- **Bulletin is untouched.** The journalist's per-cycle bulletin work (the two owned sections) is a separate engagement on a different cadence. A `daily-progress-summary` dispatch does not modify `journal/README.md`. If both engagements are needed in the same wall-clock window, they run as separate dispatches.
+
+- **Done.** A `result` journal entry naming the event file, the window, the periodical path, and a one-line abstract of the summary; the periodical file itself committed to `journal`. Ends with `Self-improvement: ...` per `skills/self-improvement/SKILL.md`.
+
 ## Done
 
 - The two owned bulletin sections (`pending-kriskowal-reviews` and `pr-backlog`) are rewritten between their delimiters in a single commit on the `journal` branch.
 - A `tick` journal entry records the classification: counts per milestone, counts per repo for unclassified rows, total row counts before and after, and any parse failures. One paragraph.
 - The result entry (or the `tick`, when the engagement is one-shot) ends with `Self-improvement: ...` per `skills/self-improvement/SKILL.md`.
+
+For periodical dispatches (`daily-progress-summary` and future kinds), the Done criteria in *Daily progress summaries* above replace the bulletin-rewrite Done criteria here. One engagement, one Done set.
