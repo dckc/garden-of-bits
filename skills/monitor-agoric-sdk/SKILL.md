@@ -1,7 +1,7 @@
 ---
 created: 2026-05-12
-updated: 2026-05-12
-author: liaison
+updated: 2026-05-13
+author: liaison, monitor
 ---
 
 # Skill: monitor-agoric-sdk
@@ -15,21 +15,27 @@ Per-event-class reaction rules for the [monitor](../../roles/monitor/AGENT.md) w
 - Default branch: `master`
 - Daemon cadence: 60s.
 
+## Posture
+
+Agoric-sdk is a **passive standing watch** repo: the daemon polls and the journal accumulates a transcript, but this garden does not actively drive the repo and the LLM monitor does not wake other roles. Sibling to cosgov (also passive watch) but distinct: cosgov carries an allowlist of expected actors and a `ReleaseEvent` exception that surface activity to the bulletin; agoric-sdk has neither. The rule here is uniform across every event class. Upgrade to per-class rules at the point this garden opens its first PR against `agoric/agoric-sdk` or one of its forks.
+
 ## Reactions per event class
 
-This list is the menu; each row records the agreed action and a brief rationale. Rows still showing `(unset; propose via message to liaison)` have not been decided. The first time the monitor surfaces an event class with no rule, it writes a `message` entry to `liaison` proposing one; the liaison decides and lands the change here.
+> **Standing posture (until first active engagement):** for every event class below, the reaction is *journal a `tick` entry and stop*. Do not dispatch. Do not emit further `message` entries proposing rules; the table is intentionally a placeholder until this garden takes an active role in the repo.
 
-- `PushEvent` — (unset; propose via message to liaison)
-- `PullRequestEvent` (opened, reopened, closed, edited, synchronize) — (unset)
-- `PullRequestReviewEvent` (submitted, edited, dismissed) — (unset)
-- `PullRequestReviewCommentEvent` — (unset)
-- `IssuesEvent` (opened, reopened, closed, edited, assigned, labeled) — (unset)
-- `IssueCommentEvent` — (unset)
-- `ReleaseEvent` — (unset)
-- `CreateEvent` / `DeleteEvent` (branches/tags) — (unset)
-- `ForkEvent`, `WatchEvent`, `MemberEvent` — (unset)
+- `PushEvent` — (passive standing watch; see banner)
+- `PullRequestEvent` (opened, reopened, closed, edited, synchronize) — (passive standing watch; see banner)
+- `PullRequestReviewEvent` (submitted, edited, dismissed) — (passive standing watch; see banner)
+- `PullRequestReviewCommentEvent` — (passive standing watch; see banner)
+- `IssuesEvent` (opened, reopened, closed, edited, assigned, labeled) — (passive standing watch; see banner)
+- `IssueCommentEvent` — (passive standing watch; see banner)
+- `ReleaseEvent` — (passive standing watch; see banner)
+- `CreateEvent` / `DeleteEvent` (branches/tags) — (passive standing watch; see banner)
+- `ForkEvent`, `WatchEvent`, `MemberEvent` — (passive standing watch; see banner)
 - Other event classes — surface as a `message` to `liaison` with the raw type and a one-line context; do not silently drop.
 
 ## Notes from the field
 
 (append dated entries as reaction rules are learned)
+
+- 2026-05-13 — Passive-standing-watch posture landed from the agoric-sdk monitor's first proposal (`journal/entries/2026/05/13/023600Z-message-monitor-926d77.md`), following a backfill tick that surfaced seven event classes against an all-`(unset)` skill. Single banner rule replaces per-class rows; sibling-but-distinct from cosgov (no allowlist, no `ReleaseEvent` exception).
