@@ -1,7 +1,7 @@
 ---
 created: 2026-05-12
 updated: 2026-05-13
-author: liaison, gardener
+author: gardener, liaison
 ---
 
 # Role: monitor
@@ -42,13 +42,16 @@ Per-repo polling state (etag, last-seen event id) lives inside the monitor's wor
 
 ## Per-project skills
 
-The base role is project-agnostic; per-project reaction rules live in their own skill so that monitors can evolve their playbook per repo without bloating the role. The dispatch prompt names the project slug; the monitor loads `skills/monitor-<slug>/SKILL.md` on each wake. Current mappings:
+The base role is project-agnostic; per-project reaction rules live in their own skill so that monitors can evolve their playbook per repo without bloating the role. The dispatch prompt names the project slug; the monitor loads `skills/monitor-<slug>/SKILL.md` on each wake. Active mappings (gated by the safety constraint in `roles/COMMON.md` § Monitoring safety constraint):
 
-- `endo` → `endojs/endo` → `skills/monitor-endo/SKILL.md`
 - `endo-but-for-bots` → `endojs/endo-but-for-bots` → `skills/monitor-endo-but-for-bots/SKILL.md`
-- `agoric-sdk` → `agoric/agoric-sdk` → `skills/monitor-agoric-sdk/SKILL.md`
-- `cosgov` → `dcfoundation/cosmos-proposal-builder` → `skills/monitor-cosgov/SKILL.md`
-- `garden` → `kriskowal/garden` → `skills/monitor-garden/SKILL.md` (this is the only mapping whose dispatched subagent runs as `liaison` rather than `monitor`; see the skill's *Dispatch role asymmetry* for why)
+
+Dormant mappings (skills preserved with a DORMANT banner; daemons stopped and worktree index entries marked `collected` as of 2026-05-13 per the safety constraint; re-enabling any of these requires explicit maintainer authorization recorded in a journal `message` entry):
+
+- `endo` → `endojs/endo` → `skills/monitor-endo/SKILL.md` (dormant)
+- `agoric-sdk` → `agoric/agoric-sdk` → `skills/monitor-agoric-sdk/SKILL.md` (dormant)
+- `cosgov` → `dcfoundation/cosmos-proposal-builder` → `skills/monitor-cosgov/SKILL.md` (dormant)
+- `garden` → `kriskowal/garden` → `skills/monitor-garden/SKILL.md` (dormant; this is the only mapping whose dispatched subagent runs as `liaison` rather than `monitor`; see the skill's *Dispatch role asymmetry* for why)
 
 When the monitor surfaces an event class for which the per-project skill records no rule (a row still marked `(unset)`), the monitor's job is not to invent a reaction. Instead, journal what happened (one `tick` entry) and write a `message` to `liaison` proposing what to do about that event class for that repo. The liaison decides and lands the change in the per-project skill; the next time the monitor sees the class, the rule is there. This is the standard self-improvement routing.
 
