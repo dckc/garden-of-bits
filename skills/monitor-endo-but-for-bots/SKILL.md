@@ -8,6 +8,10 @@ author: gardener, liaison, monitor
 
 Per-event-class reaction rules for the [monitor](../../roles/monitor/AGENT.md) when dispatched against `endojs/endo-but-for-bots`. The base role and its polling discipline live in `roles/monitor/AGENT.md` and `skills/github-activity-poll/SKILL.md`; this skill is consulted on each `NEW`-line wake to decide whether and how to react.
 
+## Recognized maintainers
+
+The maintainer set on this repo is `kriskowal` and `jcorbin`. A review or comment from either routes the same way: maintainer-equivalent authority on every PR in this repo, no topic scope. Wherever a rule row below names `kriskowal`, read it as "any recognized maintainer" and substitute either login. Recognition of `jcorbin` was added 2026-05-13 per kriskowal's directive at `endojs/endo-but-for-bots#148` ("Josh is a maintainer on endo-but-for-bots"); the recognition is repo-scoped and does not extend to `endojs/endo` absent explicit maintainer confirmation. Maintainer authority is distinct from senior-contributor authority (see the *Senior contributors* subsection below): maintainers carry repo-wide authority across every topic, while senior contributors carry topic-scoped authority that meets or exceeds maintainer weight on the technical question within their topic set.
+
 ## Project
 
 - Slug: `endo-but-for-bots`
@@ -36,19 +40,19 @@ Each row records the agreed action and a brief rationale. Where two actions are 
 
 - `PullRequestEvent/synchronize` — **quiet**. The matching `PushEvent` already handled it; recording it twice is duplicate.
 
-- `PullRequestReviewEvent/created|submitted` — **loud** with `state` (`APPROVED`, `CHANGES_REQUESTED`, `COMMENTED`) and actor. The steward routes:
-    - `kriskowal` + `CHANGES_REQUESTED` => fixer (per `roles/COMMON.md` § fixer);
-    - `kriskowal` + `COMMENTED` with non-trivial body => fixer with the per-action authorization the maintainer pre-stages (otherwise journal-only);
-    - `kriskowal` + `APPROVED` => clear the bulletin row;
-    - other reviewers => journal only, no role dispatch.
+- `PullRequestReviewEvent/created|submitted` — **loud** with `state` (`APPROVED`, `CHANGES_REQUESTED`, `COMMENTED`) and actor. The steward routes (where "recognized maintainer" = `kriskowal` or `jcorbin` per the *Recognized maintainers* section above):
+    - recognized maintainer + `CHANGES_REQUESTED` => fixer (per `roles/COMMON.md` § fixer);
+    - recognized maintainer + `COMMENTED` with non-trivial body => fixer with the per-action authorization the maintainer pre-stages (otherwise journal-only);
+    - recognized maintainer + `APPROVED` => clear the bulletin row;
+    - other reviewers => journal only, no role dispatch (subject to the *Senior contributors* subsection below for topic-matching senior-contributor events).
 
 - `PullRequestReviewEvent/edited|dismissed` — **quiet**. Edits to a prior review are typically maintainer-side polishing; dismissals are rare and the steward will see the next review-state transition.
 
 - `PullRequestReviewCommentEvent/created` — **quiet**. The parent `PullRequestReviewEvent` (when the review is submitted with the comments) carries the routing signal. Standalone inline comments without a containing review are rare on this repo and the steward picks them up via the review-queue daemon's *Pending kriskowal reviews* bulletin section anyway.
 
 - `IssueCommentEvent/created` — **conditionally loud**.
-    - On an open PR: journal a `tick` if the actor is `kriskowal` and the comment body matches one of the authorization-grant patterns (currently: identity switches, write-access grants, "do not open a PR upstream" constraints, kriskowal `/<command>` directives that route to a role). The [endojs/endo-but-for-bots#109#issuecomment-4436075344](https://github.com/endojs/endo-but-for-bots/pull/109#issuecomment-4436075344) grant is the prototype. Surface to the bulletin's *Pre-staged authorizations* section per the steward's existing pattern.
-    - On an open PR by any other actor, or by `kriskowal` without the authorization-grant shape: **quiet**. The maintainer's own comments are GitHub-notification-covered; others' comments rarely drive role dispatch.
+    - On an open PR: journal a `tick` if the actor is a recognized maintainer (`kriskowal` or `jcorbin`) and the comment body matches one of the authorization-grant patterns (currently: identity switches, write-access grants, "do not open a PR upstream" constraints, maintainer `/<command>` directives that route to a role). The [endojs/endo-but-for-bots#109#issuecomment-4436075344](https://github.com/endojs/endo-but-for-bots/pull/109#issuecomment-4436075344) grant is the prototype. Surface to the bulletin's *Pre-staged authorizations* section per the steward's existing pattern.
+    - On an open PR by any other actor, or by a recognized maintainer without the authorization-grant shape: **quiet**. Maintainer comments are GitHub-notification-covered; others' comments rarely drive role dispatch (subject to the *Senior contributors* subsection below for topic-matching senior-contributor comments).
     - On a closed PR or an issue: **quiet** unless the issue number matches a row in the bulletin's *PR backlog* or *Awaits maintainer decision*, in which case a one-line `tick`.
 
 - `IssuesEvent/opened` — **loud**. New issues may need a role dispatch (a designer for a design issue, a scout for a benchmark, a fixer for a bug repro request). The steward decides; the monitor's job is to make sure the steward sees it.
@@ -88,3 +92,4 @@ This rule supersedes the prior baseline where non-maintainer reviews were silent
 (append dated entries as reaction rules are learned)
 
 - 2026-05-13 — Initial reaction rules landed from the monitor's first proposal (`journal/entries/2026/05/13/023053Z-message-monitor-b8bb4a.md`), following a backfill tick that surfaced seven event classes against an all-`(unset)` skill. The framing turns on the repo being the active bot-evolution surface: the maintainer already sees GitHub notifications, so the monitor's job is to detect events that change which role the steward should dispatch next, not to mirror review activity into the bulletin. PR review state routes to fixer / clear-backlog / fixer-with-authorization per kriskowal's `CHANGES_REQUESTED` / `APPROVED` / `COMMENTED`. `IssueCommentEvent` from kriskowal with an authorization-grant shape (identity switches, write-access grants, no-PR-upstream constraints) surfaces to *Pre-staged authorizations*; the endo-but-for-bots#109 grant is the prototype, and the pattern waits for more examples before factoring out into its own skill.
+- 2026-05-13 — `jcorbin` added to the recognized-maintainer set per kriskowal's directive at `endojs/endo-but-for-bots#148` ("Josh is a maintainer on endo-but-for-bots"). The `PullRequestReviewEvent` and `IssueCommentEvent` rule rows now resolve "recognized maintainer" as either `kriskowal` or `jcorbin` rather than `kriskowal` alone. Recognition is repo-scoped; the parallel `skills/monitor-endo/SKILL.md` was deliberately not changed, because the maintainer's directive named endo-but-for-bots specifically and no journal evidence places `jcorbin` as a maintainer on `endojs/endo`. The distinction between maintainer authority (repo-wide, every topic) and senior-contributor authority (topic-scoped; erights on the listed subsystems) is preserved: jcorbin's recognition is the former, not the latter.
