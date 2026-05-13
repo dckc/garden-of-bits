@@ -1,7 +1,7 @@
 ---
 created: 2026-05-12
-updated: 2026-05-12
-author: liaison
+updated: 2026-05-13
+author: liaison, monitor
 ---
 
 # Skill: monitor-cosgov
@@ -15,21 +15,26 @@ Per-event-class reaction rules for the [monitor](../../roles/monitor/AGENT.md) w
 - Default branch: `main`
 - Daemon cadence: 60s.
 
+## Posture
+
+Cosgov is **observation-only**: the garden watches the repo but does not actively drive it. Most event classes log silently in the tick entry; the bulletin is reserved for activity that signals external interest or an upstream cut.
+
+## Allowlist of expected actors
+
+`kriskowal`, `netlify[bot]`, `Copilot`, `kriscendobot` (the maintainer, the deploy-preview bot, the GitHub-built-in code reviewer, and the garden's own ferry account). Activity from anyone outside this list on a comment, review, or issue class is the signal that warrants surfacing.
+
 ## Reactions per event class
 
-This list is the menu; each row records the agreed action and a brief rationale. Rows still showing `(unset; propose via message to liaison)` have not been decided. The first time the monitor surfaces an event class with no rule, it writes a `message` entry to `liaison` proposing one; the liaison decides and lands the change here.
+The rule is fundamentally one: log silently in the tick entry, except surface to the bulletin when (a) a comment, review, or issue event comes from an actor outside the allowlist, or (b) the event is a `ReleaseEvent`.
 
-- `PushEvent` — (unset; propose via message to liaison)
-- `PullRequestEvent` (opened, reopened, closed, edited, synchronize) — (unset)
-- `PullRequestReviewEvent` (submitted, edited, dismissed) — (unset)
-- `PullRequestReviewCommentEvent` — (unset)
-- `IssuesEvent` (opened, reopened, closed, edited, assigned, labeled) — (unset)
-- `IssueCommentEvent` — (unset)
-- `ReleaseEvent` — (unset)
-- `CreateEvent` / `DeleteEvent` (branches/tags) — (unset)
-- `ForkEvent`, `WatchEvent`, `MemberEvent` — (unset)
+- `PushEvent`, `CreateEvent` / `DeleteEvent` (branches/tags), `ForkEvent`, `WatchEvent`, `MemberEvent` — log silently. No bulletin, no message, no further action.
+- `PullRequestEvent` (opened, reopened, closed, edited, synchronize) — log silently.
+- `PullRequestReviewEvent` (submitted, edited, dismissed), `PullRequestReviewCommentEvent`, `IssueCommentEvent`, `IssuesEvent` (opened, reopened, closed, edited, assigned, labeled) — log silently when the actor is in the allowlist; surface to the bulletin when the actor is outside it (external interest in a watched repo).
+- `ReleaseEvent` — surface to the bulletin. Low-frequency, signals an upstream cut.
 - Other event classes — surface as a `message` to `liaison` with the raw type and a one-line context; do not silently drop.
 
 ## Notes from the field
 
 (append dated entries as reaction rules are learned)
+
+- 2026-05-13 — Initial reaction rules landed from the cosgov monitor's first proposal (`journal/entries/2026/05/13/023047Z-message-monitor-3fc6c7.md`), following a backfill tick that surfaced seven event classes against an all-`(unset)` skill. Observation-only framing plus a small allowlist collapsed the per-class table to one rule.
