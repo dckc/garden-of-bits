@@ -1,7 +1,7 @@
 ---
 created: 2026-05-12
 updated: 2026-05-13
-author: gardener, liaison
+author: steward, gardener, liaison
 ---
 
 # Role: steward
@@ -127,3 +127,26 @@ A cycle ends when:
 - The next wakeup is scheduled.
 - The steward writes a final cycle-summary entry: how many dispatches, how many results, any open `message` entries to liaison, and the scheduled next-fire timestamp.
 - `Self-improvement: ...` per the skill, in the cycle-summary entry.
+
+### Consolidating consecutive quiet cycles
+
+A *quiet cycle* is one that finds the same state as the immediately prior cycle: zero NEW lines on any monitor daemon log, zero ADD/REMOVE on the review-queue daemon log, zero dispatches, and no bulletin change. A one-off quiet cycle still writes a full `result` cycle-summary entry. The streak begins on the **second** consecutive quiet cycle: from that cycle onward, the cycle-summary is a single-line `tick` entry that references the prior cycle's `result` rather than a full `result` entry of its own. The first cycle that **breaks** the streak (any state change: a NEW line, an ADD/REMOVE, a dispatch, a bulletin edit) writes a full `result` entry that summarizes the quiet interval: how many cycles, the time span from the streak's first quiet cycle to the breaking cycle, and any pending directives that aged across the interval.
+
+The autonomous loop still fires every cycle; this is purely a journal-noise reduction. Each quiet tick is its own commit, so the loop's honesty about firing is preserved.
+
+Tick shape for a consolidated quiet cycle:
+
+```markdown
+---
+ts: <UTC>
+kind: tick
+role: steward
+to: "*"
+refs:
+  - entries/<YYYY>/<MM>/<DD>/<HHMMSS>Z-result-steward-<short-id>.md
+---
+
+Cycle <N> quiet; state unchanged since [<prior-result-entry-path>](<prior-result-entry-path>).
+```
+
+The `refs:` entry points at the prior cycle's `result` (the head of the streak, not the immediately prior `tick`). Including the cycle number in the body is recommended for grep-ability. The breaking cycle's `result` entry then `refs:` the most recent quiet tick so the chain is traversable in both directions.
