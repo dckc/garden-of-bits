@@ -1,7 +1,7 @@
 ---
 created: 2026-05-12
-updated: 2026-05-12
-author: liaison
+updated: 2026-05-13
+author: gardener, liaison
 ---
 
 # Skill: review-queue-poll
@@ -19,13 +19,13 @@ This skill is the operational contract the daemon at `skills/review-queue-poll/r
 
 Inside `state_dir`, atomic via `*.tmp` + `mv`:
 
-- `current.json`: canonical snapshot of the queue. One object per pending PR with at least `repo`, `number`, `title`, `url`, `isDraft`, `updatedAt`, `author`, `requestedAt` (best-effort).
+- `current.json`: canonical snapshot of the queue. One object per pending PR with at least `repo`, `number`, `title`, `url`, `isDraft`, `updatedAt`, `author`, `baseRefName`, `requestedAt` (best-effort). `baseRefName` is the upstream branch the PR targets (e.g., `master`, `llm`, `main`); consumers (notably the journalist's *Pending kriskowal reviews* renderer) use it to partition rows by target branch before the milestone-bin pass.
 - `prev.json`: the previous tick's snapshot, used to compute the diff. Rolled forward atomically before `current.json` is replaced.
 - `etag.txt`: present only if the daemon switches to a conditional-fetch transport later; not used by the search API today.
 
 ## Procedure (daemon)
 
-1. `gh search prs --review-requested=kriskowal --state=open --limit=1000 --json number,repository,title,url,author,isDraft,updatedAt`. The `gh search` command paginates transparently up to `--limit`; 1000 is the CLI's hard cap. The full GitHub search API caps at 1000 results regardless, so a queue larger than that is undetectable from this skill; if the count ever hits 1000, that itself is the signal to raise a `message` to liaison about refining the filter.
+1. `gh search prs --review-requested=kriskowal --state=open --limit=1000 --json number,repository,title,url,author,isDraft,updatedAt,baseRefName`. The `gh search` command paginates transparently up to `--limit`; 1000 is the CLI's hard cap. The full GitHub search API caps at 1000 results regardless, so a queue larger than that is undetectable from this skill; if the count ever hits 1000, that itself is the signal to raise a `message` to liaison about refining the filter.
 2. Normalize each row into the canonical-set shape:
 
    ```json
@@ -37,11 +37,12 @@ Inside `state_dir`, atomic via `*.tmp` + `mv`:
      "isDraft": false,
      "updatedAt": "2026-05-12T20:00:00Z",
      "author": "<login>",
+     "baseRefName": "master",
      "requestedAt": null
    }
    ```
 
-   `requestedAt` is left `null` until the per-PR timeline query is added; see *Notes from the field*.
+   `requestedAt` is left `null` until the per-PR timeline query is added; see *Notes from the field*. `baseRefName` is whatever the PR targets upstream; the daemon copies it through verbatim and does not normalize it.
 
 3. Atomically write `current.json.tmp` and rename to `current.json`. Before the rename, copy the previous `current.json` to `prev.json` (also atomic).
 

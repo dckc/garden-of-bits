@@ -39,7 +39,7 @@ while true; do
   TMP_ERR=$(mktemp)
 
   if gh search prs --review-requested=kriskowal --state=open --limit=1000 \
-       --json number,repository,title,url,author,isDraft,updatedAt \
+       --json number,repository,title,url,author,isDraft,updatedAt,baseRefName \
        > "$TMP_OUT" 2> "$TMP_ERR"; then
 
     python3 - "$TMP_OUT" "$STATE" <<'PY'
@@ -58,6 +58,7 @@ for row in raw:
         "isDraft": bool(row.get('isDraft', False)),
         "updatedAt": row.get('updatedAt',''),
         "author": (row.get('author') or {}).get('login','?'),
+        "baseRefName": row.get('baseRefName',''),
         "requestedAt": None,
     })
 canon.sort(key=lambda r: (r['repo'], r['number']))
