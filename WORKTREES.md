@@ -143,24 +143,22 @@ The orchestrator calls helper scripts; the subagent never creates or removes wor
 
 ```sh
 # Before invoking the Agent tool:
-DISPATCH_ROOT=$(scripts/dispatch-prepare.sh <role> <purpose> [<owner>/<repo> <branch>])
+DISPATCH_ROOT=$(skills/dispatch-worktree/dispatch-prepare.sh <role> <purpose> [<owner>/<repo> <branch>])
 
 # Pass $DISPATCH_ROOT into the subagent's prompt as the dispatch root.
 # (See CLAUDE.md § Dispatch prompt template for the wording.)
 
 # After the subagent returns:
-scripts/dispatch-teardown.sh "$DISPATCH_ROOT"
+skills/dispatch-worktree/dispatch-teardown.sh "$DISPATCH_ROOT"
 ```
 
-`dispatch-prepare.sh` creates the directory, runs `git worktree add --detach` for garden and journal, and (if a project repo and branch are named) for the project. It prints the dispatch root path on stdout.
-
-`dispatch-teardown.sh` runs `git worktree remove --force` for each sub-worktree, then removes the dispatch root directory. It is idempotent: missing pieces are tolerated.
+The scripts and their procedural detail live in `skills/dispatch-worktree/` (see [skills/dispatch-worktree/SKILL.md](skills/dispatch-worktree/SKILL.md) for inputs, outputs, contract guarantees, and pitfalls). In summary: `dispatch-prepare.sh` creates the directory, runs `git worktree add --detach` for garden and journal, and (if a project repo and branch are named) for the project. It prints the dispatch root path on stdout. `dispatch-teardown.sh` runs `git worktree remove --force` for each sub-worktree, then removes the dispatch root directory. It is idempotent: missing pieces are tolerated.
 
 ### Standing exceptions
 
 A few daemons and long-lived state holders are *not* per-dispatch entities and are not torn down between dispatches:
 
-- The **bash poll daemons** under `scripts/monitor-poll.sh` and `scripts/review-queue-poll.sh`. They are not subagents (no LLM involvement) and own state that must survive across LLM ticks (ETag, last-seen event id, the review-queue's canonical set).
+- The **bash poll daemons** under `skills/github-activity-poll/monitor-poll.sh` and `skills/review-queue-poll/review-queue-poll.sh`. They are not subagents (no LLM involvement) and own state that must survive across LLM ticks (ETag, last-seen event id, the review-queue's canonical set).
 - The **standing monitor worktrees** at `worktrees/<owner>-<repo>/watch-<slug>--monitor--<ts>/` exist solely as the host directory for `.garden-monitor/<owner>-<repo>/` polling state. They are referenced by the daemons, not by the LLM dispatches.
 
 LLM monitor and review-queue dispatches still receive a per-dispatch garden+journal worktree triple. They typically do not need a project worktree (the events they react to arrive via the GitHub API, and the journal carries the durable record), so dispatch-prepare is called without the project arguments for those roles.

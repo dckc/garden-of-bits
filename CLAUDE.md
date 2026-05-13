@@ -25,14 +25,14 @@ Files are named `AGENT.md` / `SKILL.md` / `COMMON.md` (not `CLAUDE.md`) on purpo
 
 ## Dispatch contract
 
-The liaison and steward dispatch subagents via the `Agent` tool. Every subagent gets its own per-dispatch worktree triple (a detached `garden/`, a detached `journal/`, and optionally a detached `project/`) under `dispatches/<role>--<purpose>--<UTC-ts>--<id>/`. The triple is created by `scripts/dispatch-prepare.sh` immediately before the `Agent` invocation and torn down by `scripts/dispatch-teardown.sh` when the subagent returns. See [WORKTREES.md](WORKTREES.md) § Per-dispatch worktree triple for the full lifecycle and rationale.
+The liaison and steward dispatch subagents via the `Agent` tool. Every subagent gets its own per-dispatch worktree triple (a detached `garden/`, a detached `journal/`, and optionally a detached `project/`) under `dispatches/<role>--<purpose>--<UTC-ts>--<id>/`. The triple is created by `skills/dispatch-worktree/dispatch-prepare.sh` immediately before the `Agent` invocation and torn down by `skills/dispatch-worktree/dispatch-teardown.sh` when the subagent returns. See [WORKTREES.md](WORKTREES.md) § Per-dispatch worktree triple for the full lifecycle and [skills/dispatch-worktree/SKILL.md](skills/dispatch-worktree/SKILL.md) for the procedural detail.
 
 The orchestrator's job per dispatch:
 
-1. `DISPATCH_ROOT=$(scripts/dispatch-prepare.sh <role> <purpose-slug> [<owner>/<repo> <branch>])`.
+1. `DISPATCH_ROOT=$(skills/dispatch-worktree/dispatch-prepare.sh <role> <purpose-slug> [<owner>/<repo> <branch>])`.
 2. Write a `dispatch` journal entry naming the role, repo (when applicable), task, and `DISPATCH_ROOT`.
 3. Invoke `Agent` with a prompt that names `DISPATCH_ROOT` explicitly.
-4. On return, write a `result` journal entry and `scripts/dispatch-teardown.sh "$DISPATCH_ROOT"`.
+4. On return, write a `result` journal entry and `skills/dispatch-worktree/dispatch-teardown.sh "$DISPATCH_ROOT"`.
 
 The dispatch prompt itself should:
 
@@ -91,7 +91,7 @@ For a Docker-hosted garden instance, the `garden` script at the garden root crea
 
 ## Current inventory
 
-- Roles: `liaison`, `steward`, `monitor`, `review-queue`, `boatman`, `fixer`, `weaver`, `shepherd`, `conductor`, `designer`, `scout`, `botanist`, `major-general`, `gardener`, `journalist`
-- Skills: `journal-sync`, `self-improvement`, `em-dash-style`, `relative-paths`, `agent-termination`, `rule-elision-test`, `inbox-drain`, `autonomous-loop-pacing`, `github-activity-poll`, `pr-ci-watch`, `review-queue-poll`, `rebase-before-followup`, `review-feedback-followup-commits`, `pr-review-thread-replies`, `pr-formation`, `pr-dependency-graph`, `pr-dependency-topo-sort`, `yarn-lock-separate-commit`, `pre-pr-checklist`, `regression-evidence`, `ci-status-summary`, `ci-runtime-comparison`, `conflict-resolution`, `cherry-pick-followup`, `rebase-hygiene-audit`, `worktree-per-pr`, `process-documents`, `prompt-section-discovery`, `benchmark-comparative-report`, `verify-upstream-state-before-pinning`, `reactji-acknowledgment`, `changeset-discipline`, `monitor-arming`. Per-project monitor reaction skills (`monitor-endo`, `monitor-endo-but-for-bots`, `monitor-agoric-sdk`, `monitor-cosgov`, `monitor-garden`) live alongside but are configuration for the `monitor` role rather than independently reusable procedures. `monitor-garden` is the only one whose dispatched subagent runs as `liaison` rather than `monitor`; see that skill's *Dispatch role asymmetry* for why.
+- Roles: `liaison`, `steward`, `monitor`, `review-queue`, `boatman`, `fixer`, `weaver`, `shepherd`, `conductor`, `designer`, `scout`, `botanist`, `major-general`, `gardener`, `journalist`, `librarian`, `scholar`
+- Skills: `journal-sync`, `self-improvement`, `em-dash-style`, `relative-paths`, `agent-termination`, `rule-elision-test`, `inbox-drain`, `autonomous-loop-pacing`, `github-activity-poll`, `pr-ci-watch`, `review-queue-poll`, `rebase-before-followup`, `review-feedback-followup-commits`, `pr-review-thread-replies`, `pr-formation`, `pr-dependency-graph`, `pr-dependency-topo-sort`, `yarn-lock-separate-commit`, `pre-pr-checklist`, `regression-evidence`, `ci-status-summary`, `ci-runtime-comparison`, `conflict-resolution`, `cherry-pick-followup`, `rebase-hygiene-audit`, `worktree-per-pr`, `process-documents`, `prompt-section-discovery`, `benchmark-comparative-report`, `verify-upstream-state-before-pinning`, `reactji-acknowledgment`, `changeset-discipline`, `monitor-arming`, `context-library`, `journalism`, `dispatch-worktree`. Per-project monitor reaction skills (`monitor-endo`, `monitor-endo-but-for-bots`, `monitor-agoric-sdk`, `monitor-cosgov`, `monitor-garden`) live alongside but are configuration for the `monitor` role rather than independently reusable procedures. `monitor-garden` is the only one whose dispatched subagent runs as `liaison` rather than `monitor`; see that skill's *Dispatch role asymmetry* for why.
 
 The `liaison` and `steward` are the two top-level orchestrator postures. When a user is in the loop (this terminal session), the liaison runs with excess authority and asks before acting. When the garden runs in the bot sandbox under safe bot credentials with no user present, the steward runs with bounded authority and may act on its own. See `roles/liaison/AGENT.md` § Posture and `roles/steward/AGENT.md` § Posture for the contract.
