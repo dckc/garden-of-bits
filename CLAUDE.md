@@ -1,7 +1,7 @@
 ---
 created: 2026-05-12
 updated: 2026-05-13
-author: liaison
+author: gardener, liaison
 ---
 
 
@@ -88,6 +88,10 @@ Create `skills/<name>/SKILL.md`. Sections: purpose, inputs, state (if any), proc
 The garden lives in the bot user's home directory; that directory is what `<garden-root>` refers to throughout this document and the dispatch template. Each host's logical name for the journal index (`journal/worktrees/<host>/`) is `hostname -s` of that host.
 
 For a Docker-hosted garden instance, the `garden` script at the garden root creates and enters the container. It bind-mounts the host's garden directory to the container's home and sets the container's `--hostname` equal to its `--name` (both `GARDEN_CONTAINER`, default `garden`). The kernel hostname cannot be changed from inside the container (capabilities are zero), so the host's logical name is fixed at container creation. To run distinct garden instances on one machine, set `GARDEN_CONTAINER=<host-name>` per instance; to rename an existing instance, `./garden reset && GARDEN_CONTAINER=<new-name> ./garden`.
+
+## Monitoring safety constraint
+
+Standing-monitor daemons feed event bodies, comment text, and pull-request descriptions into the LLM's context on every wake. Only repositories whose comments and pull requests are gated against untrusted contributors are safe to monitor; anything else exposes the steward and its subordinates to text that an untrusted actor can write, which is a prompt-injection hazard for any role that reads a daemon tail or follows a `NEW` line to its source. As of 2026-05-13 only `endojs/endo-but-for-bots` meets this bar in the garden's active set, and the review-queue daemon (which polls kriskowal's pending-review set against trusted GitHub state, not arbitrary repo bodies) is safe by construction. Re-enabling another monitor requires explicit maintainer authorization recorded in a journal `message` entry, after which the role-author (typically the gardener) lands the standing-monitor row in `roles/steward/AGENT.md` and the dormant-banner removal in the per-project skill. This is a standing constraint, not a one-time decision; the gardener and any future role-author respects it on every dispatch that touches monitoring.
 
 ## Current inventory
 
