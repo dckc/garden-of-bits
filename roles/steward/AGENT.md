@@ -1,6 +1,6 @@
 ---
 created: 2026-05-12
-updated: 2026-05-12
+updated: 2026-05-13
 author: liaison
 ---
 
@@ -46,13 +46,21 @@ The skill set will grow as the steward learns to drive more roles. Today's set i
 
 ## Subordinate roles dispatched
 
-Active roles the steward can dispatch as of 2026-05-12:
+Active roles the steward can dispatch as of 2026-05-13:
 
 - [monitor](../monitor/AGENT.md): per-repo events watcher. The steward keeps one poll daemon alive per standing repo (see *Standing monitors* below) and dispatches a monitor subagent for any repo whose daemon log carries `NEW` lines since the prior cycle.
 - [review-queue](../review-queue/AGENT.md): polls kriskowal's pending review-request queue across all of GitHub and reconciles the journal bulletin's *Pending kriskowal reviews* section. The steward keeps its daemon alive on the same standing-monitors discipline.
 - [boatman](../boatman/AGENT.md): only when a journal `message` entry from `liaison` carries `identity_switch_authorized: true` for the specific source PR and target upstream. The steward forwards the authorization in the dispatch prompt; it never originates one.
+- [fixer](../fixer/AGENT.md): dispatched against an open PR with a substantive `CHANGES_REQUESTED` (or `COMMENTED`) review from kriskowal, when the brief addresses inline comments. The dispatch carries per-action authorization for re-requesting review after the fix lands and CI is green. The steward forwards staged authorizations.
+- [weaver](../weaver/AGENT.md): dispatched against an open PR whose `mergeable_state` is `CONFLICTING` (or whose base has moved enough that a rebase is necessary before any other role can act). One rebase per dispatch; the weaver does not also fix substance.
+- [shepherd](../shepherd/AGENT.md): dispatched after a fixer (or builder) push, to drive CI to green before the next maintainer ping. Also dispatched when an explicit "are PRs green?" question arises. **Not** dispatched for pure CI-watch tasks; for those the steward arms a parent-context Monitor instead.
+- [conductor](../conductor/AGENT.md): dispatched when the merge queue (APPROVED + CI-green PRs) is non-empty and no conductor is in flight. Concurrency cap: one conductor across the estate.
+- [designer](../designer/AGENT.md): dispatched when a maintainer comment or scheduled engagement calls for a new design document, when the dispatch carries per-action authorization to open the resulting PR (if any). Most designer dispatches produce a file in the project worktree; PR opening is a separate authorization the steward forwards from a liaison `message`.
+- [scout](../scout/AGENT.md): dispatched against a maintainer-requested performance question, or against a scheduled engagement that periodically measures a metric (CI latency refresh, throughput sampling). The dispatch carries per-action authorization for posting the report on the relevant PR or issue.
+- [botanist](../botanist/AGENT.md): dispatched against each new Dependabot PR (the standing monitor surfaces them), and re-dispatched when a previously embargoed Dependabot PR's maturity date arrives (the dependabotany ledger row carries the date).
+- [major-general](../major-general/AGENT.md): dispatched on the major-general cadence (default weekly). The Scheduled engagements bulletin row carries the next date; on or after, the steward dispatches.
 
-Roles the steward will likely grow into when adopted from `references/`: `director` (per-PR dispatch sweeper), `marshal` (design pick-next), `groom` (roadmap maintenance), `conductor` (merge queue drain), `weaver` (rebase/merge resolution), `shepherd` (CI healing). Until those exist in our active library, the steward's matrix stays narrow.
+Roles the steward will likely grow into when adopted from `references/`: `director` (per-PR dispatch sweeper), `marshal` (design pick-next), `groom` (roadmap maintenance). Until those exist in our active library, the steward's matrix stays at the ten subordinates above plus the monitor and review-queue daemons.
 
 ## Standing monitors
 

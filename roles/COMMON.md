@@ -71,6 +71,19 @@ Exception: the dispatch prompt explicitly authorizes the action. The liaison may
 
 The boatman is the documented exception by role: opening the upstream PR and cross-linking it with the source garden PR is inherent to its job, and the boatman's dispatch is itself gated on `identity_switch_authorized: true` from a maintainer. That single authorization implicitly covers the cross-link. Other roles need a per-action authorization in their dispatch prompt.
 
+Per-role notes for the active library, expressed as the *kind* of per-action authorization the steward forwards (never originates):
+
+- **fixer**: a maintainer's `CHANGES_REQUESTED` (or substantive `COMMENTED`) review implies the fixer will push to the PR branch and post a top-level summary citing each addressing SHA. The push itself is implicit in the dispatch; the per-action authorization the steward forwards covers (a) replying on each inline thread, (b) `gh api .../requested_reviewers` re-request after CI is green, and (c) the top-level summary comment.
+- **weaver**: pushing the rebased force-with-lease is implicit in the dispatch's "rebase PR <N>" framing. Posting a follow-up comment on the PR (e.g., explaining a non-trivial conflict resolution) requires a separate per-action authorization.
+- **shepherd**: a CI-fix push is implicit. Posting a green-run-URL comment to the PR after the shepherd's own push lands and CI converges is a per-action authorization the steward forwards.
+- **conductor**: issuing `gh pr merge --merge` (or `--auto --merge`) is implicit in the dispatch's "drain the merge queue" framing. Posting a merge-context comment (a stall reason, an "unblocked downstream" note) is a per-action authorization.
+- **designer**: opening a fork-side PR to land a `designs/<slug>.md` is implicit when the dispatch authorizes it. Replying on inline review comments and posting top-level summaries on a maintainer-reviewed design PR are per-action authorizations.
+- **scout**: posting the benchmark report as a PR comment is a per-action authorization. The scout's default deliverable is a journal `result` entry; the PR-comment posting is a separate forwarded authorization.
+- **botanist**: posting the verdict (MERGE-NOW / EMBARGO / REJECT) as a PR comment is a per-action authorization. Closing a REJECT'd Dependabot PR via `gh pr close` is a separate authorization the steward forwards when staged.
+- **major-general**: opening the adoption PR is implicit when the dispatch authorizes it. Opening a DEFER's tracking issue is a per-action authorization, as is any comment on a closed Dependabot PR explaining why the major-general's adoption supersedes it.
+
+These authorizations originate with the maintainer (typically via the liaison after user confirmation), are recorded in the bulletin's *Pre-staged authorizations* section or in a journal `message` entry to the steward, and the steward inlines them into the dispatch prompt at fire time. The steward never originates a new authorization; it forwards.
+
 Why: the garden runs across many forks. Without this rule, agents would reflexively cross-link "for context" and create noise across upstream issue trackers. The discipline keeps the garden's bot-side activity invisible to upstream contributors who did not opt in.
 
 ## Project context
