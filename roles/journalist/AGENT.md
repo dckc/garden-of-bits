@@ -6,7 +6,7 @@ author: gardener
 
 # Role: journalist
 
-Maintains the journal bulletin's review-list sections. Classifies pending PRs by milestone using the endo roadmap (`endojs/endo-but-for-bots@llm:designs/`) and bins the remainder by repository. Does not write code, open PRs, or modify any project's source tree.
+Maintains the journal bulletin's review-list sections and the *Recent engagements ready for review* top section. Classifies pending PRs by milestone using the endo roadmap (`endojs/endo-but-for-bots@llm:designs/`) and bins the remainder by repository. Does not write code, open PRs, or modify any project's source tree.
 
 Assumes you have already read `roles/COMMON.md`.
 
@@ -18,10 +18,11 @@ The journalist also accepts **scheduled periodical dispatches** from the [timeke
 
 Sections owned (rewritten between stable delimiters):
 
+- **Recent engagements ready for review** (`<!-- BEGIN recent-engagements -->` … `<!-- END recent-engagements -->`): the five most recent garden engagements ready for the maintainer to look at again. Placed at the top of the bulletin board, above *Pending kriskowal reviews*. See *Recent engagements rendering* below for the row source and shape.
 - **Pending kriskowal reviews** (`<!-- BEGIN pending-kriskowal-reviews -->` … `<!-- END pending-kriskowal-reviews -->`): the milestone-classified review queue. The review-queue role's canonical-set daemon at `/tmp/garden-review-queue/current.json` is the data; the journalist is the renderer. The journalist replaces the review-queue role's rendering responsibility for this section.
 - **PR backlog** (`<!-- BEGIN pr-backlog -->` … `<!-- END pr-backlog -->`): items waiting on a per-PR role dispatch. The journalist reorganizes the rows the steward and per-PR roles have posted into milestone bins (with a repo-binned fallback for unclassified rows); it does not invent or retire rows.
 
-Every other bulletin section stays with whichever role originally owns it. The journalist never edits `journal/README.md` outside the two delimited blocks above.
+Every other bulletin section stays with whichever role originally owns it. The journalist never edits `journal/README.md` outside the three delimited blocks above.
 
 ## Skills
 
@@ -37,11 +38,17 @@ Every other bulletin section stays with whichever role originally owns it. The j
 
 - **Topological sort.** Within-bin ordering for both owned sections goes through [`skills/pr-dependency-topo-sort/SKILL.md`](../../skills/pr-dependency-topo-sort/SKILL.md). Apply it on every cycle. The graph is read via [`skills/pr-dependency-graph/SKILL.md`](../../skills/pr-dependency-graph/SKILL.md) from `journal/pr-deps/*.md`; the sort is stable with a `(repo, number)` tie-break. This reminder exists because cycle outputs have sometimes drifted to the earlier first-come or three-tier orderings; the topo sort is the canonical within-bin rule and supersedes both.
 
-- **The bulletin sections this role maintains carry no procedural prose.** `journal/README.md`'s *Pending kriskowal reviews* and *PR backlog* sections are heading + delimited body only; the "how this section is maintained" prose lives here, in this role file, not in the bulletin. The maintainer reading the bulletin should see PRs, not workflow documentation.
+- **The bulletin sections this role maintains carry no procedural prose.** `journal/README.md`'s *Recent engagements ready for review*, *Pending kriskowal reviews*, and *PR backlog* sections are heading + delimited body only; the "how this section is maintained" prose lives here, in this role file, not in the bulletin. The maintainer reading the bulletin should see items, not workflow documentation.
 
   - *Pending kriskowal reviews* sources: the review-queue daemon's canonical set at `/tmp/garden-review-queue/current.json` (the source of truth for the row set); the review-queue role records ADD/REMOVE deltas in its `tick` entry but no longer rewrites this section. The journalist's rewrite cadence: once per cycle when the review-queue daemon log carries any `ADD` or `REMOVE` line since the prior cycle's close (after the review-queue's own `tick` has landed).
 
   - *PR backlog* sources: existing rows between the `pr-backlog` delimiters, posted by the steward and per-PR roles. The journalist reorganizes; it does not invent or retire rows. Rows clear when their underlying PR transitions out of the waiting state (merge, close, review-state change); that clearing is the steward's housekeeping, not the journalist's. The journalist's rewrite cadence: each cycle's housekeeping pass when the *PR backlog* row set or the `endo-but-for-bots@llm:designs/` roadmap reference has moved.
+
+- **No explanatory prose in the bulletin.** This rule applies to every bulletin section (the three the journalist owns and every other section as well; the journalist enforces it on its own renders, and notes it here as the standing convention for the dashboard as a whole). Each row is one line listing what needs attention: name + link + state (e.g. "ready to merge", "awaits decision", "draft review pending"). If a row needs deeper context, the context lives in a journal entry the row cites, not in the row body. The maintainer reads a long bulletin top-to-bottom; per-row paragraphs are noise.
+
+  - The framing prose at the top of the bulletin board (the one-time "agents own the bulletin entirely" paragraph in `journal/README.md` § Bulletin board) is not per-section prose and stays; it is read once on first visit.
+
+  - **Exception: *Pre-staged authorizations*.** The rows in `journal/README.md` § Pre-staged authorizations are intentionally longer than one line because each carries constraint detail that future agents will read on-dispatch (identity, baseline commit, scope rules, no-upstream constraints). Keep the multi-line shape there. The "no explanatory prose" rule applies to every other section. The journalist does not own the *Pre-staged authorizations* section's rendering; this note is here to spare a future renderer the confusion of seeing the long rows and assuming the rule has lapsed.
 
 - **Source of truth for milestones: `endojs/endo-but-for-bots@llm:designs/`.** The journalist's project worktree is on the `llm` branch. The roadmap is `designs/README.md`. Within that file:
   - The **Per-Design Estimates** table (`### Per-Design Estimates`) is the authoritative design → milestone map. Each row carries a design slug (the bare filename without `.md`), a milestone integer (0 through 6), and notes that frequently cite the active PR number(s).
@@ -79,6 +86,28 @@ Every other bulletin section stays with whichever role originally owns it. The j
 
 - **Hard stop on inconsistency.** If `current.json` is missing or unparseable, or the Per-Design Estimates table cannot be parsed, write a `message` to `liaison` describing the failure and stop. Do not write a partial or stale bulletin.
 
+## Recent engagements rendering
+
+The *Recent engagements ready for review* section is the top section of the bulletin board (placed above *Pending kriskowal reviews*). It is a snapshot of the five most recent garden engagements ready for the maintainer to take another look at. Each render replaces the prior set; older entries fall off (they remain queryable via the journal but are not in the bulletin).
+
+- **Cadence.** Re-rendered on the same per-cycle pass as the two PR sections. The journalist rewrites all three owned sections in one commit.
+
+- **Row source.** A garden engagement is a journal `result` entry from any role except `monitor` (ignore tick-only quiet cycles) that has produced an outward-facing artifact (a PR opened, a comment posted, a design landed) or that the steward or liaison would naturally want the maintainer to look at. Walk `journal/entries/` newest-first; for each candidate `result`, decide whether the engagement is complete from the bot's side and the maintainer is the next actor. Stop after five.
+
+- **Row shape.** One line per row, terse, no per-row paragraph:
+
+  ```
+  - <one-line summary> — <kind> · <date/time UTC> · [<external artifact URL>] · [<journal entry path>]
+  ```
+
+  The external artifact link is optional if the engagement has no outward-facing artifact (e.g., a design or a journal-only `result`); the journal entry path is always present. The summary is the engagement's own one-line description, not a re-narration; cite the journal entry for the maintainer to descend into if they want more.
+
+- **Ordering.** Newest first by `ts:` on the `result` entry.
+
+- **Empty state.** If no engagement in the journal qualifies (rare; the rule is permissive), render the body as `(none)` between the delimiters.
+
+- **No deduplication against the other sections.** A PR that is also listed in *Pending kriskowal reviews* or *PR backlog* may legitimately appear here too if a recent engagement produced an artifact on it. The three sections answer different questions; do not cross-suppress.
+
 ## Daily progress summaries
 
 When the timekeeper dispatches the journalist with purpose `daily-progress-summary`, the dispatch is a periodical authoring engagement, not a bulletin rewrite. The journalist's owned bulletin sections are not touched.
@@ -89,14 +118,14 @@ When the timekeeper dispatches the journalist with purpose `daily-progress-summa
 
 - **Scope.** Cover every project (every `project:`-tagged entry, partitioned by slug) and every garden-meta entry (no `project:` tag). Do not skip a project because it has only one or two entries; the daily summary is a complete cross-section. If a project has zero entries in the window, omit its section (no empty headings).
 
-- **Bulletin is untouched.** The journalist's per-cycle bulletin work (the two owned sections) is a separate engagement on a different cadence. A `daily-progress-summary` dispatch does not modify `journal/README.md`. If both engagements are needed in the same wall-clock window, they run as separate dispatches.
+- **Bulletin is untouched.** The journalist's per-cycle bulletin work (the three owned sections) is a separate engagement on a different cadence. A `daily-progress-summary` dispatch does not modify `journal/README.md`. If both engagements are needed in the same wall-clock window, they run as separate dispatches.
 
 - **Done.** A `result` journal entry naming the event file, the window, the periodical path, and a one-line abstract of the summary; the periodical file itself committed to `journal`. Ends with `Self-improvement: ...` per `skills/self-improvement/SKILL.md`.
 
 ## Done
 
-- The two owned bulletin sections (`pending-kriskowal-reviews` and `pr-backlog`) are rewritten between their delimiters in a single commit on the `journal` branch.
-- A `tick` journal entry records the classification: counts per milestone, counts per repo for unclassified rows, total row counts before and after, and any parse failures. One paragraph.
+- The three owned bulletin sections (`recent-engagements`, `pending-kriskowal-reviews`, and `pr-backlog`) are rewritten between their delimiters in a single commit on the `journal` branch.
+- A `tick` journal entry records the classification: counts per milestone, counts per repo for unclassified rows, total row counts before and after, and any parse failures, plus the five engagement entries selected for the top section. One paragraph.
 - The result entry (or the `tick`, when the engagement is one-shot) ends with `Self-improvement: ...` per `skills/self-improvement/SKILL.md`.
 
 For periodical dispatches (`daily-progress-summary` and future kinds), the Done criteria in *Daily progress summaries* above replace the bulletin-rewrite Done criteria here. One engagement, one Done set.
