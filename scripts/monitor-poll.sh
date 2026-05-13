@@ -15,7 +15,20 @@
 #
 # State per repo, atomic via *.tmp + mv:
 #   <worktree>/.garden-monitor/<owner>-<name>/etag.txt
-#   <worktree>/.garden-monitor/<owner>-<name>/last_event_id.txt
+#   <worktree>/.garden-monitor/<owner>-<name>/last_event_ts.txt
+#
+# The "is this event new?" filter is keyed off `created_at` (ISO-8601),
+# not the event `id`. GitHub event ids are not monotonic across types:
+# Push/Create/Delete/Fork events sit in the ~11.7 B range while
+# IssueComment/Review/Issues/PullRequest events sit in the ~9.3 B range.
+# A single Push in a batch was enough to push the id cursor past every
+# comment-class event ever after, silently dropping them. Timestamps
+# don't have that bimodality. ISO-8601 lexicographic ordering is
+# monotonic, so a string compare on `created_at` is correct.
+#
+# An older `last_event_id.txt` from before this fix is ignored on
+# startup; on first poll the empty `last_event_ts.txt` cursor passes
+# everything in the page, which the rest of the loop already handles.
 #
 # Auth: uses `gh auth token` for the bearer. Token is read once at start;
 # if it rotates mid-daemon the next 401 will be reported and the daemon
@@ -42,11 +55,15 @@ TOKEN=$(gh auth token 2>/dev/null) || { echo "monitor-poll: gh auth token failed
 
 trap 'echo "[$(date -u +%H:%M:%S)] daemon stopping repo=$REPO pid=$$"; exit 0' INT TERM
 
+if [ -f "$STATE/last_event_id.txt" ]; then
+  echo "[$(date -u +%H:%M:%S)] note repo=$REPO ignoring deprecated last_event_id.txt (now tracks last_event_ts.txt)" >&2
+fi
+
 echo "[$(date -u +%H:%M:%S)] daemon starting repo=$REPO worktree=$WT cadence=${CADENCE}s pid=$$"
 
 while true; do
   ETAG=$(cat "$STATE/etag.txt" 2>/dev/null || true)
-  LAST_ID=$(cat "$STATE/last_event_id.txt" 2>/dev/null || echo 0)
+  LAST_TS=$(cat "$STATE/last_event_ts.txt" 2>/dev/null || echo "")
 
   HEADERS=$(mktemp)
   BODY=$(mktemp)
@@ -71,19 +88,21 @@ while true; do
       ;;
     200)
       NEW_ETAG=$(grep -i '^etag:' "$HEADERS" | sed -E 's/^[Ee][Tt][Aa][Gg]: //; s/\r$//' | head -1)
-      python3 - "$BODY" "$LAST_ID" "$STATE" "$REPO" <<'PY'
+      python3 - "$BODY" "$LAST_TS" "$STATE" "$REPO" <<'PY'
 import json, sys, os, datetime
-body, last_id, state, repo = sys.argv[1], int(sys.argv[2]), sys.argv[3], sys.argv[4]
+body, last_ts, state, repo = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
 try:
     events = json.load(open(body))
 except Exception as e:
     sys.stderr.write(f"parse error: {e}\n")
     sys.exit(0)
-events = [e for e in events if int(e['id']) > last_id]
-events.sort(key=lambda e: int(e['id']))
+# Filter by created_at (ISO-8601 lexicographic compare is monotonic).
+# Empty last_ts (first poll) lets every event through.
+events = [e for e in events if e.get('created_at', '') > last_ts]
+events.sort(key=lambda e: e.get('created_at', ''))
 if not events:
     sys.exit(0)
-max_id = max(int(e['id']) for e in events)
+max_ts = max(e['created_at'] for e in events)
 parts = []
 for e in events:
     t = e.get('type', '?')
@@ -106,10 +125,11 @@ for e in events:
     actor = (e.get('actor') or {}).get('login', '?')
     sys.stderr.write(f"[{ts}]   id={e['id']} type={e['type']} actor={actor} created={e['created_at']}\n")
 sys.stderr.flush()
-tmp = state + '/last_event_id.txt.tmp'
+# Persist the latest created_at (ISO-8601 string). Atomic via *.tmp + replace.
+tmp = state + '/last_event_ts.txt.tmp'
 with open(tmp, 'w') as f:
-    f.write(str(max_id))
-os.replace(tmp, state + '/last_event_id.txt')
+    f.write(max_ts)
+os.replace(tmp, state + '/last_event_ts.txt')
 PY
       if [ -n "$NEW_ETAG" ]; then
         printf '%s' "$NEW_ETAG" > "$STATE/etag.txt.tmp" && mv "$STATE/etag.txt.tmp" "$STATE/etag.txt"
