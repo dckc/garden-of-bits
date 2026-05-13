@@ -1,7 +1,7 @@
 ---
 created: 2026-05-12
 updated: 2026-05-13
-author: liaison, monitor
+author: gardener, liaison, monitor
 ---
 
 # Skill: monitor-endo-but-for-bots
@@ -64,6 +64,24 @@ Each row records the agreed action and a brief rationale. Where two actions are 
 - `ForkEvent`, `WatchEvent`, `MemberEvent` — **quiet**.
 
 - Other event classes — surface as a `message` to `liaison` with the raw type and a one-line context; do not silently drop.
+
+### Senior contributors (erights et al.)
+
+The endo-but-for-bots project README's *Authority structure* section (`journal/projects/endo-but-for-bots/README.md` § Authority structure on the `journal` branch) names erights as a senior contributor whose authority meets or exceeds kriskowal's on a defined topic set. The monitor surfaces accordingly:
+
+- A `PullRequestReviewEvent`, `PullRequestReviewCommentEvent`, or `IssueCommentEvent` from `erights` (login matches the GitHub account, verified by `gh pr view` if ambiguous) on a **topic-matching PR** is **loud** and routes a `message` to `liaison`. Do not auto-dispatch a fixer; that remains a kriskowal-directive privilege per `roles/COMMON.md` § External-repo etiquette.
+- On a PR that is **not** topic-matching, an erights event downgrades to the row that would otherwise apply (typically quiet for review events from non-maintainer reviewers; see the `PullRequestReviewEvent` row above).
+- The rule defers to the project README's *Authority structure* section for the canonical topic list and the practical-rule framing; do not duplicate the list here.
+
+**Topic-match heuristic (keyword-first with file-path fallback):**
+
+1. **Keyword check (cheap, daemon-payload-friendly).** On wake, look at the PR title (for `PullRequestEvent`-derived rows the daemon line carries it; otherwise `gh pr view <N> --json title,labels`). The PR is topic-matching if the title or any label contains any of: `pass-style`, `ses`, `hardened`, `harden`, `marshal`, `pattern`, `eventual-send`, `captp`, `ocapn`, `capability`. Case-insensitive substring match.
+2. **File-path fallback (if keyword check is inconclusive).** Run `gh pr view <N> --json files --jq '.files[].path'`. The PR is topic-matching if any path is under `packages/{pass-style,ses,marshal,patterns,eventual-send,captp,hex}/`.
+3. **Result.** Topic-matching if either step matches; otherwise not.
+
+The keyword step works from the daemon-line payload alone; the file-path step covers PRs whose title is generic (a refactor, a typo fix) but whose diff touches a topic package. If a real event reveals the heuristic is wrong, capture the fix in the *Notes from the field* row below.
+
+This rule supersedes the prior baseline where non-maintainer reviews were silent regardless of reviewer. The 2026-05-13 baseline that silently swallowed an erights `PullRequestReviewEvent/updated#69` (recorded in `journal/entries/2026/05/13/062434Z-result-steward-0a91d5.md` on the `journal` branch) is the precipitating example. Per the dispatch that landed this rule, prior swallowed events are not re-processed; the rule takes effect for future events.
 
 ## Notes from the field
 

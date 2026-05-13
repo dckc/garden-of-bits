@@ -4,6 +4,7 @@ updated: 2026-05-13
 author: gardener, monitor, liaison
 ---
 
+
 # Skill: monitor-endo
 
 > **DORMANT as of 2026-05-13.** This skill is not currently active. The `endojs/endo` standing monitor was collected per the monitoring safety constraint in `roles/COMMON.md` § Monitoring safety constraint (mirrored in `CLAUDE.md`): repositories whose comments and pull requests are not gated against untrusted contributors are not safe to monitor, because daemon log lines and event bodies enter the LLM's context. `endojs/endo` does not currently meet that bar. The precipitating dispatch is at [`journal/entries/2026/05/13/053822Z-dispatch-liaison-44e029.md`](../../../journal/entries/2026/05/13/053822Z-dispatch-liaison-44e029.md). The rules below are preserved verbatim for the record in case the constraint reverses; re-enabling this monitor requires explicit maintainer authorization recorded in a journal `message` entry, after which the role-author re-adds the row to `roles/steward/AGENT.md` § Standing monitors, restores the active mapping in `roles/monitor/AGENT.md`, and removes this banner.
@@ -61,6 +62,22 @@ The per-class rows below use a four-mode vocabulary:
   - branch deleted (dependabot cleanup, post-merge): `silent`.
 - `ForkEvent`, `WatchEvent`, `MemberEvent` — `silent`.
 - Other event classes — `escalate-message` to liaison with the raw type and a one-line context; do not silently drop.
+
+### Senior contributors (erights et al.)
+
+The endo project README's *Authority structure* section (`journal/projects/endo/README.md` § Authority structure on the `journal` branch) names erights as a senior contributor whose authority meets or exceeds kriskowal's on a defined topic set. The monitor surfaces accordingly:
+
+- A `PullRequestReviewEvent`, `PullRequestReviewCommentEvent`, or `IssueCommentEvent` from `erights` (login matches the GitHub account, verified by `gh pr view` if ambiguous) on a **topic-matching PR** is `surface-bulletin` plus an `escalate-message` to liaison. Do not auto-dispatch a fixer; that remains a kriskowal-directive privilege per `roles/COMMON.md` § External-repo etiquette on the `main` branch.
+- On a PR that is **not** topic-matching, an erights event downgrades to the row that would otherwise apply (typically `silent` for review events on PRs the garden does not have a worktree for).
+- The rule defers to the project README's *Authority structure* section for the canonical topic list and the practical-rule framing; do not duplicate the list here.
+
+**Topic-match heuristic (keyword-first with file-path fallback):**
+
+1. **Keyword check (cheap, daemon-payload-friendly).** On wake, look at the PR title (for `PullRequestEvent`-derived rows the daemon line carries it; otherwise `gh pr view <N> --json title,labels`). The PR is topic-matching if the title or any label contains any of: `pass-style`, `ses`, `hardened`, `harden`, `marshal`, `pattern`, `eventual-send`, `captp`, `ocapn`, `capability`. Case-insensitive substring match.
+2. **File-path fallback (if keyword check is inconclusive).** Run `gh pr view <N> --json files --jq '.files[].path'`. The PR is topic-matching if any path is under `packages/{pass-style,ses,marshal,patterns,eventual-send,captp,hex}/`. (The `hex` package is included because it is a captp / pass-style helper.)
+3. **Result.** Topic-matching if either step matches; otherwise not.
+
+The keyword step is fast and works from the daemon-line payload alone; the file-path step is the safety net for PRs whose title is generic (a refactor, a typo fix) but whose diff touches a topic package. If a real event reveals the heuristic is wrong (false positive or false negative), capture the fix in the *Notes from the field* row below.
 
 ## Notes from the field
 
