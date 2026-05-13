@@ -45,6 +45,7 @@ Other useful frontmatter fields:
 - `worktree:` (sometimes): the worktree the entry is about (long-lived or per-dispatch).
 - `to:` (messages): target role or `*`.
 - `refs:` (often): list of entry paths the new entry threads from.
+- `library_action:` (optional, on `kind: message` entries addressed to the scholar): names a library work item. Currently one value, `ingest-source`, paired with `source_repo:` (e.g., `endojs/endo`) and `source_path:` (repo-relative path) fields. The scholar's per-cycle procedure (`roles/scholar/AGENT.md` § Per-cycle procedure step 4) reads these on each cycle and ingests or skips per the source-index idempotency check.
 
 The schema is canonical at `garden/roles/COMMON.md` § The journal. Read that when authoring an entry; this skill is for reading.
 
