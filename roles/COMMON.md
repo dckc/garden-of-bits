@@ -90,6 +90,12 @@ These authorizations originate with the maintainer (typically via the liaison af
 
 Why: the garden runs across many forks. Without this rule, agents would reflexively cross-link "for context" and create noise across upstream issue trackers. The discipline keeps the garden's bot-side activity invisible to upstream contributors who did not opt in.
 
+## Authority structure of upstream projects
+
+Default technical authority on any repo the garden touches rests with that repo's maintainer. Some projects have non-default-authority actors: senior contributors whose review or comment on a topic-matching PR carries maintainer-equivalent (or greater) weight on the technical question, even though the garden's authorization chain still routes through the project's maintainer. The canonical place to record an actor's name, the topics that scope their authority, and the practical in-scope vs. out-of-scope rule is the **project README** in the journal (`journal/projects/<slug>/README.md`), not this file and not a role file. Per-project monitor reaction skills (`skills/monitor-<slug>/SKILL.md`) consult that section when deciding whether to surface a senior contributor's event on a topic-matching PR.
+
+The endo project README (`journal/projects/endo/README.md` § Authority structure) is the prototype: erights is named as the senior contributor; the topic list is enumerated; the practical rule states what changes (how the garden reads the technical content) and what does not (the authorization chain to act on it). Future per-project READMEs may adopt the same shape for other actors.
+
 ## Project context
 
 Project specifics (repo URLs, fork ownership, account/credential conventions, project-specific preferences) live in the **journal**, not in role or skill files. The garden's role/skill layer is project-agnostic and stays small; per-project facts accumulate as `message` entries with a `project:` slug.
