@@ -52,6 +52,7 @@ Active roles the steward can dispatch as of 2026-05-13:
 - [review-queue](../review-queue/AGENT.md): polls kriskowal's pending review-request queue across all of GitHub and reconciles the journal bulletin's *Pending kriskowal reviews* section. The steward keeps its daemon alive on the same standing-monitors discipline.
 - [boatman](../boatman/AGENT.md): only when a journal `message` entry from `liaison` carries `identity_switch_authorized: true` for the specific source PR and target upstream. The steward forwards the authorization in the dispatch prompt; it never originates one.
 - [fixer](../fixer/AGENT.md): dispatched against an open PR with a substantive `CHANGES_REQUESTED` (or `COMMENTED`) review from kriskowal, when the brief addresses inline comments. The dispatch carries per-action authorization for re-requesting review after the fix lands and CI is green. The steward forwards staged authorizations.
+- [groom](../groom/AGENT.md): dispatched when a maintainer roadmap-edit directive surfaces (e.g. an issue comment proposing a milestone change); the steward forwards the per-action authorization. The groom edits the project's `designs/README.md` (or equivalent) and pushes to the roadmap branch.
 - [weaver](../weaver/AGENT.md): dispatched against an open PR whose `mergeable_state` is `CONFLICTING` (or whose base has moved enough that a rebase is necessary before any other role can act). One rebase per dispatch; the weaver does not also fix substance.
 - [shepherd](../shepherd/AGENT.md): dispatched after a fixer (or builder) push, to drive CI to green before the next maintainer ping. Also dispatched when an explicit "are PRs green?" question arises. **Not** dispatched for pure CI-watch tasks; for those the steward arms a parent-context Monitor instead.
 - [conductor](../conductor/AGENT.md): dispatched when the merge queue (APPROVED + CI-green PRs) is non-empty and no conductor is in flight. Concurrency cap: one conductor across the estate.
@@ -62,7 +63,7 @@ Active roles the steward can dispatch as of 2026-05-13:
 - [major-general](../major-general/AGENT.md): dispatched on the major-general cadence (default weekly). The Scheduled engagements bulletin row carries the next date; on or after, the steward dispatches.
 - [scholar](../scholar/AGENT.md): autonomous index-grower for `journal/projects/`. The steward does not directly dispatch the scholar; the scholar runs on its own cadence via `<<autonomous-loop-dynamic>>` per `skills/autonomous-loop-pacing/SKILL.md`, like the steward itself. The scholar's first cycle is gated on a maintainer cadence decision recorded in `journal/README.md` § Awaits maintainer decision; the steward forwards no per-cycle dispatches for it.
 
-Roles the steward will likely grow into when adopted from `references/`: `director` (per-PR dispatch sweeper), `marshal` (design pick-next), `groom` (roadmap maintenance). Until those exist in our active library, the steward's matrix stays at the ten subordinates above plus the monitor and review-queue daemons.
+Roles the steward will likely grow into when adopted from `references/`: `director` (per-PR dispatch sweeper), `marshal` (design pick-next). Until those exist in our active library, the steward's matrix stays at the eleven subordinates above plus the monitor and review-queue daemons.
 
 ## Standing monitors
 
