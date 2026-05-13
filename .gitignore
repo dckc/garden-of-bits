@@ -2,3 +2,10 @@
 # These are separate git worktrees / bare clones; do not track them from main.
 /journal/
 /worktrees/
+
+# Docker container detritus. The garden directory is bind-mounted as the
+# container's $HOME (see ./garden, Dockerfile), so any dotfile the bot or
+# its tools create — including the kriscendobot SSH keys and gh oauth
+# token under .ssh/ and .config/gh/ — lands here. Never committed.
+# Pattern matches every top-level dotfile/dir except ./.gitignore itself.
+/.[!.]*
