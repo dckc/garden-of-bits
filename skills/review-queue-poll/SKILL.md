@@ -19,13 +19,13 @@ This skill is the operational contract the daemon at `skills/review-queue-poll/r
 
 Inside `state_dir`, atomic via `*.tmp` + `mv`:
 
-- `current.json`: canonical snapshot of the queue. One object per pending PR with at least `repo`, `number`, `title`, `url`, `isDraft`, `updatedAt`, `author`, `baseRefName`, `requestedAt` (best-effort). `baseRefName` is the upstream branch the PR targets (e.g., `master`, `llm`, `main`); consumers (notably the journalist's *Pending kriskowal reviews* renderer) use it to partition rows by target branch before the milestone-bin pass.
+- `current.json`: canonical snapshot of the queue. One object per pending PR with at least `repo`, `number`, `title`, `url`, `isDraft`, `updatedAt`, `author`, `baseRefName`, `requestedAt` (best-effort). `baseRefName` is the upstream branch the PR targets (e.g., `master`, `llm`, `main`); consumers (notably the journalist's *Pending kriskowal reviews* renderer) use it to partition rows by target branch before the milestone-bin pass. The daemon fetches `baseRefName` via a per-row REST call and reuses the prior cycle's value to keep the per-cycle REST budget proportional to the ADD rate, not the queue size; see *Procedure (daemon)* step 2.
 - `prev.json`: the previous tick's snapshot, used to compute the diff. Rolled forward atomically before `current.json` is replaced.
 - `etag.txt`: present only if the daemon switches to a conditional-fetch transport later; not used by the search API today.
 
 ## Procedure (daemon)
 
-1. `gh search prs --review-requested=kriskowal --state=open --limit=1000 --json number,repository,title,url,author,isDraft,updatedAt,baseRefName`. The `gh search` command paginates transparently up to `--limit`; 1000 is the CLI's hard cap. The full GitHub search API caps at 1000 results regardless, so a queue larger than that is undetectable from this skill; if the count ever hits 1000, that itself is the signal to raise a `message` to liaison about refining the filter.
+1. `gh search prs --review-requested=kriskowal --state=open --limit=1000 --json number,repository,title,url,author,isDraft,updatedAt`. The `gh search` command paginates transparently up to `--limit`; 1000 is the CLI's hard cap. The full GitHub search API caps at 1000 results regardless, so a queue larger than that is undetectable from this skill; if the count ever hits 1000, that itself is the signal to raise a `message` to liaison about refining the filter.
 2. Normalize each row into the canonical-set shape:
 
    ```json
@@ -42,7 +42,7 @@ Inside `state_dir`, atomic via `*.tmp` + `mv`:
    }
    ```
 
-   `requestedAt` is left `null` until the per-PR timeline query is added; see *Notes from the field*. `baseRefName` is whatever the PR targets upstream; the daemon copies it through verbatim and does not normalize it.
+   `requestedAt` is left `null` until the per-PR timeline query is added; see *Notes from the field*. `baseRefName` is not a `gh search prs --json` field (the GitHub search API does not expose it); the daemon fetches it per row with `gh api repos/<repo>/pulls/<n> --jq .base.ref` and caches the result by `(repo, number)` from the previous `current.json`. Steady-state cost is one REST call per ADD line, not per row. The cache invalidates only when a row leaves and re-enters the canonical set; base branches rarely change after PR open, so this is correct in practice.
 
 3. Atomically write `current.json.tmp` and rename to `current.json`. Before the rename, copy the previous `current.json` to `prev.json` (also atomic).
 

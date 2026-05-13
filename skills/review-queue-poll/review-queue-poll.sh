@@ -39,37 +39,56 @@ while true; do
   TMP_ERR=$(mktemp)
 
   if gh search prs --review-requested=kriskowal --state=open --limit=1000 \
-       --json number,repository,title,url,author,isDraft,updatedAt,baseRefName \
+       --json number,repository,title,url,author,isDraft,updatedAt \
        > "$TMP_OUT" 2> "$TMP_ERR"; then
 
     python3 - "$TMP_OUT" "$STATE" <<'PY'
-import json, sys, os, datetime, shutil
+import json, sys, os, datetime, shutil, subprocess
 src, state = sys.argv[1], sys.argv[2]
 raw = json.load(open(src))
-canon = []
-for row in raw:
-    repo_obj = row.get('repository') or {}
-    repo = repo_obj.get('nameWithOwner') or f"{repo_obj.get('owner','?')}/{repo_obj.get('name','?')}"
-    canon.append({
-        "repo": repo,
-        "number": row.get('number'),
-        "title": row.get('title',''),
-        "url": row.get('url',''),
-        "isDraft": bool(row.get('isDraft', False)),
-        "updatedAt": row.get('updatedAt',''),
-        "author": (row.get('author') or {}).get('login','?'),
-        "baseRefName": row.get('baseRefName',''),
-        "requestedAt": None,
-    })
-canon.sort(key=lambda r: (r['repo'], r['number']))
+# Carry forward last cycle's baseRefName values so we only fetch the field
+# for newly-arrived rows. Base branches rarely change after PR open; this
+# keeps the per-cycle REST budget proportional to the daily ADD rate (~1
+# per cycle in steady state) rather than to the queue size (~100 rows).
 cur_path = os.path.join(state, 'current.json')
-prev_path = os.path.join(state, 'prev.json')
 prev = []
 if os.path.exists(cur_path):
     try:
         prev = json.load(open(cur_path))
     except Exception:
         prev = []
+prev_base = {(r.get('repo'), r.get('number')): r.get('baseRefName','') for r in prev}
+canon = []
+for row in raw:
+    repo_obj = row.get('repository') or {}
+    repo = repo_obj.get('nameWithOwner') or f"{repo_obj.get('owner','?')}/{repo_obj.get('name','?')}"
+    number = row.get('number')
+    base = prev_base.get((repo, number), '')
+    if not base:
+        # New row this cycle, or first-ever poll: fetch the base ref. Cost
+        # is one REST call per ADD; the daily ADD rate (5 to 20) is well
+        # under the 5000/hr REST budget.
+        try:
+            base = subprocess.check_output(
+                ['gh', 'api', f'repos/{repo}/pulls/{number}', '--jq', '.base.ref'],
+                stderr=subprocess.DEVNULL,
+                text=True, timeout=20,
+            ).strip()
+        except Exception:
+            base = ''
+    canon.append({
+        "repo": repo,
+        "number": number,
+        "title": row.get('title',''),
+        "url": row.get('url',''),
+        "isDraft": bool(row.get('isDraft', False)),
+        "updatedAt": row.get('updatedAt',''),
+        "author": (row.get('author') or {}).get('login','?'),
+        "baseRefName": base,
+        "requestedAt": None,
+    })
+canon.sort(key=lambda r: (r['repo'], r['number']))
+prev_path = os.path.join(state, 'prev.json')
 def key(r): return (r['repo'], r['number'])
 prev_keys = {key(r): r for r in prev}
 cur_keys  = {key(r): r for r in canon}
