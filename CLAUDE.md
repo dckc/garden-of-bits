@@ -25,32 +25,50 @@ Files are named `AGENT.md` / `SKILL.md` / `COMMON.md` (not `CLAUDE.md`) on purpo
 
 ## Dispatch contract
 
-The liaison dispatches subagents via the `Agent` tool. To keep the subagent's context lean, the dispatch prompt should:
+The liaison and steward dispatch subagents via the `Agent` tool. Every subagent gets its own per-dispatch worktree triple (a detached `garden/`, a detached `journal/`, and optionally a detached `project/`) under `dispatches/<role>--<purpose>--<UTC-ts>--<id>/`. The triple is created by `scripts/dispatch-prepare.sh` immediately before the `Agent` invocation and torn down by `scripts/dispatch-teardown.sh` when the subagent returns. See [WORKTREES.md](WORKTREES.md) § Per-dispatch worktree triple for the full lifecycle and rationale.
+
+The orchestrator's job per dispatch:
+
+1. `DISPATCH_ROOT=$(scripts/dispatch-prepare.sh <role> <purpose-slug> [<owner>/<repo> <branch>])`.
+2. Write a `dispatch` journal entry naming the role, repo (when applicable), task, and `DISPATCH_ROOT`.
+3. Invoke `Agent` with a prompt that names `DISPATCH_ROOT` explicitly.
+4. On return, write a `result` journal entry and `scripts/dispatch-teardown.sh "$DISPATCH_ROOT"`.
+
+The dispatch prompt itself should:
 
 1. Name the role.
-2. Name the worktree path (absolute, under `<garden-root>/worktrees/...`).
-3. Name the upstream repo (`owner/name`).
+2. Name `DISPATCH_ROOT` (absolute, under `<garden-root>/dispatches/...`).
+3. Name the upstream repo (`owner/name`) when applicable.
 4. State the task in one or two sentences.
-5. Tell the subagent to read `roles/COMMON.md` and then `roles/<role>/AGENT.md` first, and to load skills only on demand.
+5. Tell the subagent to read `garden/roles/COMMON.md` and then `garden/roles/<role>/AGENT.md` first, and to load skills only on demand.
 
-Roles never inline skill bodies; they reference them by path. Skills are read just-in-time. The liaison itself rarely reads a skill body; it trusts the role to know which playbook to consult.
+Roles never inline skill bodies; they reference them by path. Skills are read just-in-time. The orchestrator rarely reads a skill body; it trusts the role to know which playbook to consult.
 
 ### Dispatch prompt template
 
 ```
 You are a subagent operating as role=<role>
-in worktree=<absolute path>, repo=<owner/name>.
+in dispatch-root=<absolute path>, repo=<owner/name>.
+
+Your dispatch root contains a worktree triple:
+  garden/   — detached worktree of garden's main branch (read roles/skills here)
+  journal/  — detached worktree of garden's journal branch (write entries here)
+  project/  — (when applicable) detached worktree of <owner/name> at <branch>
+
+Your cwd is project/ if a project worktree exists, otherwise the dispatch root itself.
 
 Read these in order, then act:
-  1. <garden-root>/roles/COMMON.md       (standing instructions)
-  2. <garden-root>/roles/<role>/AGENT.md (your role)
+  1. garden/roles/COMMON.md       (standing instructions)
+  2. garden/roles/<role>/AGENT.md (your role)
   3. skills referenced by your role, only as you need them.
 
+Commit and push in detached-HEAD style: `git push origin HEAD:<branch>`.
+
 Task: <one or two sentences>.
-Report: <what to return to the liaison>.
+Report: <what to return to the orchestrator>. The orchestrator tears down your dispatch root on return.
 ```
 
-For long-lived monitoring or recurring work, dispatch via `/loop` or a cron routine; the role file specifies any per-tick state directory the subagent should use, and every tick is recorded in the journal.
+For long-lived monitoring or recurring work, dispatch via `/loop` or a cron routine; each invocation receives a fresh dispatch root, runs one tick, and exits. Standing state that must survive across ticks (bash poll daemons' ETag and last-seen-id caches) lives outside the dispatch root, in the long-lived standing worktrees documented in WORKTREES.md § Standing exceptions. Every tick that journals is still recorded in the journal.
 
 ## Adding a role
 

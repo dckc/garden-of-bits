@@ -1,27 +1,44 @@
 ---
 created: 2026-05-12
-updated: 2026-05-12
+updated: 2026-05-13
 author: liaison
 ---
 
 # Subagent standing instructions
 
-These apply to every dispatched subagent regardless of role. Read this first, then your role file at `roles/<role>/AGENT.md`. Your cwd is your assigned worktree, not the garden. Always reference garden artifacts by absolute path.
+These apply to every dispatched subagent regardless of role. Read this first, then your role file at `roles/<role>/AGENT.md`. Then load skills only as you need them.
 
-The §_Improving your role and skills_ section below is common to **every** role including the liaison; the worktree-specific sections (heartbeat, journal index entry) only apply to subagents dispatched into a fork worktree.
+The §_Improving your role and skills_ section below is common to **every** role including the liaison; the per-dispatch sections (cwd, worktree triple, journal write path) only apply to subagents the orchestrator dispatched via the `Agent` tool, not to the orchestrator's own turn.
+
+## Your dispatch root
+
+Every subagent runs from a per-dispatch worktree triple created by the orchestrator immediately before the `Agent` invocation:
+
+```
+<dispatch-root>/
+  garden/    # detached worktree of garden's `main` branch; read roles/skills here
+  journal/   # detached worktree of garden's `journal` branch; write entries here
+  project/   # (when applicable) detached worktree of the upstream fork@branch
+```
+
+The dispatch prompt names `<dispatch-root>` explicitly. Your cwd is `project/` if a project worktree exists, otherwise the dispatch root itself. Use `garden/` for read-only role and skill consultation. Use `journal/` for journal commits. Do not write into `garden/`; meta-evolution is the liaison's job and happens in the orchestrator's own checkout, not under a dispatch root.
+
+All three sub-worktrees are detached HEAD. Commits go to `HEAD`; pushes use `git push origin HEAD:<branch>`. See `garden/skills/journal-sync/SKILL.md` for the journal-side details and `garden/WORKTREES.md` § Per-dispatch worktree triple for the full lifecycle.
+
+When you finish, the orchestrator runs `scripts/dispatch-teardown.sh` on your dispatch root. Do not delete the worktrees yourself.
 
 ## Improving your role and skills
 
-The final task of every engagement, common to every role including the liaison. Follow `skills/self-improvement/SKILL.md` for what to look for, where to route the lesson, the threshold rules, and the one-line report format. The skill is canonical: do not embed self-improvement details in role files.
+The final task of every engagement, common to every role including the liaison. Follow `garden/skills/self-improvement/SKILL.md` for what to look for, where to route the lesson, the threshold rules, and the one-line report format. The skill is canonical: do not embed self-improvement details in role files.
 
-Commit role/skill changes on `main` with a message that names the lesson, not just the file changed.
+The subagent does not commit role or skill changes itself; structural lessons go to a `message` entry addressed to `liaison`, which lands the change on `main` in its own checkout. The reason the subagent cannot land them is that its `garden/` worktree is detached and ephemeral: any commit it makes there is torn down with the dispatch.
 
 ## Style
 
 Two prose-style rules apply to every document you author or edit in the garden, including journal entry bodies. Both are skills:
 
-- `skills/em-dash-style/SKILL.md`: avoid em-dashes in prose; rewrite as period, parentheses, or colon.
-- `skills/relative-paths/SKILL.md`: paths within one document tree are relative; absolute paths are reserved for the cross-tree case (a document instructing an agent in another tree, like this file does for subagents reading it from worktrees).
+- `garden/skills/em-dash-style/SKILL.md`: avoid em-dashes in prose; rewrite as period, parentheses, or colon.
+- `garden/skills/relative-paths/SKILL.md`: paths within one document tree are relative; absolute paths are reserved for the cross-tree case (a document instructing an agent in another tree, as this file does for subagents reading it from a dispatch-root copy of `garden/`).
 
 Vendored content under `references/<source>/` is exempt from both rules: references are read-only snapshots.
 
@@ -60,28 +77,34 @@ Why: the garden runs across many forks. Without this rule, agents would reflexiv
 
 Project specifics (repo URLs, fork ownership, account/credential conventions, project-specific preferences) live in the **journal**, not in role or skill files. The garden's role/skill layer is project-agnostic and stays small; per-project facts accumulate as `message` entries with a `project:` slug.
 
-To find what the garden knows about a project: `grep -rl '^project: <slug>' /Users/kris/garden/journal/entries/`. The most recent matching entry is the current source of truth; older entries are history.
+To find what the garden knows about a project, grep the journal's entries for the project slug. From your dispatch root:
+
+```sh
+grep -rl '^project: <slug>' journal/entries/
+```
+
+The most recent matching entry is the current source of truth; older entries are history.
 
 ## Where things are
 
-- Garden root: `/Users/kris/garden/`
-- Skills: `/Users/kris/garden/skills/<skill>/SKILL.md` (load on demand)
-- Journal: `/Users/kris/garden/journal/` (git worktree of this repo on the orphan branch `journal`)
-- Worktree management doc: `/Users/kris/garden/WORKTREES.md`
-- Your assigned fork worktree: in the dispatch prompt; also `pwd` will report it.
+- Your dispatch root: in the dispatch prompt; `pwd` reports the project subworktree (or the dispatch root if there is none).
+- Garden `main` checkout (read-only for you): `<dispatch-root>/garden/`.
+- Journal worktree (write entries here): `<dispatch-root>/journal/`.
+- Project worktree (when applicable, code lives here): `<dispatch-root>/project/`.
+- Worktree management doc (`WORKTREES.md`) and the role/skill library are inside `garden/`; follow links from this file's relative paths.
 
 ## The journal
 
 The journal is the garden's transcript and message bus. It is a worktree of the garden repo on an orphan branch. Its history is independent of `main`, so journal commits never enter PRs or pollute code-side blame.
 
-The journal's top-level `README.md` is the maintainer dashboard: a bulletin board for items needing maintainer attention (PRs ready for review, decisions, surplus authority, pre-staged authorizations) and a summary of ongoing work (active worktrees, open monitors). Agents own the bulletin entirely: they post when an item arises and they clear it once the underlying condition is resolved (typically during the steward's per-cycle close). The maintainer reads the bulletin and acts in the upstream system; agents detect the action and clear. See `/Users/kris/garden/journal/README.md` for the structure.
+The journal's top-level `README.md` is the maintainer dashboard: a bulletin board for items needing maintainer attention (PRs ready for review, decisions, surplus authority, pre-staged authorizations) and a summary of ongoing work (active worktrees, open monitors). Agents own the bulletin entirely: they post when an item arises and they clear it once the underlying condition is resolved (typically during the steward's per-cycle close). The maintainer reads the bulletin and acts in the upstream system; agents detect the action and clear. See `journal/README.md` (in your dispatch root) for the current structure.
 
-The journal also archives terminated long-living subagents under `agents/`, indexed by date / role / subject matter for future consultation. The dispatcher writes a termination report per `skills/agent-termination/SKILL.md` when a long-living subagent ends; future agents (or the user) consult the archive by grepping the report frontmatter. See `/Users/kris/garden/journal/agents/README.md` for browse recipes.
+The journal also archives terminated long-living subagents under `agents/`, indexed by date / role / subject matter for future consultation. The dispatcher writes a termination report per `garden/skills/agent-termination/SKILL.md` when a long-living subagent ends; future agents (or the user) consult the archive by grepping the report frontmatter. See `journal/agents/README.md` for browse recipes.
 
 ### Entry layout
 
 ```
-/Users/kris/garden/journal/entries/<YYYY>/<MM>/<DD>/<HHMMSS>Z-<kind>-<role>-<short-id>.md
+journal/entries/<YYYY>/<MM>/<DD>/<HHMMSS>Z-<kind>-<role>-<short-id>.md
 ```
 
 - `<HHMMSS>Z`: UTC time of day, zero-padded.
@@ -107,32 +130,39 @@ refs:
 
 The `project:` field is optional but recommended whenever an entry is about a specific project. Search by `grep -l '^project: <slug>' ...` to recover all entries for a project. Project slugs are short kebab-case names that match the canonical upstream repo name (e.g. `endo`, `agoric-sdk`), not the fork owner.
 
+The `worktree:` field, when present, names the project worktree the entry is about. For per-dispatch project worktrees this is the dispatch-root-relative path; for standing worktrees (the monitor watch dirs) it is the long-lived `worktrees/<owner>-<repo>/<name>/` path.
+
 ### Writing an entry
 
-Follow `skills/journal-sync/SKILL.md`. It handles the local commit retry loop and, if a remote is configured for the journal branch, the fetch/rebase/push retry loop. Do not roll your own; concurrent appends are subtle and the skill is the single source of truth.
+Follow `garden/skills/journal-sync/SKILL.md`. It handles the detached-HEAD fetch/rebase/push retry loop. Do not roll your own; concurrent appends across orchestrator turns and parallel dispatches are subtle and the skill is the single source of truth.
 
 ### Reading recent entries
 
-- Overview: `git -C /Users/kris/garden/journal log --since='1 hour ago' --pretty='%h %s'`
-- Messages addressed to your role: `grep -rl 'to: <your-role>\|to: "\*"' /Users/kris/garden/journal/entries/$(date -u +%Y/%m/%d)/`
+From your dispatch root:
+
+- Overview: `git -C journal log --since='1 hour ago' --pretty='%h %s'`.
+- Messages addressed to your role: `grep -rl 'to: <your-role>\|to: "\*"' journal/entries/$(date -u +%Y/%m/%d)/`.
 - A specific prior entry referenced from your dispatch: read the path verbatim.
 
 ## Worktree conventions (summary)
 
-Full doc in `/Users/kris/garden/WORKTREES.md`. Minimum you need to know:
+Full doc in `garden/WORKTREES.md`. Minimum you need to know:
 
-- Your worktree's authoritative state lives in the journal at:
+- Your per-dispatch worktree triple is ephemeral; do not store anything you need to survive the dispatch outside the journal.
+- For project worktrees, role-private high-frequency state (polling caches, scratch files) lives inside the worktree under `.garden/` (e.g., `.garden-monitor/<repo>/`) and is never committed to the upstream branch. Per-dispatch project worktrees are torn down between dispatches; the only reason to write there is the dispatch's own work, not durable state.
+- The standing-monitor exception: a small number of long-lived `worktrees/<owner>-<repo>/watch-<slug>--monitor--<ts>/` checkouts persist across dispatches because their `.garden-monitor/<repo>/` state is owned by a bash daemon that runs continuously. These are referenced by the daemon, not by you; do not write to them from an LLM dispatch.
+- Do not rename, move, or remove any worktree. Lifecycle is the orchestrator's job; per-dispatch teardown happens via `scripts/dispatch-teardown.sh` when you return.
 
-  ```
-  /Users/kris/garden/journal/worktrees/$(hostname -s)/$(basename "$(pwd)").md
-  ```
+If you are dispatched into a long-lived project worktree (a standing monitor, an integrate scratch), the orchestrator names it in your dispatch prompt as the project worktree and you treat it normally. The worktree's authoritative journal index lives at:
 
-  Read it on start to learn your purpose, role, repo, branch, and any PRs you are bound to. Update `last_heartbeat` and `status` there per the lifecycle in `/Users/kris/garden/journal/worktrees/README.md`; the journal-sync skill handles the commit and push.
-- Role-private high-frequency state (polling caches, scratch files) lives inside the worktree under `.garden/` (e.g., `.garden-monitor/<repo>/`) and is never committed to the upstream branch. It is not authoritative for cross-machine state; only the journal index is.
-- Do not rename, move, or remove your worktree. Lifecycle is the liaison's and reaper's job.
+```
+journal/worktrees/$(hostname -s)/<worktree-basename>.md
+```
+
+Read it on start to learn your purpose, role, repo, branch, and any PRs you are bound to. Update `last_heartbeat` and `status` there per the lifecycle in `journal/worktrees/README.md`; the journal-sync skill handles the commit and push.
 
 ## Reporting
 
-When done with a one-shot task, write a `result` entry to the journal **and** return a concise summary in your final message. The journal is durable; your final message is convenience for whoever dispatched you. Both end with a one-line `Self-improvement: ...` per `skills/self-improvement/SKILL.md` (or `Self-improvement: nothing this time.`).
+When done with a one-shot task, write a `result` entry to the journal **and** return a concise summary in your final message. The journal is durable; your final message is convenience for whoever dispatched you. Both end with a one-line `Self-improvement: ...` per `garden/skills/self-improvement/SKILL.md` (or `Self-improvement: nothing this time.`).
 
 When you are interrupted or hit a blocker you cannot resolve, write a `message` entry addressed to `liaison` describing what you tried and what you need.

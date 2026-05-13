@@ -2,6 +2,7 @@
 # These are separate git worktrees / bare clones; do not track them from main.
 /journal/
 /worktrees/
+/dispatches/
 
 # Docker container detritus. The garden directory is bind-mounted as the
 # container's $HOME (see ./garden, Dockerfile), so any dotfile the bot or

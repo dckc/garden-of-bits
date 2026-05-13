@@ -17,7 +17,9 @@ Assumes you have already read `roles/COMMON.md`.
 
 ## Architecture: daemon + LLM wake
 
-Same shape as `monitor` (see `roles/monitor/AGENT.md` § Architecture). A long-lived bash daemon (`scripts/review-queue-poll.sh` on `main`) runs the GitHub search on a cadence, diffs the result against its persisted canonical set, and writes one stdout line per change:
+Same shape as `monitor` (see `roles/monitor/AGENT.md` § Architecture), with one simplification: the review-queue role has **no project worktree at all**, neither standing nor per-dispatch. The query spans every repo at once, so there is nothing fork-shaped to clone. The bash daemon's canonical set under `/tmp/garden-review-queue/` is the standing state (the standing-monitor exception applies here too); the LLM subagent, when dispatched, still receives a per-dispatch `garden/` + `journal/` worktree pair and runs entirely from those.
+
+A long-lived bash daemon (`scripts/review-queue-poll.sh` on `main`) runs the GitHub search on a cadence, diffs the result against its persisted canonical set, and writes one stdout line per change:
 
 ```
 [HH:MM:SS] ADD <owner>/<name>#<n> draft=<bool> updated=<iso> '<title>'

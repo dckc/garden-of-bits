@@ -6,10 +6,11 @@ author: liaison
 
 # Worktree management
 
-All worktrees the garden uses live under the garden root. Two kinds:
+All worktrees the garden uses live under the garden root. Three kinds:
 
 1. **Journal** (`journal/`). A worktree of *this* repo on the orphan branch `journal`. Created once per machine. Never delete unless intentionally archiving the garden's history.
 2. **Fork worktrees** (`worktrees/<owner>-<repo>/<name>/`). Worktrees added from a bare clone at `worktrees/<owner>-<repo>.git/`. Created and collected on demand.
+3. **Per-dispatch worktrees** (`dispatches/<role>--<purpose>--<UTC-ts>--<id>/{garden,journal,project}/`). Created by the orchestrator (liaison or steward) immediately before a subagent is dispatched and torn down when the subagent returns. See *Per-dispatch worktree triple* below.
 
 ## Bootstrap (run once)
 
@@ -109,3 +110,59 @@ If `worktree remove` complains about uncommitted changes you did not expect, sto
 An agent that wants exclusive access to a worktree sets `status: reserved` in its journal index entry before it begins work, and back to `active` or `idle` when done. Other agents skip reserved worktrees when looking for collectable candidates or when they would otherwise consider piggybacking on an existing checkout.
 
 Reservation is cooperative (no lock), so reserve only as long as you need.
+
+## Per-dispatch worktree triple
+
+Every subagent dispatched via the `Agent` tool runs in its own per-dispatch worktree triple, created by the orchestrator before the dispatch and torn down when the subagent returns. This is how "subagents should be as independent as possible" is mechanized: each subagent reads its own copy of `roles/`, writes journal entries from its own copy of `journal/`, and (when applicable) operates on its own copy of the upstream fork. No two subagents share filesystem state during a dispatch.
+
+### Layout
+
+```
+dispatches/<role>--<purpose>--<UTC-YYYYMMDD-HHMMSS>--<short-id>/
+  garden/    # detached worktree of garden's `main` branch
+  journal/   # detached worktree of garden's `journal` branch
+  project/   # (only when applicable) detached worktree of the fork@branch
+```
+
+- `<role>`: the dispatching role (`monitor`, `boatman`, `review-queue`, etc.).
+- `<purpose>`: a short kebab-case slug describing this specific dispatch (`react-to-pr-3253`, `forward-handoff-122`, `reconcile-bulletin`).
+- `<UTC-YYYYMMDD-HHMMSS>`: timestamp of the dispatch, ensures uniqueness even when multiple dispatches share role + purpose within a second.
+- `<short-id>`: 6 hex chars, same generation rule as the journal entry short-id. Useful as a cross-reference: the matching journal `dispatch` entry typically reuses this id.
+
+All three sub-worktrees are checked out in **detached-HEAD** so the subagent can `git fetch` and rebase or reset its HEAD freely without competing for branch ownership with the orchestrator's own checkouts. Commits and pushes use the detached-HEAD form:
+
+```sh
+git fetch origin <branch>
+git rebase origin/<branch>     # if the subagent has local commits to keep
+git push origin HEAD:<branch>  # push the detached commit back to the branch
+```
+
+### Lifecycle
+
+The orchestrator calls helper scripts; the subagent never creates or removes worktrees itself.
+
+```sh
+# Before invoking the Agent tool:
+DISPATCH_ROOT=$(scripts/dispatch-prepare.sh <role> <purpose> [<owner>/<repo> <branch>])
+
+# Pass $DISPATCH_ROOT into the subagent's prompt as the dispatch root.
+# (See CLAUDE.md § Dispatch prompt template for the wording.)
+
+# After the subagent returns:
+scripts/dispatch-teardown.sh "$DISPATCH_ROOT"
+```
+
+`dispatch-prepare.sh` creates the directory, runs `git worktree add --detach` for garden and journal, and (if a project repo and branch are named) for the project. It prints the dispatch root path on stdout.
+
+`dispatch-teardown.sh` runs `git worktree remove --force` for each sub-worktree, then removes the dispatch root directory. It is idempotent: missing pieces are tolerated.
+
+### Standing exceptions
+
+A few daemons and long-lived state holders are *not* per-dispatch entities and are not torn down between dispatches:
+
+- The **bash poll daemons** under `scripts/monitor-poll.sh` and `scripts/review-queue-poll.sh`. They are not subagents (no LLM involvement) and own state that must survive across LLM ticks (ETag, last-seen event id, the review-queue's canonical set).
+- The **standing monitor worktrees** at `worktrees/<owner>-<repo>/watch-<slug>--monitor--<ts>/` exist solely as the host directory for `.garden-monitor/<owner>-<repo>/` polling state. They are referenced by the daemons, not by the LLM dispatches.
+
+LLM monitor and review-queue dispatches still receive a per-dispatch garden+journal worktree triple. They typically do not need a project worktree (the events they react to arrive via the GitHub API, and the journal carries the durable record), so dispatch-prepare is called without the project arguments for those roles.
+
+If you find yourself wanting to grow per-dispatch state inside a standing worktree, that is a sign the design has drifted; route it through a journal entry instead.
