@@ -1,7 +1,7 @@
 ---
 created: 2026-05-12
-updated: 2026-05-12
-author: liaison
+updated: 2026-05-13
+author: liaison, monitor
 ---
 
 # Skill: monitor-endo-but-for-bots
@@ -15,21 +15,58 @@ Per-event-class reaction rules for the [monitor](../../roles/monitor/AGENT.md) w
 - Default branch: `llm`
 - Daemon cadence: 30s (faster than the other monitors because this repo is the active bot-evolution surface; events here often drive the maintainer's next prompt and benefit from low latency, even though the GitHub `/events` cache caps effective freshness around 60s).
 
+## Posture
+
+`endojs/endo-but-for-bots` is the **active bot-evolution surface**. The maintainer reviews PRs interactively on GitHub and dispatches work into the garden by writing skill/role updates or by issuing prompts in the garden root. Two consequences for the monitor:
+
+1. The maintainer is already plugged into GitHub notifications for this repo, so reposting every PR comment to the bulletin is pure noise.
+2. The journal-side message bus is the right destination for anything that should drive a *future steward dispatch* (a `fixer` for a CHANGES_REQUESTED review, a `weaver` for a new conflict, a `botanist` for a Dependabot open). The bulletin's *PR backlog* already enumerates the waiting PRs.
+
+The operative axis is "does this event change which role the steward should dispatch next?" If yes, journal loud. If no, journal quiet (or not at all).
+
 ## Reactions per event class
 
-This list is the menu; each row records the agreed action and a brief rationale. Rows still showing `(unset; propose via message to liaison)` have not been decided. The first time the monitor surfaces an event class with no rule, it writes a `message` entry to `liaison` proposing one; the liaison decides and lands the change here.
+Each row records the agreed action and a brief rationale. Where two actions are listed, the first is the default; the second is the conditional fallback.
 
-- `PushEvent` — (unset; propose via message to liaison)
-- `PullRequestEvent` (opened, reopened, closed, edited, synchronize) — (unset)
-- `PullRequestReviewEvent` (submitted, edited, dismissed) — (unset)
-- `PullRequestReviewCommentEvent` — (unset)
-- `IssuesEvent` (opened, reopened, closed, edited, assigned, labeled) — (unset)
-- `IssueCommentEvent` — (unset)
-- `ReleaseEvent` — (unset)
-- `CreateEvent` / `DeleteEvent` (branches/tags) — (unset)
-- `ForkEvent`, `WatchEvent`, `MemberEvent` — (unset)
+- `PushEvent` — **quiet** by default. Journal a `tick` only if the push is to an open PR's head branch that the bulletin records as `CHANGES_REQUESTED` (the fixer's "addressing push" pattern) or as `CONFLICTING` (the weaver may need to re-rebase). Otherwise no entry: pushes to the maintainer's own feature branches and to `llm` (the default branch) are routine and the maintainer sees them in GitHub directly. *Rationale: a push to a backlog PR's branch changes that PR's `head_sha` and re-arms its CI; an unannotated `llm` push does not change any bulletin state.*
+
+- `PullRequestEvent/opened` — **loud** with a one-line summary: number, title, author, draft-or-not, base branch. The steward uses this to know there is a new candidate for the backlog. No bulletin write from the monitor; that is the steward's job at the next cycle's close.
+
+- `PullRequestEvent/reopened|closed|merged|edited` — **quiet for merged**, **loud for closed-without-merge** (one-line summary with the closing actor; the steward clears the matching backlog row). **Quiet for `edited`** (title/body churn is common during review and rarely affects routing).
+
+- `PullRequestEvent/synchronize` — **quiet**. The matching `PushEvent` already handled it; recording it twice is duplicate.
+
+- `PullRequestReviewEvent/created|submitted` — **loud** with `state` (`APPROVED`, `CHANGES_REQUESTED`, `COMMENTED`) and actor. The steward routes:
+    - `kriskowal` + `CHANGES_REQUESTED` => fixer (per `roles/COMMON.md` § fixer);
+    - `kriskowal` + `COMMENTED` with non-trivial body => fixer with the per-action authorization the maintainer pre-stages (otherwise journal-only);
+    - `kriskowal` + `APPROVED` => clear the bulletin row;
+    - other reviewers => journal only, no role dispatch.
+
+- `PullRequestReviewEvent/edited|dismissed` — **quiet**. Edits to a prior review are typically maintainer-side polishing; dismissals are rare and the steward will see the next review-state transition.
+
+- `PullRequestReviewCommentEvent/created` — **quiet**. The parent `PullRequestReviewEvent` (when the review is submitted with the comments) carries the routing signal. Standalone inline comments without a containing review are rare on this repo and the steward picks them up via the review-queue daemon's *Pending kriskowal reviews* bulletin section anyway.
+
+- `IssueCommentEvent/created` — **conditionally loud**.
+    - On an open PR: journal a `tick` if the actor is `kriskowal` and the comment body matches one of the authorization-grant patterns (currently: identity switches, write-access grants, "do not open a PR upstream" constraints, kriskowal `/<command>` directives that route to a role). The [endojs/endo-but-for-bots#109#issuecomment-4436075344](https://github.com/endojs/endo-but-for-bots/pull/109#issuecomment-4436075344) grant is the prototype. Surface to the bulletin's *Pre-staged authorizations* section per the steward's existing pattern.
+    - On an open PR by any other actor, or by `kriskowal` without the authorization-grant shape: **quiet**. The maintainer's own comments are GitHub-notification-covered; others' comments rarely drive role dispatch.
+    - On a closed PR or an issue: **quiet** unless the issue number matches a row in the bulletin's *PR backlog* or *Awaits maintainer decision*, in which case a one-line `tick`.
+
+- `IssuesEvent/opened` — **loud**. New issues may need a role dispatch (a designer for a design issue, a scout for a benchmark, a fixer for a bug repro request). The steward decides; the monitor's job is to make sure the steward sees it.
+
+- `IssuesEvent/reopened|closed` — **conditionally loud**. Surface if the issue matches a backlog row; otherwise quiet.
+
+- `IssuesEvent/edited|assigned|labeled|unlabeled` — **quiet**.
+
+- `CreateEvent` / `DeleteEvent` (branches/tags) — **quiet**. These are the natural byproducts of merges and feature-branch cleanup. Rare exception: a `DeleteEvent` for a branch that the bulletin records as the head of an open PR is loud, because that means the PR is about to be closed (or the actor made a mistake the maintainer needs to see).
+
+- `ReleaseEvent` — **loud**. Releases on this repo would be a significant signal; none are expected at this stage of the project, so a tick gives the steward a chance to surface to the maintainer.
+
+- `ForkEvent`, `WatchEvent`, `MemberEvent` — **quiet**.
+
 - Other event classes — surface as a `message` to `liaison` with the raw type and a one-line context; do not silently drop.
 
 ## Notes from the field
 
 (append dated entries as reaction rules are learned)
+
+- 2026-05-13 — Initial reaction rules landed from the monitor's first proposal (`journal/entries/2026/05/13/023053Z-message-monitor-b8bb4a.md`), following a backfill tick that surfaced seven event classes against an all-`(unset)` skill. The framing turns on the repo being the active bot-evolution surface: the maintainer already sees GitHub notifications, so the monitor's job is to detect events that change which role the steward should dispatch next, not to mirror review activity into the bulletin. PR review state routes to fixer / clear-backlog / fixer-with-authorization per kriskowal's `CHANGES_REQUESTED` / `APPROVED` / `COMMENTED`. `IssueCommentEvent` from kriskowal with an authorization-grant shape (identity switches, write-access grants, no-PR-upstream constraints) surfaces to *Pre-staged authorizations*; the endo-but-for-bots#109 grant is the prototype, and the pattern waits for more examples before factoring out into its own skill.
