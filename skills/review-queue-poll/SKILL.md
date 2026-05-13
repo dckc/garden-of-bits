@@ -8,7 +8,7 @@ author: liaison
 
 Poll the GitHub search API for the set of open pull requests on which `kriskowal` is a requested reviewer, persist the canonical set atomically, and emit one log line per add/remove since the previous tick.
 
-This skill is the operational contract the daemon at `scripts/review-queue-poll.sh` implements. The LLM-side `review-queue` role reads the daemon's outputs; it does not call the search itself.
+This skill is the operational contract the daemon at `skills/review-queue-poll/review-queue-poll.sh` (sibling to this `SKILL.md`) implements. The LLM-side `review-queue` role reads the daemon's outputs; it does not call the search itself.
 
 ## Inputs
 

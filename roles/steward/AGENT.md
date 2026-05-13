@@ -85,14 +85,14 @@ Liveness check per cycle: for each daemon, `kill -0 $(cat /tmp/garden-monitor-<o
 
 ```sh
 # repo monitor
-nohup bash scripts/monitor-poll.sh <owner>/<name> \
+nohup bash skills/github-activity-poll/monitor-poll.sh <owner>/<name> \
   worktrees/<owner>-<name>/watch-main--monitor--<ts> <cadence> \
   > /tmp/garden-monitor-<owner>-<name>.log \
   2> /tmp/garden-monitor-<owner>-<name>.err &
 echo $! > /tmp/garden-monitor-<owner>-<name>.pid
 
 # review-queue
-nohup bash scripts/review-queue-poll.sh /tmp/garden-review-queue 120 \
+nohup bash skills/review-queue-poll/review-queue-poll.sh /tmp/garden-review-queue 120 \
   > /tmp/garden-review-queue.log \
   2> /tmp/garden-review-queue.err &
 echo $! > /tmp/garden-review-queue.pid
@@ -106,10 +106,10 @@ Each invocation is one cycle. Wake, survey, dispatch, journal, schedule, exit. N
 
 1. **Sync the journal.** Run step 1 of journal-sync (fetch / rebase if a remote is configured) so the cycle reads current state.
 2. **Survey.**
-   - **Drain the inbox** via `scripts/inbox-drain.sh steward --no-fetch` (step 1 already fetched). One line per addressed-to-`steward` or broadcast-`*` entry since the prior cycle's drain. Read each. This is the primary surface for cross-role messages; do not rely on a manual grep instead.
+   - **Drain the inbox** via `skills/inbox-drain/inbox-drain.sh steward --no-fetch` (step 1 already fetched). One line per addressed-to-`steward` or broadcast-`*` entry since the prior cycle's drain. Read each. This is the primary surface for cross-role messages; do not rely on a manual grep instead.
    - Recent journal entries since the prior steward cycle (use `kind:` filters: tick, result, message, worktree). Complements the inbox drain by surfacing context the inbox does not (your own prior cycle's results, other ticks worth glancing at).
    - Worktree inventory (`git worktree list` plus the per-host directory under `journal/worktrees/`). Note collectable worktrees per `WORKTREES.md` for the cycle's housekeeping pass.
-3. **Dispatch.** Run the *Standing monitors* liveness check above and respawn any dead daemons. Then scan each daemon's log tail since the prior cycle's close; for each repo with `NEW` lines (or the review-queue with `ADD`/`REMOVE` lines), prepare a per-dispatch worktree triple, write a `dispatch` entry naming the dispatch root, and invoke the corresponding role's `Agent`. Forward any pre-authorized boatman handoff that arrived as a `message` from `liaison`. Each `Agent` invocation runs in its own per-dispatch worktree triple created by `scripts/dispatch-prepare.sh <role> <purpose> [<owner>/<repo> <branch>]` and torn down on return by `scripts/dispatch-teardown.sh "$DISPATCH_ROOT"`. Monitor and review-queue dispatches typically omit the `[<owner>/<repo> <branch>]` arguments because their work is journal-and-API-only; boatman dispatches always include them. Dispatches are independent and may run in parallel; their dispatch roots do not interfere.
+3. **Dispatch.** Run the *Standing monitors* liveness check above and respawn any dead daemons. Then scan each daemon's log tail since the prior cycle's close; for each repo with `NEW` lines (or the review-queue with `ADD`/`REMOVE` lines), prepare a per-dispatch worktree triple, write a `dispatch` entry naming the dispatch root, and invoke the corresponding role's `Agent`. Forward any pre-authorized boatman handoff that arrived as a `message` from `liaison`. Each `Agent` invocation runs in its own per-dispatch worktree triple created by `skills/dispatch-worktree/dispatch-prepare.sh <role> <purpose> [<owner>/<repo> <branch>]` and torn down on return by `skills/dispatch-worktree/dispatch-teardown.sh "$DISPATCH_ROOT"`. Monitor and review-queue dispatches typically omit the `[<owner>/<repo> <branch>]` arguments because their work is journal-and-API-only; boatman dispatches always include them. Dispatches are independent and may run in parallel; their dispatch roots do not interfere.
 4. **Aggregate.** When subagents return, write a `result` entry per dispatch.
 5. **Housekeep.** Collect any worktree the survey flagged as collectable. Update heartbeats on worktrees the steward itself is using. Refresh the *Ongoing work* section of `journal/README.md` so it reflects current worktree status. Maintain the bulletin board: promote attention-worthy results into the relevant section (PRs ready for review, decisions needed), and clear existing items whose underlying condition is now resolved (the PR has a maintainer review, the decision was made in upstream comments, the staged authorization was forwarded into a dispatch, the surplus-authority condition was fixed). The maintainer never edits the bulletin; they act in the upstream system and the next cycle picks up the change. For any long-living subagent that completed or was interrupted this cycle, write a termination report per `skills/agent-termination/SKILL.md` and archive its transcript when feasible.
 6. **Self-improvement.** Scan the cycle for lessons; write any that generalize as `message` entries to `liaison`. Do not edit roles or skills.

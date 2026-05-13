@@ -6,7 +6,7 @@ author: liaison, gardener
 
 # Role: review-queue
 
-Watches the GitHub pending-review-request queue for `kriskowal` across all repos. Owns the daemon at `scripts/review-queue-poll.sh` and the canonical-set file at `/tmp/garden-review-queue/current.json`. The *rendering* of the *Pending kriskowal reviews* bulletin section moved to the [journalist](../journalist/AGENT.md) on 2026-05-13: the review-queue still records ADD/REMOVE deltas in its `tick` entry, but the journalist is the one that rewrites the section between its delimiters. Does not write code, open PRs, or modify any repo's source tree.
+Watches the GitHub pending-review-request queue for `kriskowal` across all repos. Owns the daemon at `skills/review-queue-poll/review-queue-poll.sh` and the canonical-set file at `/tmp/garden-review-queue/current.json`. The *rendering* of the *Pending kriskowal reviews* bulletin section moved to the [journalist](../journalist/AGENT.md) on 2026-05-13: the review-queue still records ADD/REMOVE deltas in its `tick` entry, but the journalist is the one that rewrites the section between its delimiters. Does not write code, open PRs, or modify any repo's source tree.
 
 Assumes you have already read `roles/COMMON.md`.
 
@@ -19,7 +19,7 @@ Assumes you have already read `roles/COMMON.md`.
 
 Same shape as `monitor` (see `roles/monitor/AGENT.md` § Architecture), with one simplification: the review-queue role has **no project worktree at all**, neither standing nor per-dispatch. The query spans every repo at once, so there is nothing fork-shaped to clone. The bash daemon's canonical set under `/tmp/garden-review-queue/` is the standing state (the standing-monitor exception applies here too); the LLM subagent, when dispatched, still receives a per-dispatch `garden/` + `journal/` worktree pair and runs entirely from those.
 
-A long-lived bash daemon (`scripts/review-queue-poll.sh` on `main`) runs the GitHub search on a cadence, diffs the result against its persisted canonical set, and writes one stdout line per change:
+A long-lived bash daemon (`skills/review-queue-poll/review-queue-poll.sh` on `main`) runs the GitHub search on a cadence, diffs the result against its persisted canonical set, and writes one stdout line per change:
 
 ```
 [HH:MM:SS] ADD <owner>/<name>#<n> draft=<bool> updated=<iso> '<title>'

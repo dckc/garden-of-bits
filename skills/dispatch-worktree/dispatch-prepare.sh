@@ -29,7 +29,7 @@ fi
 
 ROLE=$1
 PURPOSE=$2
-GARDEN_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+GARDEN_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 
 TS=$(date -u +%Y%m%d-%H%M%S)
 ID=$(openssl rand -hex 3)

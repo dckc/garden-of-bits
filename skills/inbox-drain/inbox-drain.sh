@@ -36,9 +36,9 @@ ROLE="${1:?usage: inbox-drain.sh <role> [--no-fetch]}"
 NO_FETCH=0
 [ "${2:-}" = "--no-fetch" ] && NO_FETCH=1
 
-# Locate the garden root (this script lives in <root>/scripts).
+# Locate the garden root (this script lives in <root>/skills/inbox-drain/).
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-GARDEN_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+GARDEN_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 JRN="$GARDEN_ROOT/journal"
 HOST="$(hostname -s)"
 STATE_DIR="$JRN/inboxes/$HOST"
@@ -73,7 +73,7 @@ last_drained_commit: $CUR_HEAD
 
 # $ROLE inbox state on $HOST
 
-Updated by \`scripts/inbox-drain.sh\` after each drain. Use
+Updated by \`skills/inbox-drain/inbox-drain.sh\` after each drain. Use
 \`git -C journal log <last_drained_commit>..HEAD\` to see the same range
 the next call will scan, or just rerun the script.
 EOF
@@ -111,7 +111,7 @@ last_drained_commit: $CUR_HEAD
 
 # $ROLE inbox state on $HOST
 
-Updated by \`scripts/inbox-drain.sh\` after each drain. Use
+Updated by \`skills/inbox-drain/inbox-drain.sh\` after each drain. Use
 \`git -C journal log <last_drained_commit>..HEAD\` to see the same range
 the next call will scan, or just rerun the script.
 EOF

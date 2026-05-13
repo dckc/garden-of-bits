@@ -6,7 +6,7 @@ author: liaison
 
 # Skill: inbox-drain
 
-Find journal entries addressed to a role since the last time that role drained its inbox. Backed by `scripts/inbox-drain.sh` and a per-host per-role state file at `journal/inboxes/<host>/<role>.md`.
+Find journal entries addressed to a role since the last time that role drained its inbox. Backed by `skills/inbox-drain/inbox-drain.sh` (sibling to this `SKILL.md`) and a per-host per-role state file at `journal/inboxes/<host>/<role>.md`.
 
 ## When to use
 
@@ -32,7 +32,7 @@ The state file is committed and pushed back to the journal so other hosts (or th
 ## Running once
 
 ```sh
-scripts/inbox-drain.sh liaison
+skills/inbox-drain/inbox-drain.sh liaison
 ```
 
 Output (chronological by entry timestamp; one line per match):
@@ -54,7 +54,7 @@ Two patterns:
 In the parent session, wrap the script in a Monitor invocation that polls every 60 to 120 seconds:
 
 ```sh
-while sleep 90; do scripts/inbox-drain.sh liaison; done
+while sleep 90; do skills/inbox-drain/inbox-drain.sh liaison; done
 ```
 
 Each output line becomes a notification in the parent session. The wrapper stays quiet between drains (the script's empty-on-no-change behavior).

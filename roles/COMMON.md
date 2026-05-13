@@ -25,7 +25,7 @@ The dispatch prompt names `<dispatch-root>` explicitly. Your cwd is `project/` i
 
 All three sub-worktrees are detached HEAD. Commits go to `HEAD`; pushes use `git push origin HEAD:<branch>`. See `garden/skills/journal-sync/SKILL.md` for the journal-side details and `garden/WORKTREES.md` § Per-dispatch worktree triple for the full lifecycle.
 
-When you finish, the orchestrator runs `scripts/dispatch-teardown.sh` on your dispatch root. Do not delete the worktrees yourself.
+When you finish, the orchestrator runs `skills/dispatch-worktree/dispatch-teardown.sh` on your dispatch root. Do not delete the worktrees yourself.
 
 ## Improving your role and skills
 
@@ -164,7 +164,7 @@ Full doc in `garden/WORKTREES.md`. Minimum you need to know:
 - Your per-dispatch worktree triple is ephemeral; do not store anything you need to survive the dispatch outside the journal.
 - For project worktrees, role-private high-frequency state (polling caches, scratch files) lives inside the worktree under `.garden/` (e.g., `.garden-monitor/<repo>/`) and is never committed to the upstream branch. Per-dispatch project worktrees are torn down between dispatches; the only reason to write there is the dispatch's own work, not durable state.
 - The standing-monitor exception: a small number of long-lived `worktrees/<owner>-<repo>/watch-<slug>--monitor--<ts>/` checkouts persist across dispatches because their `.garden-monitor/<repo>/` state is owned by a bash daemon that runs continuously. These are referenced by the daemon, not by you; do not write to them from an LLM dispatch.
-- Do not rename, move, or remove any worktree. Lifecycle is the orchestrator's job; per-dispatch teardown happens via `scripts/dispatch-teardown.sh` when you return.
+- Do not rename, move, or remove any worktree. Lifecycle is the orchestrator's job; per-dispatch teardown happens via `skills/dispatch-worktree/dispatch-teardown.sh` when you return.
 
 If you are dispatched into a long-lived project worktree (a standing monitor, an integrate scratch), the orchestrator names it in your dispatch prompt as the project worktree and you treat it normally. The worktree's authoritative journal index lives at:
 

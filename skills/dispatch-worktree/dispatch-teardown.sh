@@ -18,7 +18,7 @@ if [ "$#" -ne 1 ]; then
 fi
 
 ROOT=$1
-GARDEN_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+GARDEN_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 
 if [ ! -d "$ROOT" ]; then
   echo "dispatch-teardown: $ROOT does not exist; nothing to do" >&2

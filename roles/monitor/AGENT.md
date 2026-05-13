@@ -20,7 +20,7 @@ Assumes you have already read `roles/COMMON.md`.
 
 A monitor's polling loop is a long-lived `bash` daemon, not the LLM. The daemon is the standing-monitor exception documented in `WORKTREES.md` § Standing exceptions: it owns the ETag and last-seen-event-id state that must survive across LLM ticks, so its working directory (a `worktrees/<owner>-<repo>/watch-<slug>--monitor--<ts>/` checkout) persists across dispatches and is **not** torn down by `dispatch-teardown.sh`. The LLM monitor subagent, when it wakes, still receives a fresh per-dispatch `garden/` + `journal/` worktree triple (and typically no `project/`, since events arrive via the GitHub API and the daemon log is the source of truth).
 
-The daemon (see `scripts/monitor-poll.sh` on `main`) issues conditional GETs against `https://api.github.com/repos/<owner>/<name>/events` on the configured cadence. The steady state (304 Not Modified) costs nothing against the rate limit and produces no log output beyond the daemon's own startup line. On a 200 with new events, the daemon writes one stdout line per batch:
+The daemon (see `skills/github-activity-poll/monitor-poll.sh` on `main`) issues conditional GETs against `https://api.github.com/repos/<owner>/<name>/events` on the configured cadence. The steady state (304 Not Modified) costs nothing against the rate limit and produces no log output beyond the daemon's own startup line. On a 200 with new events, the daemon writes one stdout line per batch:
 
 ```
 [HH:MM:SS] NEW <count> on <owner>/<name>: <type>/<action>#<ref>, ...

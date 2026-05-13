@@ -8,7 +8,7 @@ author: liaison
 
 Adopted from `references/endo-but-for-bots/skills/worktree-per-pr.md` and adapted for this garden's per-dispatch worktree contract.
 
-In this garden, each dispatched subagent operates inside a per-dispatch worktree triple created by `scripts/dispatch-prepare.sh`. The triple's `project/` directory is the equivalent of the reference's per-PR worktree. The orchestrator (liaison or steward) creates the triple before dispatch and tears it down after return.
+In this garden, each dispatched subagent operates inside a per-dispatch worktree triple created by `skills/dispatch-worktree/dispatch-prepare.sh`. The triple's `project/` directory is the equivalent of the reference's per-PR worktree. The orchestrator (liaison or steward) creates the triple before dispatch and tears it down after return.
 
 See `garden/WORKTREES.md` § Per-dispatch worktree triple for the lifecycle.
 
@@ -57,9 +57,9 @@ The orchestrator names the remote in the dispatch brief.
 The orchestrator owns the lifecycle:
 
 ```sh
-DISPATCH_ROOT=$(scripts/dispatch-prepare.sh <role> <purpose> [<owner>/<repo> <branch>])
+DISPATCH_ROOT=$(skills/dispatch-worktree/dispatch-prepare.sh <role> <purpose> [<owner>/<repo> <branch>])
 # ... dispatch the subagent with $DISPATCH_ROOT in the prompt ...
-scripts/dispatch-teardown.sh "$DISPATCH_ROOT"
+skills/dispatch-worktree/dispatch-teardown.sh "$DISPATCH_ROOT"
 ```
 
 The subagent never creates or removes worktrees. Standing exceptions (monitor and review-queue poll daemons; long-lived `worktrees/<owner>-<repo>/watch-<slug>--monitor--<ts>/` checkouts that host polling state) are documented in `WORKTREES.md` § Standing exceptions.
