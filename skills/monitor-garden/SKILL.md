@@ -1,12 +1,10 @@
 ---
 created: 2026-05-13
-updated: 2026-05-13
+updated: 2026-05-14
 author: gardener, liaison
 ---
 
 # Skill: monitor-garden
-
-> **DORMANT as of 2026-05-13.** This skill is not currently active. The `kriskowal/garden` standing monitor was collected per the monitoring safety constraint in `roles/COMMON.md` § Monitoring safety constraint (mirrored in `CLAUDE.md`): repositories whose comments and pull requests are not gated against untrusted contributors are not safe to monitor, because daemon log lines and event bodies enter the LLM's context. `kriskowal/garden` does not currently meet that bar. The precipitating dispatch is at [`journal/entries/2026/05/13/053822Z-dispatch-liaison-44e029.md`](../../../journal/entries/2026/05/13/053822Z-dispatch-liaison-44e029.md). The rules below (including the liaison-not-monitor dispatch asymmetry) are preserved verbatim for the record in case the constraint reverses; re-enabling this monitor requires explicit maintainer authorization recorded in a journal `message` entry, after which the role-author re-adds the row to `roles/steward/AGENT.md` § Standing monitors, restores the active mapping in `roles/monitor/AGENT.md`, and removes this banner.
 
 Per-event-class reaction rules for the [monitor](../../roles/monitor/AGENT.md) when dispatched against `kriskowal/garden`. The base role and its polling discipline live in `roles/monitor/AGENT.md` and `skills/github-activity-poll/SKILL.md`; this skill is consulted on each `NEW`-line wake to decide whether and how to react. The garden is **this repo**, so the skill is issue-focused: it watches for external contributors or the maintainer opening, reopening, or commenting on issues, and surfaces those events as a liaison-proxy dispatch so the in-session liaison can decide how to react.
 
@@ -49,3 +47,5 @@ The reason for the asymmetry: issue activity on `kriskowal/garden` is meta-evolu
 (append dated entries as reaction rules are learned)
 
 - 2026-05-13 — Initial skill landed by the gardener dispatch at `journal/entries/2026/05/13/045631Z-dispatch-liaison-266ec2.md`. The garden gets its first standing monitor at the same time as this skill, so all per-class rows are first-pass: issue-loud, non-issue-silent, with the liaison-proxy dispatch as the only loud routing. The asymmetric `liaison` dispatch role (the steward dispatches a liaison subagent, not a monitor) is the distinguishing feature among the five standing monitors and is documented in *Dispatch role asymmetry* above.
+- 2026-05-13 — Collected per the monitoring safety constraint sweep (`journal/entries/2026/05/13/053822Z-dispatch-liaison-44e029.md`). Daemon stopped, worktree index entry marked `collected`, DORMANT banner added at the top of this file; reaction rules preserved verbatim.
+- 2026-05-14 — Re-activated. The maintainer authorized re-enabling the monitor in the liaison session at ~21:58Z; the steward recorded the authorization at `journal/entries/2026/05/14/220015Z-message-steward-d3e810.md` (the per-skill protocol the DORMANT banner specified). The gardener removed the banner, re-added the standing-monitor row to `roles/steward/AGENT.md`, and restored the active mapping in `roles/monitor/AGENT.md` in the same engagement (`journal/entries/2026/05/14/221128Z-dispatch-liaison-7d4081.md`). The maintainer's framing: `kriskowal/garden` is in practice a low-traffic repo whose external-contributor volume is small enough that the prompt-injection exposure from monitor log lines is tolerable. The liaison re-validates that judgment on any sustained increase in external-contributor activity.
