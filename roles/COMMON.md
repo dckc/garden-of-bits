@@ -110,6 +110,16 @@ grep -rl '^project: <slug>' journal/entries/
 
 The most recent matching entry is the current source of truth; older entries are history.
 
+## Library
+
+The journal carries a cross-cutting reference library at `journal/library/` distilled from upstream design documents and READMEs. When your work touches a domain term you do not already understand — a code symbol, a proper name, a phrase from a design — consult the library before guessing. The library has three indexing axes:
+
+- `journal/library/sources/` — by provenance (which upstream document said this).
+- `journal/library/topics/` — by broad subject taxonomy.
+- `journal/library/keywords.md` + `journal/library/concepts/` — by *the specific term you are looking up*.
+
+Use the `garden/skills/library-lookup/SKILL.md` skill rather than reading these by eye. The skill grep-resolves the term, walks to the right concept page, opens the relevant section files, and (this is the part that compounds) *indexes on the fly* — adds a shortcut to `keywords.md`, prunes a distraction on a concept page, or drafts a missing concept — so the next reader's search succeeds where yours did not or succeeds faster than yours did. Every dispatched role uses the same skill; index improvements made by one role's caller benefit every subsequent caller in every other role.
+
 ## Where things are
 
 - Your dispatch root: in the dispatch prompt; `pwd` reports the project subworktree (or the dispatch root if there is none).

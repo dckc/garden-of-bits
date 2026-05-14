@@ -20,6 +20,7 @@ Assumes you have already read `roles/COMMON.md`.
 
 ## Skills
 
+- [library-lookup](../../skills/library-lookup/SKILL.md): **before implementing**, look up the domain terms named in the design / issue so the implementation uses the same identifiers, mechanisms, and naming as the rest of the corpus. Index on the fly per the skill's writeback procedure.
 - [worktree-per-pr](../../skills/worktree-per-pr/SKILL.md): operate inside the dispatch root's `project/` worktree.
 - [pre-pr-checklist](../../skills/pre-pr-checklist/SKILL.md): format, lint, docs, tests run locally before pushing.
 - [pr-formation](../../skills/pr-formation/SKILL.md): authoring the PR title and body from the upstream template.
