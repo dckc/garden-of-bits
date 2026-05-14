@@ -87,6 +87,15 @@ Create `skills/<name>/SKILL.md`. Sections: purpose, inputs, state (if any), proc
 
 The garden lives in the bot user's home directory; that directory is what `<garden-root>` refers to throughout this document and the dispatch template. Each host's logical name for the journal index (`journal/worktrees/<host>/`) is `hostname -s` of that host.
 
+Each host configures its bot identity once in the garden repo's local git config:
+
+```sh
+git -C <garden-root> config user.name  <bot-login>     # e.g. kriscendobot, endolinbot
+git -C <garden-root> config user.email <bot-email>
+```
+
+`skills/dispatch-worktree/dispatch-prepare.sh` reads those values and pins them into each dispatch sub-worktree's local config so subagent commits cannot drift to the parent shell's global identity (which on a maintainer's host is the maintainer's name, reserved for upstream pushes via the boatman). The boatman overrides the pin at commit time when its dispatch carries `identity_switch_authorized: true`; every other role's commits carry the bot identity.
+
 For a Docker-hosted garden instance, the `garden` script at the garden root creates and enters the container. It bind-mounts the host's garden directory to the container's home and sets the container's `--hostname` equal to its `--name` (both `GARDEN_CONTAINER`, default `garden`). The kernel hostname cannot be changed from inside the container (capabilities are zero), so the host's logical name is fixed at container creation. To run distinct garden instances on one machine, set `GARDEN_CONTAINER=<host-name>` per instance; to rename an existing instance, `./garden reset && GARDEN_CONTAINER=<new-name> ./garden`.
 
 ## Monitoring safety constraint

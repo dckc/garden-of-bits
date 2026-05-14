@@ -1,6 +1,6 @@
 ---
 created: 2026-05-12
-updated: 2026-05-13
+updated: 2026-05-14
 author: gardener, liaison
 ---
 
@@ -24,6 +24,8 @@ Every subagent runs from a per-dispatch worktree triple created by the orchestra
 The dispatch prompt names `<dispatch-root>` explicitly. Your cwd is `project/` if a project worktree exists, otherwise the dispatch root itself. Use `garden/` for read-only role and skill consultation. Use `journal/` for journal commits. Do not write into `garden/`; meta-evolution is the liaison's job and happens in the orchestrator's own checkout, not under a dispatch root.
 
 All three sub-worktrees are detached HEAD. Commits go to `HEAD`; pushes use `git push origin HEAD:<branch>`. See `garden/skills/journal-sync/SKILL.md` for the journal-side details and `garden/WORKTREES.md` § Per-dispatch worktree triple for the full lifecycle.
+
+Each sub-worktree's git identity is pinned to the bot at prepare time, so any commit you make (in `garden/`, `journal/`, or `project/`) carries the bot identity by default. Do not edit the worktree's `user.name` / `user.email`. Only the boatman is authorized to override the pin, and does so per-commit via `git -c user.name=... -c user.email=...` when its dispatch carries `identity_switch_authorized: true`. Every other role's commits are bot-identity commits. See `garden/skills/dispatch-worktree/SKILL.md` § Identity pinning for the mechanism.
 
 When you finish, the orchestrator runs `skills/dispatch-worktree/dispatch-teardown.sh` on your dispatch root. Do not delete the worktrees yourself.
 

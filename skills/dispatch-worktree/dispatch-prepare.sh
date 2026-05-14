@@ -28,6 +28,19 @@
 # All three worktrees are checked out in detached-HEAD so a subagent can
 # `git fetch origin <branch>`, rebase, and `git push origin HEAD:<branch>`
 # without competing for branch ownership with the orchestrator's checkout.
+#
+# Identity pinning: each sub-worktree's local `core.<scope>` is set to
+# the bot identity at prepare time so a subagent's commits cannot drift
+# to the parent shell's `~/.gitconfig` (which on the maintainer's host
+# is `kriskowal`, the maintainer identity reserved for upstream pushes
+# via the boatman). The bot identity is read from the garden repo's
+# local config (`<garden-root>/.git/config`'s `user.name` and
+# `user.email`); each host configures the bot identity there once.
+# Boatman overrides at commit-time via `git -c user.name=<human-name>
+# -c user.email=<human-email> commit ...` (or equivalent
+# `GIT_AUTHOR_*` / `GIT_COMMITTER_*` env vars) when its dispatch
+# carries `identity_switch_authorized: true`; the per-worktree pin
+# remains the default for every non-overriding commit in the dispatch.
 
 set -euo pipefail
 
@@ -44,6 +57,25 @@ ID=$(openssl rand -hex 3)
 NAME="${ROLE}--${ID}"
 ROOT="${GARDEN_ROOT}/dispatches/${NAME}"
 
+# Resolve the bot identity from the garden repo's local config. Each
+# host configures its bot identity there once (e.g. `kriscendobot` on
+# the docker-hosted bot, `endolinbot` on alternative bot hosts). If
+# either field is missing in the local config, fall back to whatever
+# `git config --get` resolves at the garden root (which may inherit
+# from `~/.gitconfig`) and warn so the operator can repair the
+# host setup.
+bot_name=$(git -C "$GARDEN_ROOT" config --local --get user.name  2>/dev/null || true)
+bot_email=$(git -C "$GARDEN_ROOT" config --local --get user.email 2>/dev/null || true)
+if [ -z "$bot_name" ] || [ -z "$bot_email" ]; then
+  echo "dispatch-prepare: warning: garden repo at $GARDEN_ROOT has no local user.name/user.email; falling back to inherited config" >&2
+  bot_name=${bot_name:-$(git -C "$GARDEN_ROOT" config --get user.name  2>/dev/null || true)}
+  bot_email=${bot_email:-$(git -C "$GARDEN_ROOT" config --get user.email 2>/dev/null || true)}
+fi
+if [ -z "$bot_name" ] || [ -z "$bot_email" ]; then
+  echo "dispatch-prepare: error: no git user.name/user.email configured anywhere; cannot pin identity" >&2
+  exit 1
+fi
+
 mkdir -p "$ROOT"
 
 # Garden + journal worktrees both come from the garden repo's admin tree
@@ -51,6 +83,13 @@ mkdir -p "$ROOT"
 # new worktree at the named ref in detached-HEAD state.
 git -C "$GARDEN_ROOT" worktree add --detach "$ROOT/garden"  main    >/dev/null
 git -C "$GARDEN_ROOT" worktree add --detach "$ROOT/journal" journal >/dev/null
+
+# Pin the bot identity in each sub-worktree's local config so commits
+# cannot drift to the parent shell's global git identity.
+git -C "$ROOT/garden"  config user.name  "$bot_name"
+git -C "$ROOT/garden"  config user.email "$bot_email"
+git -C "$ROOT/journal" config user.name  "$bot_name"
+git -C "$ROOT/journal" config user.email "$bot_email"
 
 if [ "$#" -ge 4 ]; then
   REPO=$3
@@ -68,6 +107,8 @@ if [ "$#" -ge 4 ]; then
     exit 1
   fi
   git --git-dir="$BARE" worktree add --detach "$ROOT/project" "$BRANCH" >/dev/null
+  git -C "$ROOT/project" config user.name  "$bot_name"
+  git -C "$ROOT/project" config user.email "$bot_email"
 fi
 
 echo "$ROOT"

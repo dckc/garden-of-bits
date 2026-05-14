@@ -1,7 +1,7 @@
 ---
 created: 2026-05-12
-updated: 2026-05-12
-author: liaison
+updated: 2026-05-14
+author: liaison, gardener
 ---
 
 # Role: boatman
@@ -40,6 +40,20 @@ If any of `source`, `upstream`, `human`, or `identity_switch_authorized` is miss
   ```
 
   If `git interpret-trailers --parse` reports a `Co-authored-by` on any commit, the handoff is not done.
+
+- **Override the per-worktree identity pin at commit time.** `skills/dispatch-worktree/dispatch-prepare.sh` pins the bot identity into each sub-worktree's local config (see `skills/dispatch-worktree/SKILL.md` § Identity pinning). The boatman is the only role authorized to override the pin, and does so per-commit rather than by rewriting the worktree's config:
+
+  ```sh
+  git -C project \
+      -c user.name="<human-name>" -c user.email="<human-email>" \
+      commit ...
+
+  git -C project \
+      -c user.name="<human-name>" -c user.email="<human-email>" \
+      rebase ...  # for any rebase that creates new commits, e.g. interactive
+  ```
+
+  Equivalent: set `GIT_AUTHOR_NAME`, `GIT_AUTHOR_EMAIL`, `GIT_COMMITTER_NAME`, `GIT_COMMITTER_EMAIL` in the environment for the commit subprocess. The `git -c` form is preferred because it is local to the invocation and self-documents the override. Do not edit `project/.git/config` directly; that would silently break the discipline for any other commit the boatman makes in the same dispatch (e.g. a journal entry).
 
 - **One voice upstream.** The garden may have messy intermediate history (WIP commits, fixups, agent ticks); the upstream does not need to see it. Squash or rewrite to present a clean, reviewable series. Default: one commit per logical change.
 

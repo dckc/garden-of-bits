@@ -152,7 +152,7 @@ DISPATCH_ROOT=$(skills/dispatch-worktree/dispatch-prepare.sh <role> <purpose> [<
 skills/dispatch-worktree/dispatch-teardown.sh "$DISPATCH_ROOT"
 ```
 
-The scripts and their procedural detail live in `skills/dispatch-worktree/` (see [skills/dispatch-worktree/SKILL.md](skills/dispatch-worktree/SKILL.md) for inputs, outputs, contract guarantees, and pitfalls). In summary: `dispatch-prepare.sh` creates the directory, runs `git worktree add --detach` for garden and journal, and (if a project repo and branch are named) for the project. It prints the dispatch root path on stdout. `dispatch-teardown.sh` runs `git worktree remove --force` for each sub-worktree, then removes the dispatch root directory. It is idempotent: missing pieces are tolerated.
+The scripts and their procedural detail live in `skills/dispatch-worktree/` (see [skills/dispatch-worktree/SKILL.md](skills/dispatch-worktree/SKILL.md) for inputs, outputs, contract guarantees, identity pinning, and pitfalls). In summary: `dispatch-prepare.sh` creates the directory, runs `git worktree add --detach` for garden and journal, and (if a project repo and branch are named) for the project. It also pins the bot identity (read from `<garden-root>/.git/config`'s local `user.name` and `user.email`) into each sub-worktree's local config, so a subagent's commits cannot drift to the parent shell's global identity. It prints the dispatch root path on stdout. `dispatch-teardown.sh` runs `git worktree remove --force` for each sub-worktree, then removes the dispatch root directory. It is idempotent: missing pieces are tolerated.
 
 ### Standing exceptions
 

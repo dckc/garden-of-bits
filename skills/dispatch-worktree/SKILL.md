@@ -49,6 +49,33 @@ The directory name omits the purpose slug and the UTC timestamp on purpose. Earl
 
 If a project repo and branch are named but no bare clone exists at `worktrees/<owner>-<repo>.git/`, the script rolls back partial state and exits non-zero with a hint to clone the fork first. The orchestrator either clones the fork (per `WORKTREES.md` § Adding a fork worktree) and retries, or reports the missing fork to the user.
 
+### Identity pinning
+
+`dispatch-prepare.sh` reads the **bot identity** from the garden repo's local config (`<garden-root>/.git/config`'s `user.name` and `user.email`) and writes it into each sub-worktree's local config before returning. Every commit a subagent makes in `garden/`, `journal/`, or `project/` therefore carries the bot identity, regardless of what the orchestrator's shell has set in `~/.gitconfig`.
+
+The reason: the maintainer's host has a global `~/.gitconfig` that sets `user.name = Kris Kowal` and `user.email = kriskowal@...`, the maintainer identity reserved for upstream pushes via the [boatman](../../roles/boatman/AGENT.md). Without a per-worktree pin, a fixer (or any other subagent) commits inherit the maintainer name even when committing on the bot's own fork. The garden repo's local config is the per-host source of truth for "which bot identity does this host represent" (`kriscendobot` on the docker-hosted bot, `endolinbot` on alternative hosts, etc.); pinning that into the sub-worktrees prevents the drift.
+
+Each host configures its bot identity once at setup time:
+
+```sh
+git -C <garden-root> config user.name  <bot-login>
+git -C <garden-root> config user.email <bot-email>
+```
+
+If the local config is empty, `dispatch-prepare.sh` warns and falls back to whatever `git config --get` resolves at the garden root (which may inherit from `~/.gitconfig`); if nothing resolves, the script errors out.
+
+**Boatman override at commit-time.** When a boatman dispatch carries `identity_switch_authorized: true` and its dispatch prompt names a `human:` author (per `roles/boatman/AGENT.md` § Dispatch inputs), the boatman overrides the per-worktree pin at commit time:
+
+```sh
+git -C project \
+    -c user.name="<human-name>" -c user.email="<human-email>" \
+    commit ...
+```
+
+The `git -c` form sets the identity for that single command only; the per-worktree pin remains the default for every other commit in the dispatch (e.g. the source-side cross-link comment, journal entries). Equivalent: set `GIT_AUTHOR_NAME` / `GIT_AUTHOR_EMAIL` / `GIT_COMMITTER_NAME` / `GIT_COMMITTER_EMAIL` env vars for the commit subprocess. Either form is fine; the `git -c` form is preferred because it is local to the commit invocation and self-documents the override.
+
+The boatman is the **only** role authorized to override the pin. Every other role's commits are bot-identity commits.
+
 ### Teardown
 
 ```sh
@@ -74,7 +101,8 @@ The scripts are stateless. State that survives across dispatches lives in the jo
 - Each dispatch sees its own `garden/` and `journal/`. Concurrent dispatches do not share these working trees.
 - Each dispatch sees its own `project/` when applicable. Concurrent dispatches on the same fork worktree do not share working trees (each gets its own checkout off the shared bare clone).
 - The orchestrator's own `garden/` checkout (on `main`) and its long-lived `journal/` worktree (on the `journal` branch) are not touched by the prepare or teardown scripts. The orchestrator is not in detached HEAD; only the per-dispatch sub-worktrees are.
-- Concurrent prepare invocations do not collide because each script-call generates a fresh timestamp + short-id pair.
+- Concurrent prepare invocations do not collide because each script-call generates a fresh short-id.
+- Every commit a subagent makes in `garden/`, `journal/`, or `project/` carries the bot identity by default. The pin is in each sub-worktree's local config and cannot be overridden by inheriting from the parent shell or `~/.gitconfig`. The boatman is the only role authorized to override the pin, and does so at commit time per *Identity pinning* above.
 
 ## Pitfalls
 
@@ -88,3 +116,4 @@ The scripts are stateless. State that survives across dispatches lives in the jo
 
 - _2026-05-13_: scripts moved from `scripts/` to this skill directory (`skills/dispatch-worktree/{dispatch-prepare,dispatch-teardown}.sh`) as part of the broader scripts-into-skills reorganization. The architecture summary in `WORKTREES.md` § Per-dispatch worktree triple is unchanged; this skill is the new home of the procedural detail and the scripts themselves. The four other per-dispatch sibling scripts (`monitor-poll.sh`, `review-queue-poll.sh`, `inbox-drain.sh`) also moved into their respective skill directories in the same pass.
 - _2026-05-14_: dispatch-root naming shortened from `<role>--<purpose>--<UTC-YYYYMMDD-HHMMSS>--<short-id>` to `<role>--<short-id>`. Trigger was a fixer working on PR #135 in `endojs/endo-but-for-bots` who could not run the daemon's `endo.test.js` locally: the absolute UNIX-socket path `/home/<user>/dispatches/<long-name>/project/packages/daemon/tmp/<test-slug>/endo.sock` overran the 108-char `sockaddr_un` limit, so every daemon test failed `ENOENT` before any assertion ran. The fix is to drop the purpose slug and the timestamp from the directory name; both still live in the matching `dispatch` journal entry, which is the authoritative index. Diagnosis at `entries/2026/05/14/090813Z-message-liaison-1bc419.md`.
+- _2026-05-14_: per-worktree bot-identity pin added to `dispatch-prepare.sh`. Trigger was the discipline observation at `entries/2026/05/14/061959Z-result-liaison-7675d7.md` § Discipline observation: a fixer's commit on PR #244 went out authored as `kriskowal <bot-email>` because the dispatch worktree inherited the parent shell's global `user.name` (the maintainer's name). The fix is to read the bot identity from the garden repo's local config (`<garden-root>/.git/config`) and write it into each sub-worktree's local config before the subagent runs, so a subagent's commits cannot drift to the maintainer's name. The boatman overrides at commit-time when its dispatch carries `identity_switch_authorized: true`.
