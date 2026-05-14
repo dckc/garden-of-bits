@@ -66,6 +66,7 @@ The verb names the role. The orchestrator dispatches that role against the named
 | **build #N** / **build a PR for X**                                                             | dispatch [builder](../builder/AGENT.md).                                                                                   |
 | **design X** / **propose X** / **spec X**                                                       | dispatch [designer](../designer/AGENT.md) (draft PR against `llm` per the design-PR policy).                              |
 | **fix #N**                                                                                      | dispatch [fixer](../fixer/AGENT.md).                                                                                       |
+| **retcon #N** / **retcon this branch**                                                          | dispatch [fixer](../fixer/AGENT.md) to reset the PR branch to its base and restage the same net diff as per-package commits plus a separate `chore: Update yarn.lock` commit, implementation and tests bundled. See [`skills/retcon/SKILL.md`](../../skills/retcon/SKILL.md). The PR's diff is unchanged; only the commit grouping changes. |
 | **weave #N** / **rebase #N**                                                                    | dispatch [weaver](../weaver/AGENT.md).                                                                                     |
 | **merge #N**                                                                                    | dispatch [conductor](../conductor/AGENT.md).                                                                               |
 | **groom the roadmap**                                                                           | dispatch [groom](../groom/AGENT.md).                                                                                       |
@@ -82,6 +83,7 @@ Each phrase triggers multiple sequential dispatches.
 | **mirror #N** / **fork #N onto bots**                                                                    | builder ports the upstream PR's diff onto the bot fork; chain proceeds from there.                                                   |
 | **carry feedback from #N** / **respond to feedback on #N** / **respond in kind on #N**                   | fixer applies inline-review feedback on the bot-side mirror.                                                                         |
 | **address #N** / **wrap up #N**                                                                          | fixer-loop on whatever is owed (CHANGES_REQUESTED, lint failure, etc.).                                                              |
+| **retcon and ferry #N** / **retcon then ferry #N**                                                       | fixer retcons the branch per [`skills/retcon/SKILL.md`](../../skills/retcon/SKILL.md), then boatman ferries upstream (requires `identity_switch_authorized: true`).                                            |
 
 ### Garden-meta phrases
 
@@ -135,6 +137,7 @@ Phrases by which the user grants the liaison permission to originate an action t
 - *Ferry* is the canonical verb for the boatman; *carry upstream* and *ship upstream* are recognized synonyms. The boatman entry stands out because the maintainer reaffirmed *ferry* as the preferred phrasing (2026-05-14).
 - *Carry feedback from #N* (fixer on bot-side mirror) is distinct from *carry #N upstream* (boatman to upstream). The orchestrator reads the prepositional phrase or the surrounding context to disambiguate.
 - *Cleanup #N* (cleaner) is distinct from *wrap up #N* (fixer-loop on whatever is owed). The cleaner is the coverage / dead-code stage of the PR-creation-flow; wrap-up is the catch-all for "drive the PR to a finished state, whatever is currently blocking it."
+- *Retcon #N* (regroup commits, base unchanged) is distinct from *weave #N* (rebase onto current base). The retcon's net diff is invariant by construction; the weave's may not be (the base moved). When the maintainer wants both ("weave then retcon"), run weave first; the retcon assumes the base is current.
 - *Encode* (gardener authors a rule) is distinct from *encode the lesson* in a journal entry (`scholar` / `librarian` work on `journal/projects/`). The maintainer typically means the former; if context names a project-context document, route to the right role.
 
 ## Operating norms
