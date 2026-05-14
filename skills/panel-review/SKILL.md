@@ -1,24 +1,25 @@
 ---
 created: 2026-05-13
-updated: 2026-05-13
+updated: 2026-05-14
 author: gardener
 ---
 
 # Skill: panel-review
 
-Adopted from `references/endo-but-for-bots/skills/panel-review-12-perspectives.md` and reshaped for this garden's 2-member default panel (juror plus saboteur).
+Adopted from `references/endo-but-for-bots/skills/panel-review-12-perspectives.md` and reshaped for this garden's six-seat default panel.
 
-The aggregation discipline and submission contract for jury reviews. The default jury in `skills/pr-creation-flow/SKILL.md` is the juror plus the saboteur; this skill describes how their findings combine into one verdict and how that verdict gets submitted.
+The aggregation discipline and submission contract for jury reviews. The default jury in `skills/pr-creation-flow/SKILL.md` is six seats (assessor, stylist, archivist, curator, locksmith, saboteur) dispatched by the [judge](../../roles/judge/AGENT.md); this skill describes how their findings combine into one verdict and how the judge submits that verdict.
 
 ## When to use
 
-- Every PR-creation-flow jury round. The juror is the panel-side editor (it aggregates the saboteur's findings into the same body).
-- A maintainer-requested standalone review of a stale PR. Same procedure; the orchestrator names the panel composition in the dispatch brief.
+- Every PR-creation-flow jury round. The judge is the panel's foreperson (aggregates the six per-juror blocks into one body and submits the formal review).
+- A maintainer-requested standalone review of a stale PR. Same procedure; the orchestrator names the panel composition in the dispatch brief and the judge dispatches that composition.
 
 ## Panel composition
 
-- **Default for PR-creation flow: juror plus saboteur.** Two seats, dispatched as a single jury round by the orchestrator (sequential or concurrent at the orchestrator's discretion; the panel's deliverable is the same shape either way).
-- **Larger panels** are supported by the same aggregation rules. The reference's 12-perspective panel (correctness, test coverage, types, API stability, diff hygiene, error messages, performance, naming, changeset, backwards compatibility, docs, security, plus the adversarial slot) remains a viable composition when a PR is large or important enough that the 2-member default would miss a perspective. The orchestrator names the additional jurors in the dispatch brief; each one returns a block in the same shape and the juror-editor aggregates them all.
+- **Default for PR-creation flow: six seats** (assessor, stylist, archivist, curator, locksmith, saboteur), dispatched as a single panel round by the judge. The judge picks sequential or concurrent at its discretion; the panel's deliverable is the same shape either way. See `skills/pr-creation-flow/SKILL.md` § Jury composition for the seat list and the deliberate-overlap rationale.
+- **Smaller panels** (e.g., three seats for a tiny PR) are valid when the orchestrator names a reduced composition in the dispatch brief.
+- **Larger panels** are supported by the same aggregation rules. The reference's 12-perspective panel (correctness, test coverage, types, API stability, diff hygiene, error messages, performance, naming, changeset, backwards compatibility, docs, security, plus the adversarial slot) remains a viable composition when a PR is large or important enough that the six-seat default would miss a perspective. The judge dispatches each named seat and aggregates them all.
 
 ## Per-juror block shape
 
@@ -40,10 +41,10 @@ Each block under ~400 words. "Comment-only" is for taste; anything that warrants
 
 ## Aggregation
 
-The juror-editor groups findings into:
+The judge groups findings into:
 
 - **Must fix before merge** (any "request-changes" with concrete code / test / doc impact). Drives the jury-fixer loop per `skills/pr-creation-flow/SKILL.md`.
-- **Should fix in this PR** (taste or clarity items raised independently by both panel members, when the panel size is 2; or by at least two members on a larger panel).
+- **Should fix in this PR** (taste or clarity items raised independently by at least two seats; on a six-seat panel the deliberate inquiry-area overlap means routine duplicate flagging is expected and is the signal "promote to should-fix").
 - **Out of scope / follow-up** (useful but not blocking this PR's loop).
 
 Dedupe overlapping findings. Where panel members disagree, present both views and pick the side most consistent with the project's `CLAUDE.md` (or `AGENTS.md`); make the disagreement explicit so the orchestrator can act.
@@ -66,7 +67,7 @@ gh pr review <N> -R <repo> --comment --body-file /tmp/panel.md
 gh pr review <N> -R <repo> --approve --body-file /tmp/panel.md
 ```
 
-The body is the same aggregated report (typically under 700 words for a 2-member panel; larger panels run longer). Cite findings by perspective grouped where members agreed; do not list individual agent names.
+The judge submits the formal review. The body is the same aggregated report (typically 700 to 1200 words for the six-seat default; smaller panels run shorter, larger ones run longer). Cite findings by perspective grouped where members agreed; do not list individual agent names.
 
 ## Pitfalls
 
@@ -78,4 +79,5 @@ The body is the same aggregated report (typically under 700 words for a 2-member
 
 ## Notes from the field
 
-- _2026-05-13_: adopted from the reference and reshaped for the 2-member default panel. The reference's 12-perspective form is preserved as a larger-panel option; the orchestrator names the composition in the dispatch brief.
+- _2026-05-13_: adopted from the reference and reshaped for the 2-member default panel (juror plus saboteur). The reference's 12-perspective form was preserved as a larger-panel option.
+- _2026-05-14_: redesign. The default panel grew from 2 seats to 6 named seats (assessor, stylist, archivist, curator, locksmith, saboteur), the judge role was introduced as the panel's foreperson (it aggregates and submits, but is not itself a reviewer), and per-juror block submission migrated from "the juror is the panel-side editor" to "each seat returns a block, the judge aggregates". The orchestrator names a different composition in the dispatch brief when the default does not fit.

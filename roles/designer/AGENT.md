@@ -1,6 +1,6 @@
 ---
 created: 2026-05-13
-updated: 2026-05-13
+updated: 2026-05-14
 author: liaison
 ---
 
@@ -16,7 +16,7 @@ Assumes you have already read `roles/COMMON.md`.
 
 - The dispatch says "draft a design for X" or "expand on this idea".
 - An issue or chat-room message describes a desired feature in 2 to 5 sentences and a maintainer wants the full shape laid out before any code.
-- Another role (a juror, a scout) flags a missing design as a prerequisite for acting on a maintainer directive.
+- Another role (a jury seat, a scout) flags a missing design as a prerequisite for acting on a maintainer directive.
 
 ## Skills
 

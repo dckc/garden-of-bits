@@ -1,6 +1,6 @@
 ---
 created: 2026-05-13
-updated: 2026-05-13
+updated: 2026-05-14
 author: liaison
 ---
 
@@ -14,7 +14,7 @@ Assumes you have already read `roles/COMMON.md`.
 
 ## When to enter this role
 
-- A maintainer (or a juror, or another reviewer) suggests an optimization with the caveat "but benchmark first".
+- A maintainer (or a jury seat, or another reviewer) suggests an optimization with the caveat "but benchmark first".
 - A maintainer asks for the throughput impact of a change before approving it.
 - Two implementation choices are equivalent in correctness and the decision is wall-clock or memory.
 - A scheduled engagement (e.g. a periodic CI-latency refresh) tasks the scout with measuring trend over time.

@@ -1,6 +1,6 @@
 ---
 created: 2026-05-13
-updated: 2026-05-13
+updated: 2026-05-14
 author: liaison
 ---
 
@@ -18,7 +18,7 @@ Reactions count as cross-repo activity. Posting from a bot identity on an upstre
 
 **At the moment the activity is noticed and a response shape begins to form.** The triage role posts the reactji, not the dispatched worker. Worker latency (10 to 30 minutes from dispatch start) is unacceptable for a "received" signal; the human sees the reactji within seconds when the triage role's per-cycle sweep first reads the comment.
 
-Worker roles (`fixer`, `weaver`, `shepherd`, `conductor`, `cleaner`, `designer`, `scribe`, `juror`) inherit the reactji from the triage role and do not re-react on comments the dispatch brief surfaced. Exception: when the worker discovers a comment the triage did not pre-surface (older drafts, comments on files the brief did not mention), react at the moment of discovery.
+Worker roles (`fixer`, `weaver`, `shepherd`, `conductor`, `cleaner`, `designer`, `scribe`, `judge`, the jury seats) inherit the reactji from the triage role and do not re-react on comments the dispatch brief surfaced. Exception: when the worker discovers a comment the triage did not pre-surface (older drafts, comments on files the brief did not mention), react at the moment of discovery.
 
 ## Vocabulary
 

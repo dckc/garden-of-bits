@@ -16,7 +16,7 @@ Assumes you have already read `roles/COMMON.md`.
 
 - A maintainer directive says "implement #N" or "open a PR for X".
 - A design or spec document with concrete acceptance criteria points at code that does not exist yet.
-- A juror panel's must-fix list directs new work in a sibling area, and the orchestrator dispatches a builder against that sibling.
+- A jury panel's must-fix list directs new work in a sibling area, and the orchestrator dispatches a builder against that sibling.
 
 ## Skills
 

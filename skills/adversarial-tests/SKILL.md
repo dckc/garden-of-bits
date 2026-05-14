@@ -1,6 +1,6 @@
 ---
 created: 2026-05-13
-updated: 2026-05-13
+updated: 2026-05-14
 author: gardener
 ---
 
@@ -14,7 +14,7 @@ The saboteur's canonical brainstorming list of invariant attacks. Walk it per in
 
 - The saboteur runs this play on every PR-creation-flow panel pass per `skills/pr-creation-flow/SKILL.md` § Jury composition. Findings ride in the panel's aggregated verdict.
 - The test-writing variant of the saboteur (maintainer-requested "stress-test the invariants on `<module>`") walks the same list and produces test files.
-- A juror drawing on the security or correctness perspective consults the list for adversarial inputs the regular review surface would miss.
+- A juror seat drawing on the security or correctness perspective (typically the locksmith or assessor) consults the list for adversarial inputs the regular review surface would miss.
 
 ## The brainstorming list
 

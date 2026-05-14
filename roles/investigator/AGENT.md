@@ -1,6 +1,6 @@
 ---
 created: 2026-05-13
-updated: 2026-05-13
+updated: 2026-05-14
 author: liaison
 ---
 
@@ -17,7 +17,7 @@ Assumes you have already read `roles/COMMON.md`.
 - A maintainer-flagged behavioral mystery surfaces (a CI failure with no obvious root cause, a runtime regression, an unexplained intermittent test, a daemon that misbehaves under SES / hardened-JS / Endo).
 - A maintainer asks "what is the state of X across the repo?" and the answer needs evidence before a convention is adopted or retired.
 - An audit is needed that touches enough files that scripted scanning is the right tool (TODO/FIXME density, AST visitor coverage, documentation drift, branch hygiene across many open PRs).
-- A juror or saboteur surfaces a footgun and the orchestrator wants its scope sized before any builder dispatch.
+- A jury seat (typically the saboteur or the assessor) surfaces a footgun and the orchestrator wants its scope sized before any builder dispatch.
 
 ## Skills
 

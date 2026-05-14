@@ -1,6 +1,6 @@
 ---
 created: 2026-05-13
-updated: 2026-05-13
+updated: 2026-05-14
 author: gardener
 ---
 
@@ -12,9 +12,9 @@ The cleaner's baseline-and-iterate loop for raising coverage on a target package
 
 ## When to use
 
-- The cleaner runs this after the jury has cleared a draft PR, before un-drafting. See `skills/pr-creation-flow/SKILL.md` § Cleaner placement.
+- The cleaner runs this between the builder and the jury per `skills/pr-creation-flow/SKILL.md` § Cleaner placement. The cleaner is no longer the un-drafter; the judge un-drafts after the jury-fixer loop terminates.
 - A maintainer directive asks for "a coverage pass on `<package>`".
-- A juror flagged thin coverage on a PR's affected package and the orchestrator dispatched a cleaner.
+- A jury panel flagged thin coverage on a PR's affected package as a follow-up (uncommon, since the cleaner runs before the panel in the post-2026-05-14 flow); the orchestrator dispatched a cleaner.
 
 ## Procedure
 

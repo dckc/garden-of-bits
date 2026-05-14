@@ -1,6 +1,6 @@
 ---
 created: 2026-05-13
-updated: 2026-05-13
+updated: 2026-05-14
 author: liaison
 ---
 
@@ -17,7 +17,7 @@ See `garden/WORKTREES.md` § Per-dispatch worktree triple for the lifecycle.
 Every dispatched subagent operates outside the orchestrator's seat, full stop. Three lanes:
 
 1. **Mutating subagents** (fixer, weaver, shepherd, conductor, designer): work inside `<dispatch-root>/project/`, the project worktree the orchestrator prepared.
-2. **Read-only subagents** (juror reading the diff, saboteur perspective on a contributor PR): the orchestrator still prepares a project worktree (detached HEAD, never committed); the dispatch brief notes the read-only posture.
+2. **Read-only subagents** (any jury seat reading the diff: assessor, stylist, archivist, curator, locksmith, saboteur): the orchestrator (or the judge, when the seats are dispatched as a panel) still prepares a project worktree (detached HEAD, never committed); the dispatch brief notes the read-only posture.
 3. **API-only subagents** (monitor, review-queue): the dispatch prep is called without the project arguments; the agent's work is journal-and-API-only.
 
 ## Layout
