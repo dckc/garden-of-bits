@@ -6,7 +6,7 @@ author: gardener
 
 # Skill: pr-creation-flow
 
-The canonical procedure that ties the per-PR roles together: which role opens the PR, which roles touch it before the maintainer ever sees it, and which role decides it is ready for the maintainer's review queue. Read by every role the flow touches ([builder](../../roles/builder/AGENT.md), [assayer](../../roles/assayer/AGENT.md), [cleaner](../../roles/cleaner/AGENT.md), [judge](../../roles/judge/AGENT.md), the jury seats ([assessor](../../roles/assessor/AGENT.md), [stylist](../../roles/stylist/AGENT.md), [archivist](../../roles/archivist/AGENT.md), [curator](../../roles/curator/AGENT.md), [locksmith](../../roles/locksmith/AGENT.md), [saboteur](../../roles/saboteur/AGENT.md)), and [fixer](../../roles/fixer/AGENT.md)) and by the orchestrators ([liaison](../../roles/liaison/AGENT.md), [steward](../../roles/steward/AGENT.md)) that dispatch them.
+The canonical procedure that ties the per-PR roles together: which role opens the PR, which roles touch it before the maintainer ever sees it, and which role decides it is ready for the maintainer's review queue. Read by every role the flow touches ([builder](../../roles/builder/AGENT.md), [assayer](../../roles/assayer/AGENT.md), [cleaner](../../roles/cleaner/AGENT.md), [judge](../../roles/judge/AGENT.md), the jury seats ([assessor](../../roles/assessor/AGENT.md), [typist](../../roles/typist/AGENT.md), [stylist](../../roles/stylist/AGENT.md), [packager](../../roles/packager/AGENT.md), [archivist](../../roles/archivist/AGENT.md), [prover](../../roles/prover/AGENT.md), [curator](../../roles/curator/AGENT.md), [migrator](../../roles/migrator/AGENT.md), [locksmith](../../roles/locksmith/AGENT.md), [warden](../../roles/warden/AGENT.md), [saboteur](../../roles/saboteur/AGENT.md), [breaker](../../roles/breaker/AGENT.md)), and [fixer](../../roles/fixer/AGENT.md)) and by the orchestrators ([liaison](../../roles/liaison/AGENT.md), [steward](../../roles/steward/AGENT.md)) that dispatch them.
 
 The skill is the orchestration map. Per-role detail (how to write a test, how to address a review thread, how to delete dead code) lives in the role files and the role-specific skills.
 
@@ -38,7 +38,7 @@ cleaner (coverage pass; dead-code; same branch)
    v
 judge (foreperson; dispatches the jury panel)
    |
-   |  judge runs six juror dispatches + gh pr edit --add-reviewer @copilot
+   |  judge runs twelve juror dispatches (concurrent) + gh pr edit --add-reviewer @copilot
    v
 jury panel verdict (judge aggregates, submits formal gh pr review)
    |
@@ -96,32 +96,47 @@ If the PR is `CONFLICTING` against its base when the cleaner arrives, the cleane
 
 ## Jury composition
 
-The default jury is **six seats**, dispatched by the judge as one panel round:
+The default jury is **twelve seats**, dispatched by the judge as one panel round. The 2026-05-14 redesign halved each of the prior six seats' responsibilities into two more-focused successor seats so the panel hits each inquiry area twice with one primary per area.
 
-- [assessor](../../roles/assessor/AGENT.md): correctness, types, control flow, performance / complexity. Secondary: regression-evidence overlap with the archivist.
-- [stylist](../../roles/stylist/AGENT.md): naming, diff hygiene, changeset content. Secondary: public-surface naming overlap with the curator.
-- [archivist](../../roles/archivist/AGENT.md): docs, regression evidence, comment / JSDoc accuracy. Secondary: naming clarity overlap with the stylist.
-- [curator](../../roles/curator/AGENT.md): API stability, public surface, backwards compatibility. Secondary: correctness on interface boundaries overlap with the assessor.
-- [locksmith](../../roles/locksmith/AGENT.md): security, capabilities, attenuation, SES boundary. Secondary: correctness on capability edges overlap with the assessor.
-- [saboteur](../../roles/saboteur/AGENT.md): adversarial inputs, invariant attacks. Secondary: security adjacency overlap with the locksmith.
+- [assessor](../../roles/assessor/AGENT.md): correctness logic, control flow, error handling. Secondary: invariant claims overlap with the breaker.
+- [typist](../../roles/typist/AGENT.md): type accuracy (TS, JSDoc types, narrowings). Secondary: public-API signature correctness overlap with the curator.
+- [stylist](../../roles/stylist/AGENT.md): naming and identifier choice. Secondary: doc-name accuracy overlap with the archivist.
+- [packager](../../roles/packager/AGENT.md): diff hygiene, commit splitting, changeset content. Secondary: public-surface rename description overlap with the stylist and curator.
+- [archivist](../../roles/archivist/AGENT.md): docs and comment / JSDoc prose accuracy. Secondary: naming-vs-docstring overlap with the stylist.
+- [prover](../../roles/prover/AGENT.md): regression evidence (test load-bearingness). Secondary: correctness on the tested path overlap with the assessor.
+- [curator](../../roles/curator/AGENT.md): public API surface, exported identifier shape. Secondary: bump-level correctness overlap with the migrator.
+- [migrator](../../roles/migrator/AGENT.md): backwards compatibility, behavior under prior callers, peer-dep cascade, bump-level. Secondary: silent contract shifts on the public surface overlap with the curator.
+- [locksmith](../../roles/locksmith/AGENT.md): capability flow and attenuation. Secondary: boundary-crossing capabilities overlap with the warden.
+- [warden](../../roles/warden/AGENT.md): SES / hardened-JS boundary, harden discipline, unguarded globals, prototype pollution. Secondary: capability-on-boundary overlap with the locksmith.
+- [saboteur](../../roles/saboteur/AGENT.md): adversarial inputs (boundary, type confusion, adversarial values, reentrancy, timing). Secondary: invariant adjacency overlap with the breaker.
+- [breaker](../../roles/breaker/AGENT.md): invariant attacks against claimed contracts (`M.interface()`, attenuator promises, vat-boundary contracts). Secondary: capability-attack overlap with the locksmith.
 
-Plus one fire-and-forget shell call alongside the six dispatches (not a separate `Agent` invocation):
+Plus one fire-and-forget shell call alongside the twelve dispatches (not a separate `Agent` invocation):
 
 ```sh
 gh pr edit <N> -R <owner>/<repo> --add-reviewer @copilot
 ```
 
-### Why six seats with deliberate overlap
+### Why twelve seats with halved responsibilities
 
-Maintainer's framing (2026-05-14): "each kind of review is conducted more than once, but a wide variety of concerns are evaluated." Six seats lets every named inquiry area in this skill be touched by at least two seats (the "secondary overlap" in each juror's role file). The areas covered: correctness/types, naming/diff/changeset, docs/regression-evidence, API stability, security/capabilities, adversarial/invariants, performance/complexity. Four or five seats would force one seat to carry two unrelated areas; seven or more dilutes focus per seat.
+Maintainer's framing (2026-05-14): each seat should carry **half** of what the prior six-seat version did, so the panel can be deeper in each inquiry area without diluting any seat's focus. The earlier framing remains true ("each kind of review is conducted more than once, but a wide variety of concerns are evaluated"); the 2026-05-14 directive narrows the per-seat lens by splitting each prior seat into two successor seats with disjoint primary surfaces and one deliberate overlap each.
 
-The orchestrator (liaison or steward) may pick a different composition by naming jurors in the dispatch prompt. Smaller panels (3 seats) are valid for tiny PRs; larger ones (the reference's 12-perspective panel) are valid for large or unusually risky ones. The default is six.
+Splits, one line per prior seat:
+
+- **assessor** split into `assessor` (correctness logic and control flow) plus `typist` (type accuracy). Rationale: the typist's lens (JSDoc / TS type accuracy) is mechanically distinct from logic correctness and benefits from a dedicated reader.
+- **stylist** split into `stylist` (naming only) plus `packager` (diff hygiene, commit splitting, changeset). Rationale: naming is a code-side concern; the packager's lens is the shape of the PR itself.
+- **archivist** split into `archivist` (docs and comment prose) plus `prover` (regression evidence). Rationale: the regression-evidence audit is procedural (would the test reden if reverted) and warrants a dedicated reader; the archivist's lens stays on prose accuracy.
+- **curator** split into `curator` (public surface and signature shape) plus `migrator` (backwards compat, peer-dep cascade, bump-level). Rationale: the curator inventories what changed; the migrator audits what depends on it.
+- **locksmith** split into `locksmith` (capability flow and attenuation) plus `warden` (SES boundary, harden discipline, prototype pollution). Rationale: capability flow inside the module is mechanically distinct from the SES / hardened-JS boundary discipline.
+- **saboteur** split into `saboteur` (adversarial inputs) plus `breaker` (invariant attacks against claimed contracts). Rationale: input-shape attacks target the code's behavior; invariant attacks target the code's published contract.
+
+Smaller panels (3 to 6 seats) remain valid for tiny PRs when the orchestrator names a reduced composition in the dispatch brief; the reference's 12-perspective panel is now the default rather than an override.
 
 ### Concurrency
 
-The judge dispatches the six seats sequentially or concurrently at its discretion. Concurrent is cheaper wall-clock and is the working default. Sequential lets one seat's findings inform another (e.g., the saboteur's attack can be informed by the assessor's correctness reading), but with six seats the wall-clock cost adds up. The deliverable shape is the same either way: one aggregated panel verdict, one formal `gh pr review` submission from the judge.
+The judge dispatches the twelve seats **concurrently by default**. Twelve sequential `Agent` invocations would compound wall-clock cost beyond what the chain can absorb. The judge sends the panel out in parallel, waits for all twelve results to land, then aggregates. Sequential dispatch remains valid when the orchestrator explicitly requests it (e.g., for a panel where one seat's findings should inform another's), but is not the working default at twelve seats. The deliverable shape is the same either way: one aggregated panel verdict, one formal `gh pr review` submission from the judge.
 
-### Copilot as a seventh reviewer
+### Copilot as a thirteenth reviewer
 
 The `@copilot` `gh pr edit --add-reviewer` call is fire-and-forget. The `@copilot` token is `gh`'s canonical handle for the Copilot reviewer; the login that appears in `reviewRequests` and `reviews[].author.login` afterward is `copilot-pull-request-reviewer`. Copilot leaves a `COMMENTED` review on its own schedule (typically minutes); the judge does not poll or block on it. If Copilot's review has landed by the time the judge writes the panel's formal `gh pr review`, the judge considers it part of the panel's reading; otherwise the panel proceeds without it. The `gh pr edit` is idempotent for the same reviewer; on a re-round it re-requests Copilot's review.
 
@@ -211,3 +226,4 @@ The orchestrator decides whether to dispatch concurrently (multiple PRs' next st
 - _2026-05-13_: skill landed. The default assayer placement is in concert with the builder, the jury composition was a fixed juror plus saboteur pair, and labels were advisory while draft state was the load-bearing flag.
 - _2026-05-14_: backlog of garden-authored draft PRs accumulated on `endojs/endo-but-for-bots` (#236, #237, #238, #239, #240, #241, #242, #243) because builder dispatches landed and the orchestrator stopped, treating the open draft as "done". The maintainer framed it as a systemic failure of chaining. Repair: the *Orchestrator chaining is load-bearing* section and the next-stage-owed heuristic above are now mandatory reading for the orchestrator, and the steward's per-cycle PR-creation-flow scan (see `roles/steward/AGENT.md` § PR-creation-flow scan) enforces the chain automatically.
 - _2026-05-14_: jury-judge redesign. The single generic `juror` role split into five named seats (assessor, stylist, archivist, curator, locksmith) plus the existing saboteur for six total, with deliberate overlap so every inquiry area is touched by at least two seats. The judge role was added as the panel's foreperson (dispatches the jurors, aggregates, submits one verdict, un-drafts on loop completion). The cleaner moved from last-in-the-chain to between-builder-and-jury, and lost un-draft authority. Old single-stage juror-plus-saboteur panels remain valid by maintainer override; the default is the six-seat panel.
+- _2026-05-14_ (same day, later): twelve-seat panel. The maintainer's directive was to halve each seat's responsibilities. Each of the six prior seats split into two successor seats: assessor → assessor + typist, stylist → stylist + packager, archivist → archivist + prover, curator → curator + migrator, locksmith → locksmith + warden, saboteur → saboteur + breaker. Concurrent dispatch became the explicit default at this size; sequential dispatch is an override. Smaller panels (3 to 6 seats) remain valid when the dispatch brief names a reduced composition.
