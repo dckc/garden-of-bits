@@ -72,7 +72,21 @@ For long-lived monitoring or recurring work, dispatch via `/loop` or a cron rout
 
 ### Orchestrator vocabulary
 
-- **the gamut**: the PR-creation-flow chain end to end (`skills/pr-creation-flow/SKILL.md`). "Run the gamut on #N" = orchestrator reads PR #N's next-stage-owed and dispatches the chain's stages sequentially until termination (judge un-drafts). Both orchestrators honor it: the liaison runs the gamut in one engagement; the steward's per-cycle PR-creation-flow scan is the autonomous form. See `roles/liaison/AGENT.md` § Vocabulary: the gamut and `roles/steward/AGENT.md` § Vocabulary: the gamut for the per-role semantics.
+The maintainer speaks to the orchestrators (liaison and steward) in shorthand. The full categorized tables live on the role files (`roles/liaison/AGENT.md` § Vocabulary and `roles/steward/AGENT.md` § Vocabulary). The glossary below names the most common direct-dispatch verbs and the one compound chain idiom both orchestrators honor.
+
+| Phrase                                                          | What it means                                                                                                                  |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| **the gamut** / **run the gamut on #N**                         | the PR-creation-flow chain end to end (`skills/pr-creation-flow/SKILL.md`). Reads PR #N's next-stage-owed and dispatches the chain's stages sequentially until termination (judge un-drafts). The liaison runs the gamut in one engagement; the steward's per-cycle PR-creation-flow scan is the autonomous form. |
+| **ferry #N** (canonical) / **carry #N upstream**                | dispatch [boatman](roles/boatman/AGENT.md). Requires `identity_switch_authorized: true`. *Ferry* is the maintainer's preferred verb (reaffirmed 2026-05-14). |
+| **shepherd #N**                                                 | dispatch [shepherd](roles/shepherd/AGENT.md) to drive CI to green.                                                              |
+| **judge #N** / **panel #N**                                     | dispatch [judge](roles/judge/AGENT.md) (panel + fixer-loop; un-drafts on termination).                                          |
+| **build #N**                                                    | dispatch [builder](roles/builder/AGENT.md).                                                                                     |
+| **design X** / **propose X** / **spec X**                       | dispatch [designer](roles/designer/AGENT.md).                                                                                   |
+| **fix #N**                                                      | dispatch [fixer](roles/fixer/AGENT.md).                                                                                         |
+| **weave #N** / **rebase #N**                                    | dispatch [weaver](roles/weaver/AGENT.md).                                                                                       |
+| **merge #N**                                                    | dispatch [conductor](roles/conductor/AGENT.md).                                                                                 |
+
+The role files carry the full table including compound chain idioms (*mirror #N*, *carry feedback from #N*, *wrap up #N*), garden-meta phrases (*encode this*, *carve a role for X*; liaison-only), bulletin and journal phrases (liaison-only), authorization shapes (liaison-only), and negation patterns (*don't X*, *never X*; both orchestrators).
 
 ## Adding a role
 
