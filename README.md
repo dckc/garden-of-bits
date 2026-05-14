@@ -18,7 +18,7 @@ The journal's [`README.md`](https://github.com/kriskowal/garden/blob/journal/REA
 - [`WORKTREES.md`](./WORKTREES.md) — worktree lifecycle: the standing journal worktree, fork worktrees, and the per-dispatch worktree triple every subagent runs in.
 - [`references/<source>/`](./references/) — read-only shelves of roles and skills imported from other gardens, browsed when no active role fits a new request.
 
-Files are named `AGENT.md` / `SKILL.md` / `COMMON.md` (not `CLAUDE.md`) on purpose: only the orchestrator should auto-load the garden's top-level orientation; subagents load their role and skills explicitly.
+Role and skill files use `AGENT.md` / `SKILL.md` / `COMMON.md` naming on purpose: Claude Code only auto-loads `CLAUDE.md`, so the root `CLAUDE.md` orients the orchestrator while role and skill files stay out of the auto-loaded set — each dispatched subagent reads only the files its role brief explicitly names.
 
 ## Not application code
 
