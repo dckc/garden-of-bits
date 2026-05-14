@@ -25,7 +25,7 @@ Files are named `AGENT.md` / `SKILL.md` / `COMMON.md` (not `CLAUDE.md`) on purpo
 
 ## Dispatch contract
 
-The liaison and steward dispatch subagents via the `Agent` tool. Every subagent gets its own per-dispatch worktree triple (a detached `garden/`, a detached `journal/`, and optionally a detached `project/`) under `dispatches/<role>--<purpose>--<UTC-ts>--<id>/`. The triple is created by `skills/dispatch-worktree/dispatch-prepare.sh` immediately before the `Agent` invocation and torn down by `skills/dispatch-worktree/dispatch-teardown.sh` when the subagent returns. See [WORKTREES.md](WORKTREES.md) § Per-dispatch worktree triple for the full lifecycle and [skills/dispatch-worktree/SKILL.md](skills/dispatch-worktree/SKILL.md) for the procedural detail.
+The liaison and steward dispatch subagents via the `Agent` tool. Every subagent gets its own per-dispatch worktree triple (a detached `garden/`, a detached `journal/`, and optionally a detached `project/`) under `dispatches/<role>--<short-id>/`. The triple is created by `skills/dispatch-worktree/dispatch-prepare.sh` immediately before the `Agent` invocation and torn down by `skills/dispatch-worktree/dispatch-teardown.sh` when the subagent returns. The directory name is kept short so deep project paths (UNIX sockets, build artifacts) stay within OS path limits; the full role / purpose / timestamp metadata lives in the matching `dispatch` journal entry. See [WORKTREES.md](WORKTREES.md) § Per-dispatch worktree triple for the full lifecycle and [skills/dispatch-worktree/SKILL.md](skills/dispatch-worktree/SKILL.md) for the procedural detail.
 
 The orchestrator's job per dispatch:
 

@@ -1,6 +1,6 @@
 ---
 created: 2026-05-13
-updated: 2026-05-13
+updated: 2026-05-14
 author: gardener
 ---
 
@@ -37,13 +37,15 @@ DISPATCH_ROOT=$(skills/dispatch-worktree/dispatch-prepare.sh <role> <purpose> [<
 The script creates:
 
 ```
-dispatches/<role>--<purpose>--<UTC-YYYYMMDD-HHMMSS>--<short-id>/
+dispatches/<role>--<short-id>/
   garden/    # detached worktree of garden's main branch
   journal/   # detached worktree of garden's journal branch
   project/   # (only when applicable) detached worktree of the fork@branch
 ```
 
 All three sub-worktrees are detached HEAD so the subagent can `git fetch` and rebase or reset its own HEAD freely. The short-id is six hex chars; the orchestrator reuses it for the matching `dispatch` journal entry's filename so the two cross-reference cleanly.
+
+The directory name omits the purpose slug and the UTC timestamp on purpose. Earlier the scheme included both (`<role>--<purpose>--<UTC-YYYYMMDD-HHMMSS>--<short-id>`), but absolute paths assembled from a deep dispatch root plus a deep project tree (e.g. `dispatches/<long>/project/packages/daemon/tmp/<slug>/endo.sock`) overran the 108-char `sockaddr_un` limit Linux applies to UNIX domain sockets and made the endo daemon's tests unrunnable inside a dispatch worktree. The full role / purpose / timestamp metadata lives in the matching `dispatch` journal entry (the authoritative index); the directory is only a unique handle. The purpose argument the orchestrator passes is still consumed by this script (it is included in the dispatch journal entry that the orchestrator writes next), it just does not flow into the directory name.
 
 If a project repo and branch are named but no bare clone exists at `worktrees/<owner>-<repo>.git/`, the script rolls back partial state and exits non-zero with a hint to clone the fork first. The orchestrator either clones the fork (per `WORKTREES.md` § Adding a fork worktree) and retries, or reports the missing fork to the user.
 
@@ -85,3 +87,4 @@ The scripts are stateless. State that survives across dispatches lives in the jo
 (Terse and dated. Append; do not rewrite history.)
 
 - _2026-05-13_: scripts moved from `scripts/` to this skill directory (`skills/dispatch-worktree/{dispatch-prepare,dispatch-teardown}.sh`) as part of the broader scripts-into-skills reorganization. The architecture summary in `WORKTREES.md` § Per-dispatch worktree triple is unchanged; this skill is the new home of the procedural detail and the scripts themselves. The four other per-dispatch sibling scripts (`monitor-poll.sh`, `review-queue-poll.sh`, `inbox-drain.sh`) also moved into their respective skill directories in the same pass.
+- _2026-05-14_: dispatch-root naming shortened from `<role>--<purpose>--<UTC-YYYYMMDD-HHMMSS>--<short-id>` to `<role>--<short-id>`. Trigger was a fixer working on PR #135 in `endojs/endo-but-for-bots` who could not run the daemon's `endo.test.js` locally: the absolute UNIX-socket path `/home/<user>/dispatches/<long-name>/project/packages/daemon/tmp/<test-slug>/endo.sock` overran the 108-char `sockaddr_un` limit, so every daemon test failed `ENOENT` before any assertion ran. The fix is to drop the purpose slug and the timestamp from the directory name; both still live in the matching `dispatch` journal entry, which is the authoritative index. Diagnosis at `entries/2026/05/14/090813Z-message-liaison-1bc419.md`.
