@@ -1,7 +1,7 @@
 ---
 created: 2026-05-12
 updated: 2026-05-14
-author: steward, gardener, liaison
+author: gardener, steward, liaison
 ---
 
 # Role: steward
@@ -104,6 +104,45 @@ echo $! > /tmp/garden-review-queue.pid
 
 Event consumption per cycle: for each daemon, `tail -200 /tmp/garden-monitor-<owner>-<name>.log` (or the review-queue equivalent) and find any `NEW` (monitor) or `ADD`/`REMOVE` (review-queue) line newer than the prior cycle's close timestamp. For the endo-but-for-bots monitor, write a `dispatch` entry and invoke `Agent` for the monitor role; for the review-queue, do the same with the review-queue role. Empty tails are silent (no dispatch, no journal entry).
 
+## PR-creation-flow scan
+
+The steward owns the per-cycle scan that keeps garden-authored draft PRs moving through the chain defined in `skills/pr-creation-flow/SKILL.md`. A builder dispatch that lands a draft PR is not "done"; the PR sits orphaned until the next stage's role pushes. Without this scan, the bot opens drafts the bot itself never finishes; the chain breaks at exactly the seam where one role hands off to another. The scan is the steward's per-cycle muscle that converts the chain into automatic flow.
+
+Run the scan once per cycle, after the standing-monitor dispatches and before the cycle's *Aggregate* step.
+
+### Procedure
+
+For each monitored upstream repo (today: `endojs/endo-but-for-bots`):
+
+```sh
+gh pr list -R <owner>/<repo> --author kriscendobot --draft --state open \
+  --json number,headRefName,baseRefName,reviews,statusCheckRollup,mergeable,labels,updatedAt
+```
+
+For each returned PR, compute the next-stage-owed per the heuristic in `skills/pr-creation-flow/SKILL.md` § The next-stage owed heuristic:
+
+1. `mergeable_state == CONFLICTING`: dispatch a weaver. Skip further evaluation this cycle.
+2. No jury review yet: dispatch the jury (juror + saboteur).
+3. Jury review with must-fix in-scope, no fixer push since that review's commit SHA: dispatch a fixer with the must-fix list inline.
+4. Fixer push more recent than the latest jury review: re-dispatch the jury.
+5. Jury most recent verdict is `--approve` or `--comment` with no in-scope must-fix, and no later builder/fixer push: dispatch a cleaner.
+6. Cleaner has pushed and CI is green, but PR is still draft: un-draft directly (`gh pr ready <N>`) and journal a discipline-lapse note.
+
+A *jury review* is a `kriscendobot`-authored formal review (`reviews[].author.login == "kriscendobot"` and `reviews[].state in (CHANGES_REQUESTED, COMMENTED, APPROVED)`) whose body shape matches the panel-review pattern. A plain `gh pr comment` does not count.
+
+### Concurrency
+
+Dispatch the next-owed stage for each PR in parallel within one cycle, up to the steward's working concurrency cap. Two practical caps:
+
+- **One stage per PR per cycle.** A PR that just had its jury dispatched this cycle does not also get a fixer dispatch in the same cycle; the next stage waits for the current one's `result`.
+- **At most one cleaner across the estate at a time.** Cleaner coverage passes can be CPU-heavy and read the test matrix; one in flight is enough.
+
+Rate-limit by deferring excess PRs to the next cycle (whose pacing then biases active per `skills/autonomous-loop-pacing/SKILL.md`); do not queue them inside the cycle.
+
+### Empty-scan cycles
+
+A cycle with no garden-authored draft PRs (or with all draft PRs already in flight from prior cycles) produces no dispatches. That is the steady state; record it in the cycle summary as "PR-flow scan: 0 PRs owed" and continue.
+
 ## Per-cycle procedure
 
 Each invocation is one cycle. Wake, survey, dispatch, journal, schedule, exit. No internal sleep.
@@ -113,7 +152,7 @@ Each invocation is one cycle. Wake, survey, dispatch, journal, schedule, exit. N
    - **Drain the inbox** via `skills/inbox-drain/inbox-drain.sh steward --no-fetch` (step 1 already fetched). One line per addressed-to-`steward` or broadcast-`*` entry since the prior cycle's drain. Read each. This is the primary surface for cross-role messages; do not rely on a manual grep instead.
    - Recent journal entries since the prior steward cycle (use `kind:` filters: tick, result, message, worktree). Complements the inbox drain by surfacing context the inbox does not (your own prior cycle's results, other ticks worth glancing at).
    - Worktree inventory (`git worktree list` plus the per-host directory under `journal/worktrees/`). Note collectable worktrees per `WORKTREES.md` for the cycle's housekeeping pass.
-3. **Dispatch.** Run the *Standing monitors* liveness check above and respawn any dead daemons. Then scan each daemon's log tail since the prior cycle's close; for the endo-but-for-bots monitor with `NEW` lines (or the review-queue with `ADD`/`REMOVE` lines), prepare a per-dispatch worktree triple, write a `dispatch` entry naming the dispatch root, and invoke the corresponding role's `Agent`. Forward any pre-authorized boatman handoff that arrived as a `message` from `liaison`. Each `Agent` invocation runs in its own per-dispatch worktree triple created by `skills/dispatch-worktree/dispatch-prepare.sh <role> <purpose> [<owner>/<repo> <branch>]` and torn down on return by `skills/dispatch-worktree/dispatch-teardown.sh "$DISPATCH_ROOT"`. Monitor and review-queue dispatches typically omit the `[<owner>/<repo> <branch>]` arguments because their work is journal-and-API-only; boatman dispatches always include them. Dispatches are independent and may run in parallel; their dispatch roots do not interfere.
+3. **Dispatch.** Run the *Standing monitors* liveness check above and respawn any dead daemons. Then scan each daemon's log tail since the prior cycle's close; for the endo-but-for-bots monitor with `NEW` lines (or the review-queue with `ADD`/`REMOVE` lines), prepare a per-dispatch worktree triple, write a `dispatch` entry naming the dispatch root, and invoke the corresponding role's `Agent`. Forward any pre-authorized boatman handoff that arrived as a `message` from `liaison`. Then run the **PR-creation-flow scan** described below for every active monitored repo (today, `endojs/endo-but-for-bots`); dispatch the next-owed stage for each garden-authored draft PR. Each `Agent` invocation runs in its own per-dispatch worktree triple created by `skills/dispatch-worktree/dispatch-prepare.sh <role> <purpose> [<owner>/<repo> <branch>]` and torn down on return by `skills/dispatch-worktree/dispatch-teardown.sh "$DISPATCH_ROOT"`. Monitor and review-queue dispatches typically omit the `[<owner>/<repo> <branch>]` arguments because their work is journal-and-API-only; boatman and PR-flow stage dispatches always include them. Dispatches are independent and may run in parallel; their dispatch roots do not interfere.
 4. **Aggregate.** When subagents return, write a `result` entry per dispatch.
 5. **Housekeep.** Collect any worktree the survey flagged as collectable. Update heartbeats on worktrees the steward itself is using. Refresh the *Ongoing work* section of `journal/README.md` so it reflects current worktree status. Maintain the bulletin board: promote attention-worthy results into the relevant section (PRs ready for review, decisions needed), and clear existing items whose underlying condition is now resolved (the PR has a maintainer review, the decision was made in upstream comments, the staged authorization was forwarded into a dispatch, the surplus-authority condition was fixed). The maintainer never edits the bulletin; they act in the upstream system and the next cycle picks up the change. For any long-living subagent that completed or was interrupted this cycle, write a termination report per `skills/agent-termination/SKILL.md` and archive its transcript when feasible.
 6. **Self-improvement.** Scan the cycle for lessons; write any that generalize as `message` entries to `liaison`. Do not edit roles or skills.
