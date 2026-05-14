@@ -105,6 +105,20 @@ echo $! > /tmp/garden-review-queue.pid
 
 Event consumption per cycle: for each daemon, `tail -200 /tmp/garden-monitor-<owner>-<name>.log` (or the review-queue equivalent) and find any `NEW` (monitor) or `ADD`/`REMOVE` (review-queue) line newer than the prior cycle's close timestamp. For the endo-but-for-bots monitor, write a `dispatch` entry and invoke `Agent` for the monitor role; for the review-queue, do the same with the review-queue role. Empty tails are silent (no dispatch, no journal entry).
 
+## Vocabulary: the gamut
+
+*The gamut* is shorthand for the PR-creation-flow chain end to end: builder → cleaner (or skipped on a tiny-PR or design-only variant) → judge (dispatches the twelve-seat code panel or the five-seat design panel per PR shape) → fixer-loop (the judge re-dispatches the same panel after each fixer round) → judge un-drafts. The procedure lives in `skills/pr-creation-flow/SKILL.md`; the vocabulary is the maintainer's framing for "the chain, from wherever it currently sits, until it terminates."
+
+The steward's per-cycle PR-creation-flow scan **is** the gamut in autonomous form: for each garden-authored draft PR on a monitored repo, the scan reads the next-stage-owed via `skills/pr-creation-flow/SKILL.md` § The next-stage-owed heuristic and dispatches that stage; subsequent cycles dispatch the subsequent stages. Running the gamut on the open set is the default per-cycle action whenever draft PRs exist.
+
+An inbox `message: liaison → steward` whose body says "run the gamut on PR #N" is the rate-limited form: the steward biases the current cycle onto PR #N specifically, dispatches that PR's next-owed stage, and chases the chain to termination across cycles. Concretely, the message scopes the per-cycle scan onto one PR until it un-drafts; other PRs still get one stage per cycle in parallel up to the working concurrency cap.
+
+What the gamut does **not** mean:
+
+- It does not bypass the chain's discipline. The cleaner still runs before the jury (except on the explicit tiny-PR and design-only variants), the judge still runs the panel, and the fixer-loop still iterates until no in-scope must-fix remains.
+- It does not skip maintainer review. The gamut terminates at the judge's un-draft; the maintainer's review queue is the next venue, on the maintainer's own time.
+- It does not auto-merge. Merge is the conductor's separate authority; the gamut stops at ready-for-review.
+
 ## PR-creation-flow scan
 
 The steward owns the per-cycle scan that keeps garden-authored draft PRs moving through the chain defined in `skills/pr-creation-flow/SKILL.md`. A builder dispatch that lands a draft PR is not "done"; the PR sits orphaned until the next stage's role pushes. Without this scan, the bot opens drafts the bot itself never finishes; the chain breaks at exactly the seam where one role hands off to another. The scan is the steward's per-cycle muscle that converts the chain into automatic flow.
