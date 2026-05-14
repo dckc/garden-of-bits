@@ -6,20 +6,20 @@ author: gardener
 
 # Skill: panel-review
 
-Adopted from `references/endo-but-for-bots/skills/panel-review-12-perspectives.md` and reshaped for this garden's six-seat default panel.
+Adopted from `references/endo-but-for-bots/skills/panel-review-12-perspectives.md` and shaped for this garden's twelve-seat default panel.
 
-The aggregation discipline and submission contract for jury reviews. The default jury in `skills/pr-creation-flow/SKILL.md` is six seats (assessor, stylist, archivist, curator, locksmith, saboteur) dispatched by the [judge](../../roles/judge/AGENT.md); this skill describes how their findings combine into one verdict and how the judge submits that verdict.
+The aggregation discipline and submission contract for jury reviews. The default jury in `skills/pr-creation-flow/SKILL.md` is twelve seats (assessor, typist, stylist, packager, archivist, prover, curator, migrator, locksmith, warden, saboteur, breaker) dispatched by the [judge](../../roles/judge/AGENT.md); this skill describes how their findings combine into one verdict and how the judge submits that verdict.
 
 ## When to use
 
-- Every PR-creation-flow jury round. The judge is the panel's foreperson (aggregates the six per-juror blocks into one body and submits the formal review).
+- Every PR-creation-flow jury round. The judge is the panel's foreperson (aggregates the twelve per-juror blocks into one body and submits the formal review).
 - A maintainer-requested standalone review of a stale PR. Same procedure; the orchestrator names the panel composition in the dispatch brief and the judge dispatches that composition.
 
 ## Panel composition
 
-- **Default for PR-creation flow: six seats** (assessor, stylist, archivist, curator, locksmith, saboteur), dispatched as a single panel round by the judge. The judge picks sequential or concurrent at its discretion; the panel's deliverable is the same shape either way. See `skills/pr-creation-flow/SKILL.md` § Jury composition for the seat list and the deliberate-overlap rationale.
-- **Smaller panels** (e.g., three seats for a tiny PR) are valid when the orchestrator names a reduced composition in the dispatch brief.
-- **Larger panels** are supported by the same aggregation rules. The reference's 12-perspective panel (correctness, test coverage, types, API stability, diff hygiene, error messages, performance, naming, changeset, backwards compatibility, docs, security, plus the adversarial slot) remains a viable composition when a PR is large or important enough that the six-seat default would miss a perspective. The judge dispatches each named seat and aggregates them all.
+- **Default for PR-creation flow: twelve seats** (assessor, typist, stylist, packager, archivist, prover, curator, migrator, locksmith, warden, saboteur, breaker), dispatched concurrently as a single panel round by the judge. See `skills/pr-creation-flow/SKILL.md` § Jury composition for the seat list, the halved-responsibilities rationale, and the concurrent-dispatch default.
+- **Smaller panels** (3 to 6 seats) are valid when the orchestrator names a reduced composition in the dispatch brief for a tiny PR. The aggregation discipline below applies unchanged.
+- **Custom compositions** are valid when a maintainer's directive names them. The judge dispatches each named seat and aggregates them all.
 
 ## Per-juror block shape
 
@@ -44,7 +44,7 @@ Each block under ~400 words. "Comment-only" is for taste; anything that warrants
 The judge groups findings into:
 
 - **Must fix before merge** (any "request-changes" with concrete code / test / doc impact). Drives the jury-fixer loop per `skills/pr-creation-flow/SKILL.md`.
-- **Should fix in this PR** (taste or clarity items raised independently by at least two seats; on a six-seat panel the deliberate inquiry-area overlap means routine duplicate flagging is expected and is the signal "promote to should-fix").
+- **Should fix in this PR** (taste or clarity items raised independently by at least two seats; on the twelve-seat default panel the deliberate inquiry-area overlap means routine duplicate flagging is expected and is the signal "promote to should-fix").
 - **Out of scope / follow-up** (useful but not blocking this PR's loop).
 
 Dedupe overlapping findings. Where panel members disagree, present both views and pick the side most consistent with the project's `CLAUDE.md` (or `AGENTS.md`); make the disagreement explicit so the orchestrator can act.
@@ -67,7 +67,7 @@ gh pr review <N> -R <repo> --comment --body-file /tmp/panel.md
 gh pr review <N> -R <repo> --approve --body-file /tmp/panel.md
 ```
 
-The judge submits the formal review. The body is the same aggregated report (typically 700 to 1200 words for the six-seat default; smaller panels run shorter, larger ones run longer). Cite findings by perspective grouped where members agreed; do not list individual agent names.
+The judge submits the formal review. The body is the same aggregated report (typically 1200 to 2000 words for the twelve-seat default; smaller panels run shorter). Cite findings by perspective grouped where members agreed; do not list individual agent names.
 
 ## Pitfalls
 
@@ -81,3 +81,4 @@ The judge submits the formal review. The body is the same aggregated report (typ
 
 - _2026-05-13_: adopted from the reference and reshaped for the 2-member default panel (juror plus saboteur). The reference's 12-perspective form was preserved as a larger-panel option.
 - _2026-05-14_: redesign. The default panel grew from 2 seats to 6 named seats (assessor, stylist, archivist, curator, locksmith, saboteur), the judge role was introduced as the panel's foreperson (it aggregates and submits, but is not itself a reviewer), and per-juror block submission migrated from "the juror is the panel-side editor" to "each seat returns a block, the judge aggregates". The orchestrator names a different composition in the dispatch brief when the default does not fit.
+- _2026-05-14_ (same day, later): twelve-seat default. The maintainer's directive was to halve each seat's responsibilities so the panel could be deeper in each inquiry area. Each of the six prior seats split into two successor seats; concurrent dispatch became the explicit default at twelve. The aggregation discipline (must-fix / should-fix / out-of-scope grouping, dedupe of overlapping findings) is unchanged.

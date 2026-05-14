@@ -29,30 +29,36 @@ Assumes you have already read `roles/COMMON.md`.
 
 ## Default panel composition
 
-Six seats per round (the judge dispatches each as its own `Agent` invocation):
+Twelve seats per round (the judge dispatches each as its own `Agent` invocation):
 
-- [assessor](../assessor/AGENT.md): correctness, types, control flow, performance / complexity.
-- [stylist](../stylist/AGENT.md): naming, diff hygiene, changeset content.
-- [archivist](../archivist/AGENT.md): docs, regression evidence, comment / JSDoc accuracy.
-- [curator](../curator/AGENT.md): API stability, public surface, backwards compatibility.
-- [locksmith](../locksmith/AGENT.md): security, capabilities, attenuation, SES boundary.
-- [saboteur](../saboteur/AGENT.md): adversarial inputs, invariant attacks.
+- [assessor](../assessor/AGENT.md): correctness logic, control flow, error handling.
+- [typist](../typist/AGENT.md): type accuracy (TS, JSDoc types, narrowings).
+- [stylist](../stylist/AGENT.md): naming and identifier choice.
+- [packager](../packager/AGENT.md): diff hygiene, commit splitting, changeset content.
+- [archivist](../archivist/AGENT.md): docs and comment / JSDoc prose accuracy.
+- [prover](../prover/AGENT.md): regression evidence (test load-bearingness).
+- [curator](../curator/AGENT.md): public API surface, exported identifier shape.
+- [migrator](../migrator/AGENT.md): backwards compatibility, peer-dep cascade, bump-level.
+- [locksmith](../locksmith/AGENT.md): capability flow and attenuation.
+- [warden](../warden/AGENT.md): SES / hardened-JS boundary, harden discipline, unguarded globals.
+- [saboteur](../saboteur/AGENT.md): adversarial inputs (boundary, type confusion, reentrancy, timing).
+- [breaker](../breaker/AGENT.md): invariant attacks against claimed contracts.
 
-Plus one fire-and-forget shell call alongside the six dispatches (not a separate `Agent` invocation):
+Plus one fire-and-forget shell call alongside the twelve dispatches (not a separate `Agent` invocation):
 
 ```sh
 gh pr edit <N> -R <owner>/<repo> --add-reviewer @copilot
 ```
 
-The maintainer's framing for this redesign: "each kind of review is conducted more than once, but a wide variety of concerns are evaluated." Every inquiry area in `skills/panel-review/SKILL.md` § Per-juror block shape is touched by at least two seats by deliberate overlap (see each juror's role file for the secondary area it covers). The judge does not need to enforce overlap explicitly; it is encoded in the seat list.
+The maintainer's framing for the 2026-05-14 twelve-seat redesign: each prior seat's responsibilities were **halved** so the panel could be deeper in each inquiry area without diluting any seat's focus. Every inquiry area in `skills/panel-review/SKILL.md` § Per-juror block shape is touched by at least two seats by deliberate overlap (see each juror's role file for the secondary area it covers). The judge does not need to enforce overlap explicitly; it is encoded in the seat list.
 
-The orchestrator (liaison or steward) may pick a different composition by naming jurors in the dispatch prompt. Smaller panels (3 seats) are valid for tiny PRs; larger ones (the reference's 12-perspective panel) are valid for large or unusually risky ones. The default is six.
+The orchestrator (liaison or steward) may pick a different composition by naming jurors in the dispatch prompt. Smaller panels (3 to 6 seats) are valid for tiny PRs; the twelve-seat default is the standard for normal-sized PRs.
 
 ## Operating norms
 
-- **Dispatch each juror in its own per-dispatch worktree triple.** Per `skills/dispatch-worktree/SKILL.md`. The judge prepares one triple per juror, writes a `dispatch` entry naming the role and the dispatch root, and invokes `Agent`. Sequential or concurrent at the judge's discretion; concurrent is cheaper wall-clock and is the working default. After every juror returns, run `dispatch-teardown.sh` on each dispatch root.
+- **Concurrent dispatch is the default at twelve seats.** Per `skills/dispatch-worktree/SKILL.md`, the judge prepares one triple per juror, writes a `dispatch` entry naming the role and the dispatch root, and invokes `Agent`. Twelve sequential `Agent` invocations would compound wall-clock cost beyond what the chain can absorb, so the judge sends the panel out **in parallel by default**: fire all twelve dispatches in one turn's tool batch, wait for all twelve `result` entries to land, then aggregate. Sequential dispatch is valid only when the orchestrator explicitly requests it (e.g., for a panel where one seat's findings should inform another's); it is no longer the default at this size. After every juror returns, run `dispatch-teardown.sh` on each dispatch root (concurrently or sequentially, at the judge's discretion).
 - **Fire `@copilot` once per round.** Run `gh pr edit <N> -R <owner>/<repo> --add-reviewer @copilot` alongside the juror dispatches (not as its own dispatch). The call is idempotent on re-rounds; it re-requests Copilot's review. If Copilot's prior review has not yet landed, that is fine; the panel proceeds without it and Copilot will leave its review when it leaves it.
-- **Aggregate the per-juror blocks into one body.** Per `skills/panel-review/SKILL.md` § Aggregation. Dedupe overlapping findings (the deliberate overlap means two seats will routinely hit the same issue). Group findings into must-fix / should-fix / out-of-scope. Present disagreements as both views with a recommended resolution. The aggregated body typically runs 700 to 1200 words for a 6-seat panel; trim ruthlessly if it exceeds 1500.
+- **Aggregate the per-juror blocks into one body.** Per `skills/panel-review/SKILL.md` § Aggregation. Dedupe overlapping findings (the deliberate overlap means two seats will routinely hit the same issue). Group findings into must-fix / should-fix / out-of-scope. Present disagreements as both views with a recommended resolution. The aggregated body typically runs 1200 to 2000 words for a 12-seat panel; trim ruthlessly if it exceeds 2500.
 - **Submit one formal `gh pr review`.** Per `skills/panel-review/SKILL.md` § Posting the review. `--request-changes` when any must-fix is present, `--comment` when only should-fix or out-of-scope, `--approve` when net-clean. The verdict is the panel's, not the judge's; the judge is the panel's voice.
 - **Self-review fallback.** If the authenticated identity is also the PR's author (typical for garden-authored draft PRs), GitHub blocks `--request-changes`. Fall back to `--comment` and ensure the body carries the explicit "Must-fix before merge" heading so the orchestrator's dispatch matrix keys on it. Per `skills/panel-review/SKILL.md` § Pitfalls.
 - **Read the fixer's result before re-dispatching.** When the orchestrator hands a fixer's `result` back, the judge reads it for: which must-fix items were addressed (commit SHAs cited), which were deferred or argued out of scope, and which new in-scope concerns the fix introduced. The re-dispatched panel is briefed with the prior verdict plus the fixer's response so each juror verifies prior items and surfaces new ones.
