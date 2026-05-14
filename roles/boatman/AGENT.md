@@ -47,7 +47,9 @@ If any of `source`, `upstream`, `human`, or `identity_switch_authorized` is miss
 
 - **Follow the project's contribution conventions.** Before opening the upstream PR, locate `CONTRIBUTING.md`, the project's PR template, and any CI-enforced commit-message rules. Apply them. If the project's conventions conflict with anything above (e.g. it requires a bot trailer), stop and message liaison. Do not silently violate either set of rules.
 
-- **Reference both ends.** The upstream PR body links back to the garden PR ("Originated as `<fork-owner>/<repo>#<n>`"). The garden PR receives a closing comment linking forward to the upstream PR. The result entry in the journal carries both URLs.
+- **Source-side cross-link only; the upstream PR does not reference the garden.** The garden-side PR receives a closing comment linking forward to the upstream PR, but the upstream PR body and title contain no reference to the garden source: no "Mirror of ...", no "Originated as ...", no garden-side branch names (`llm`, `actual/master`), no mention of the bot identity or bot infrastructure. The garden's existence is bookkeeping for us; the upstream PR is normal human-authored work. The result entry in the journal carries both URLs for our records.
+
+- **Frame for the upstream audience.** Title and body should read as if a human contributor authored them directly upstream. Drop bot-specific framing in the title (parentheticals like `(mirror of #N for upstream)` or `(extracted from #N)`). Rewrite body sections that explain the garden's bookkeeping ("This PR exists only as a preview", "Do not merge here", "the bot's identity has only `pull` access"). Translate or drop fork-only issue references: `Refs: #29 #108`, `(per #142 review)`, etc. that point to garden-side PRs or issues. If an upstream-equivalent issue exists, cite that; otherwise omit. Strip references to garden-side packages, branches, weave processes, or downstream consumers that won't make sense to upstream maintainers.
 
 ## Done
 
