@@ -1,6 +1,6 @@
 ---
 created: 2026-05-13
-updated: 2026-05-13
+updated: 2026-05-14
 author: gardener
 ---
 
@@ -141,6 +141,36 @@ Per-stage dispatch decisions:
 - **Cleaner dispatched** when the jury declares the loop done (no further in-scope complaints).
 - **Weaver dispatched first** if any of the above stages find the PR is `CONFLICTING`. The weaver rebases; the interrupted stage re-dispatches.
 
+## Orchestrator chaining is load-bearing
+
+The single-stage dispatch (build a PR and stop) is the **failure mode** this skill exists to prevent. A builder dispatch that lands a draft PR is *not* "done"; the PR is in the bot's chain, in draft state, with no maintainer review possible until the cleaner un-drafts. If no role advances it, the PR sits orphaned: the bot opens drafts the bot itself never finishes, the maintainer's queue stays empty, and the cycle of work never closes. Observed evidence (as of 2026-05-14): a backlog of garden-authored draft PRs on `endojs/endo-but-for-bots` whose builders returned without the orchestrator continuing the chain.
+
+The discipline lives in two places: the **liaison** when a user-in-session dispatches a builder, and the **steward**'s per-cycle scan when no user is in the loop.
+
+### The next-stage owed heuristic
+
+For each open draft PR authored by the garden (`gh pr list -R <repo> --author kriscendobot --draft --state open`), the next stage owed is the first stage whose preceding stage's artifact exists but whose own artifact does not. Detection reads the PR state directly from GitHub, not from journal entries (which can lag, be misfiled, or describe a stage the orchestrator never dispatched).
+
+Reading order, top to bottom; the first match is the stage owed:
+
+1. **Cleaner has un-drafted?** PR is no longer draft. Flow complete; the PR is in the maintainer's queue. Nothing owed.
+2. **Cleaner pushed and CI is green?** The cleaner should have un-drafted but did not. The orchestrator un-drafts directly (`gh pr ready <N>`) and surfaces the discipline lapse. Owed: un-draft.
+3. **Jury submitted a `--approve` review (or `--comment` with no must-fix in-scope), with no later builder/fixer push?** Cleaner is owed.
+4. **Jury submitted `--request-changes` with must-fix items, and the fixer has not yet pushed addressing commits since?** Fixer is owed.
+5. **Fixer pushed since the last jury review, and the jury has not re-reviewed since the fixer's HEAD?** Jury re-review is owed.
+6. **Builder's PR is open (any state) and no jury review exists yet?** Jury (the first pass) is owed. The assayer's in-concert pass, if it was going to happen, has either happened or been skipped by now; the absence of an assayer push is not a blocker.
+7. **PR is `CONFLICTING` against its base?** Weaver is owed first, before any of the above. Re-evaluate the next-owed stage after the weaver returns.
+
+A *jury-shaped review* is a `kriscendobot`-authored formal `gh pr review` (state `CHANGES_REQUESTED`, `COMMENTED`, or `APPROVED`) whose body matches the panel-review shape (in-scope / out-of-scope sections, must-fix / should-fix verdicts). A plain `gh pr comment` is not a jury review and does not advance the flow; the juror's role file requires the formal-review submission.
+
+The orchestrator decides whether to dispatch concurrently (multiple PRs' next stages in one cycle) or rate-limit (one stage per PR per cycle) based on its own load. The steward's default is concurrent dispatch; the liaison's default is sequential and explicit (the user is in the loop and watching).
+
+### Discipline
+
+- A single-stage dispatch (the orchestrator dispatches a builder and the PR sits) is a **discipline violation**. The next orchestrator turn (liaison's next prompt, or the steward's next cycle) corrects it by reading the next-stage-owed and dispatching it.
+- The orchestrator does not need a maintainer's per-PR authorization to advance a garden-authored draft PR through its own chain; the chain is the garden's normal operation. Authorization is only required for the cross-repo etiquette actions per `roles/COMMON.md` § External-repo etiquette (the boatman handoff, replying on inline review threads, posting top-level PR comments). The chain itself (builder push, assayer push, jury review submission, fixer push, cleaner push, un-draft) is implicit in each role's dispatch.
+- A draft PR that has been quiet for more than one steward cycle without a clear "owed" stage is a signal that the heuristic is missing a case. Surface it via a `message` to `liaison` rather than guessing.
+
 ## Pitfalls
 
 - **A non-cleaner role un-drafting is a discipline violation.** Only the cleaner un-drafts, and only after CI is green. A builder that opens a PR ready-for-review (skipping the draft) bypasses the entire flow; the orchestrator's first action on noticing is to `gh pr ready --undo <N>` and report the discipline violation.
@@ -153,3 +183,4 @@ Per-stage dispatch decisions:
 
 - _2026-05-13_: skill landed. The default assayer placement is in concert with the builder, the jury composition is a fixed juror plus saboteur pair, and labels are advisory while draft state is the load-bearing flag. These defaults are starting points; the notes-from-the-field below accumulate evidence as the flow runs and revisits them.
 - _2026-05-13_: first builder/assayer/jury/cleaner dispatches will land when the maintainer next asks for work on a specific PR; this engagement is meta-evolution, not flow-running.
+- _2026-05-14_: backlog of garden-authored draft PRs accumulated on `endojs/endo-but-for-bots` (#236, #237, #238, #239, #240, #241, #242, #243) because builder dispatches landed and the orchestrator stopped, treating the open draft as "done". The maintainer framed it as a systemic failure of chaining. Repair: the *Orchestrator chaining is load-bearing* section and the next-stage-owed heuristic above are now mandatory reading for the orchestrator, and the steward's per-cycle PR-creation-flow scan (see `roles/steward/AGENT.md` § PR-creation-flow scan) enforces the chain automatically. The maintainer's in-session liaison handles the existing backlog; future builder dispatches inherit the scan.
