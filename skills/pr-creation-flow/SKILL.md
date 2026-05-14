@@ -6,7 +6,7 @@ author: gardener
 
 # Skill: pr-creation-flow
 
-The canonical procedure that ties the per-PR roles together: which role opens the PR, which roles touch it before the maintainer ever sees it, and which role decides it is ready for the maintainer's review queue. Read by every role the flow touches ([builder](../../roles/builder/AGENT.md), [assayer](../../roles/assayer/AGENT.md), [cleaner](../../roles/cleaner/AGENT.md), [judge](../../roles/judge/AGENT.md), the jury seats ([assessor](../../roles/assessor/AGENT.md), [typist](../../roles/typist/AGENT.md), [stylist](../../roles/stylist/AGENT.md), [packager](../../roles/packager/AGENT.md), [archivist](../../roles/archivist/AGENT.md), [prover](../../roles/prover/AGENT.md), [curator](../../roles/curator/AGENT.md), [migrator](../../roles/migrator/AGENT.md), [locksmith](../../roles/locksmith/AGENT.md), [warden](../../roles/warden/AGENT.md), [saboteur](../../roles/saboteur/AGENT.md), [breaker](../../roles/breaker/AGENT.md)), and [fixer](../../roles/fixer/AGENT.md)) and by the orchestrators ([liaison](../../roles/liaison/AGENT.md), [steward](../../roles/steward/AGENT.md)) that dispatch them.
+The canonical procedure that ties the per-PR roles together: which role opens the PR, which roles touch it before the maintainer ever sees it, and which role decides it is ready for the maintainer's review queue. Read by every role the flow touches ([builder](../../roles/builder/AGENT.md), [assayer](../../roles/assayer/AGENT.md), [cleaner](../../roles/cleaner/AGENT.md), [judge](../../roles/judge/AGENT.md), the code-panel seats ([assessor](../../roles/assessor/AGENT.md), [typist](../../roles/typist/AGENT.md), [stylist](../../roles/stylist/AGENT.md), [packager](../../roles/packager/AGENT.md), [archivist](../../roles/archivist/AGENT.md), [prover](../../roles/prover/AGENT.md), [curator](../../roles/curator/AGENT.md), [migrator](../../roles/migrator/AGENT.md), [locksmith](../../roles/locksmith/AGENT.md), [warden](../../roles/warden/AGENT.md), [saboteur](../../roles/saboteur/AGENT.md), [breaker](../../roles/breaker/AGENT.md)), the design-panel seats ([critic](../../roles/critic/AGENT.md), [skeptic](../../roles/skeptic/AGENT.md), [copyeditor](../../roles/copyeditor/AGENT.md), [pedant](../../roles/pedant/AGENT.md), [novice](../../roles/novice/AGENT.md)), and [fixer](../../roles/fixer/AGENT.md)) and by the orchestrators ([liaison](../../roles/liaison/AGENT.md), [steward](../../roles/steward/AGENT.md)) that dispatch them.
 
 The skill is the orchestration map. Per-role detail (how to write a test, how to address a review thread, how to delete dead code) lives in the role files and the role-specific skills.
 
@@ -36,11 +36,12 @@ cleaner (coverage pass; dead-code; same branch)
    |
    |  cleaner pushes coverage commits, watches CI converge
    v
-judge (foreperson; dispatches the jury panel)
+judge (foreperson; picks panel by PR shape; dispatches the panel)
    |
-   |  judge runs twelve juror dispatches (concurrent) + gh pr edit --add-reviewer @copilot
+   |  judge runs the code panel (twelve seats, concurrent) + gh pr edit --add-reviewer @copilot
+   |  OR the design panel (five seats, concurrent; no @copilot) on a design-only PR
    v
-jury panel verdict (judge aggregates, submits formal gh pr review)
+panel verdict (judge aggregates, submits formal gh pr review)
    |
    |  if must-fix items, the orchestrator dispatches a fixer
    v
@@ -57,20 +58,20 @@ gh pr ready <N>  (judge un-drafts; PR enters maintainer's review queue)
 Variants:
 
 - **Cleaner-skipped tiny-PR variant.** When the PR is pure documentation, lockfile-only churn, a one-file format sweep, or a single bug-fix line whose test fixture is already in the diff, the cleaner has no coverage surface to expand. The orchestrator skips the cleaner and **dispatches the judge directly after the builder**. There is no procedural no-op cleaner stage; the cleaner is skipped, not run-as-a-no-op. The judge still runs the panel and un-drafts at the end of the loop.
+- **Design-only-PR variant.** When the PR is **design-only** (file additions only under `<project>/designs/` or the project's equivalent design directory, no source changes, no test changes), the flow is **builder → judge (design panel) → fixer loop → un-draft**. The assayer is skipped (no test surface to author against), and the cleaner is skipped (no coverage surface, no source dead code). The orchestrator dispatches the judge directly after the builder; the judge picks the design panel per `roles/judge/AGENT.md` § Panel-kind discrimination and runs the five-seat design panel (critic, skeptic, copyeditor, pedant, novice). The fixer loop and un-draft step are unchanged from the default flow; the fixer's commits on a design-only PR are revisions to the design document itself. The base of a design-only PR is the project's bot-fork roadmap branch rather than the implementation base; see *Designs versus implementations* below for the base-split rule.
 - **No must-fix on first panel round.** The fixer step is skipped. The judge declares the loop done after the first panel verdict and un-drafts immediately.
 - **Pre-merge fix-up rounds (after maintainer review).** The maintainer's `CHANGES_REQUESTED` triggers the standard fixer loop (fixer to CI-green to re-request maintainer); neither the cleaner nor the judge re-runs by default. The PR stays out of draft; the maintainer's review queue is the venue. A maintainer who explicitly asks for a fresh cleaner or judge pass overrides this default.
-- **Design-only PR (no flow).** A draft PR whose only diff is a `designs/<slug>.md` file landed by the designer (per `roles/designer/AGENT.md` § Operating norms) is **not in the build → cleaner → judge → fixer chain**. The cleaner has no source surface to coverage-expand; the judge has no jury-reviewable contribution (no tests, no public-API surface, no behavior change); the panel-review shape does not apply. The orchestrator's per-cycle scan skips such PRs entirely. The PR stays in draft until the maintainer reviews it directly; the designer's role file (and the project's bot-fork roadmap branch convention recorded in `journal/projects/<slug>/README.md`) governs un-drafting, not the judge. A separate builder dispatch later implements the design as a master-base PR (see *Designs versus implementations* below).
 
 ## Designs versus implementations
 
 Design PRs and implementation PRs are two separate PRs against two different bases. The maintainer's framing on 2026-05-14: "We don't carry designs onto the master branch. The designs should be based on llm. The implementations should be based on master, for those designs."
 
-- A **design PR** lands on the project's bot-fork roadmap branch (today `llm` on `endojs/endo-but-for-bots`). The designer opens it in draft; its diff is the `designs/<slug>.md` file. It is **not** in this skill's flow chain (see *Design-only PR* variant above).
-- An **implementation PR** lands on the project's natural implementation base (today `master` on `endojs/endo-but-for-bots`). A separate builder dispatch opens it; its diff is the source change that realizes the design. It **is** in this skill's flow chain (builder, assayer, cleaner, judge, fixer, un-draft).
+- A **design PR** lands on the project's bot-fork roadmap branch (today `llm` on `endojs/endo-but-for-bots`). The designer opens it in draft; its diff is the `designs/<slug>.md` file. It runs through the *Design-only-PR variant* of this skill's flow chain: builder, judge (with the design panel), fixer loop, un-draft. The assayer and cleaner stages are skipped (no test or source surface).
+- An **implementation PR** lands on the project's natural implementation base (today `master` on `endojs/endo-but-for-bots`). A separate builder dispatch opens it; its diff is the source change that realizes the design. It runs through the full flow chain (builder, assayer, cleaner, judge with the code panel, fixer, un-draft).
 - The boatman later ferries the implementation to the upstream `master` if and when the maintainer authorizes.
 - Reference shape: `endojs/endo-but-for-bots#232` (Node-18-drop design on `llm`) and `endojs/endo-but-for-bots#246` (Node-18-drop master-base implementation, mirrored from `#232`).
 
-The two PRs are intentionally not combined. A single PR carrying both the `designs/<slug>.md` file and the implementation source forces the maintainer to review documentation prose alongside source diff, dilutes the design review's audience (anyone interested in the design must filter implementation noise), and prevents the boatman from ferrying the implementation alone. The split also lets the implementation land before, with, or after the design at the maintainer's discretion.
+The two PRs are intentionally not combined. A single PR carrying both the `designs/<slug>.md` file and the implementation source forces the maintainer to review documentation prose alongside source diff, dilutes the design review's audience (anyone interested in the design must filter implementation noise), and prevents the boatman from ferrying the implementation alone. The split also lets the implementation land before, with, or after the design at the maintainer's discretion. The split also lets the design and code panels review the two surfaces independently with the seat lists each shape warrants.
 
 ## Assayer placement
 
@@ -108,7 +109,13 @@ If the PR is `CONFLICTING` against its base when the cleaner arrives, the cleane
 
 ## Jury composition
 
-The default jury is **twelve seats**, dispatched by the judge as one panel round. The 2026-05-14 redesign halved each of the prior six seats' responsibilities into two more-focused successor seats so the panel hits each inquiry area twice with one primary per area.
+There are **two default panels**: the code panel (twelve seats, for source-touching PRs) and the design panel (five seats, for design-only PRs). The judge picks one per round based on the PR's file list per `roles/judge/AGENT.md` § Panel-kind discrimination.
+
+**Panel-kind rule.** A PR is **design-only** when every changed path is under `<project>/designs/` (or the project's equivalent design directory) and no path is under `src/`, `test/`, `tests/`, or `packages/<name>/src/`. Otherwise the PR is source-touching, and the code panel applies. Mixed PRs (source plus design document) get the code panel; the design content rides as supplementary context in the code panel's report rather than as its own pass.
+
+### Code panel (default for source-touching PRs)
+
+Twelve seats, dispatched by the judge as one panel round. The 2026-05-14 redesign halved each of the prior six seats' responsibilities into two more-focused successor seats so the panel hits each inquiry area twice with one primary per area.
 
 - [assessor](../../roles/assessor/AGENT.md): correctness logic, control flow, error handling. Secondary: invariant claims overlap with the breaker.
 - [typist](../../roles/typist/AGENT.md): type accuracy (TS, JSDoc types, narrowings). Secondary: public-API signature correctness overlap with the curator.
@@ -129,7 +136,19 @@ Plus one fire-and-forget shell call alongside the twelve dispatches (not a separ
 gh pr edit <N> -R <owner>/<repo> --add-reviewer @copilot
 ```
 
-### Why twelve seats with halved responsibilities
+### Design panel (default for design-only PRs)
+
+Five seats, dispatched by the judge as one panel round. The panel reviews a design document as a written artifact rather than reviewing code, so the seats target prose-and-argument inquiry areas rather than code-correctness areas.
+
+- [critic](../../roles/critic/AGENT.md): substantive critique of the proposed approach (goals, constraints, tradeoffs, rejected alternatives, composition with the rest of the system). Secondary: rationale-integrity overlap with the skeptic.
+- [skeptic](../../roles/skeptic/AGENT.md): adversarial premise attacks (assumptions, spec reading, workflow framing, compatibility, test-catalog completeness, failure-mode handling). Secondary: rationale-of-approach overlap with the critic.
+- [copyeditor](../../roles/copyeditor/AGENT.md): prose mechanics (grammar, sentence structure, paragraph flow, voice consistency, jargon introduction, section transitions). Secondary: sentence-level clarity overlap with the novice.
+- [pedant](../../roles/pedant/AGENT.md): formal style (Chicago Manual conventions plus the garden's own style rules: em-dash discipline, relative-path discipline). Secondary: rule-settled prose-mechanic overlap with the copyeditor.
+- [novice](../../roles/novice/AGENT.md): top-down clarity as a naive reader (logical progress, assumed background, skipped reasoning steps, prose density, example clarity). Secondary: mental-model-gaps-after-jargon-introduction overlap with the copyeditor.
+
+The design panel does **not** add `@copilot`: the design surface is prose rather than code, and Copilot's code-review heuristics do not apply.
+
+### Why twelve seats with halved responsibilities (code panel)
 
 Maintainer's framing (2026-05-14): each seat should carry **half** of what the prior six-seat version did, so the panel can be deeper in each inquiry area without diluting any seat's focus. The earlier framing remains true ("each kind of review is conducted more than once, but a wide variety of concerns are evaluated"); the 2026-05-14 directive narrows the per-seat lens by splitting each prior seat into two successor seats with disjoint primary surfaces and one deliberate overlap each.
 
@@ -144,17 +163,23 @@ Splits, one line per prior seat:
 
 Smaller panels (3 to 6 seats) remain valid for tiny PRs when the orchestrator names a reduced composition in the dispatch brief; the reference's 12-perspective panel is now the default rather than an override.
 
+### Why five seats for the design panel
+
+The maintainer's framing (2026-05-14): "Designs should be reviewed by a critic, a skeptic, a copy editor, a Chicago Manual style guide enthusiast, and a naive reader who only understands short sentences with clear logical progress." Five perspectives cover the design surface (substantive critique, adversarial premise attacks, prose mechanics, formal style, top-down clarity) without redundancy. The design panel is smaller than the code panel because the design surface is narrower: a design document is one artifact (a single prose document), while a code PR can touch many files and many inquiry axes that warrant the halved-responsibility overlap the code panel uses.
+
+The design panel is what gets dispatched when the steward's per-cycle scan picks up a design-only PR (the first cohort: the SES top-level-await draft PR #249 and the SES import-attributes draft PR once its builder lands).
+
 ### Concurrency
 
-The judge dispatches the twelve seats **concurrently by default**. Twelve sequential `Agent` invocations would compound wall-clock cost beyond what the chain can absorb. The judge sends the panel out in parallel, waits for all twelve results to land, then aggregates. Sequential dispatch remains valid when the orchestrator explicitly requests it (e.g., for a panel where one seat's findings should inform another's), but is not the working default at twelve seats. The deliverable shape is the same either way: one aggregated panel verdict, one formal `gh pr review` submission from the judge.
+The judge dispatches all seats **concurrently by default**, on both panel sizes. Sequential `Agent` invocations would compound wall-clock cost beyond what the chain can absorb. The judge sends the panel out in parallel, waits for all results to land, then aggregates. Sequential dispatch remains valid when the orchestrator explicitly requests it (e.g., for a panel where one seat's findings should inform another's), but is not the working default at either panel size. The deliverable shape is the same either way: one aggregated panel verdict, one formal `gh pr review` submission from the judge.
 
-When the harness does not surface an `Agent` (or `Task`) tool to the judge subagent, the judge falls back to the in-band procedure named in `roles/judge/AGENT.md` § In-band fallback: each seat's block is written one at a time against the per-seat role file's primary surface, aggregation runs after all twelve blocks land, and one formal `gh pr review` is still submitted. The `result` entry names the panel-execution mode for audit.
+When the harness does not surface an `Agent` (or `Task`) tool to the judge subagent, the judge falls back to the in-band procedure named in `roles/judge/AGENT.md` § In-band fallback: each seat's block is written one at a time against the per-seat role file's primary surface, aggregation runs after all seats land, and one formal `gh pr review` is still submitted. The `result` entry names the panel-execution mode and the panel kind (`code-panel` or `design-panel`) for audit.
 
-### Copilot as a thirteenth reviewer
+### Copilot as a thirteenth reviewer (code panel only)
 
 The `@copilot` `gh pr edit --add-reviewer` call is fire-and-forget. The `@copilot` token is `gh`'s canonical handle for the Copilot reviewer; the login that appears in `reviewRequests` and `reviews[].author.login` afterward is `copilot-pull-request-reviewer`. Copilot leaves a `COMMENTED` review on its own schedule (typically minutes); the judge does not poll or block on it. If Copilot's review has landed by the time the judge writes the panel's formal `gh pr review`, the judge considers it part of the panel's reading; otherwise the panel proceeds without it. The `gh pr edit` is idempotent for the same reviewer; on a re-round it re-requests Copilot's review.
 
-Copilot is added only when the judge dispatches a panel. The orchestrator does not add Copilot to PRs outside the judge-dispatch flow.
+Copilot is added only when the judge dispatches the **code panel**. Design-panel rounds skip the `@copilot` call. The orchestrator does not add Copilot to PRs outside the judge-dispatch flow.
 
 ## Jury-fixer loop
 
@@ -209,15 +234,14 @@ For each open draft PR authored by the garden (`gh pr list -R <repo> --author kr
 Reading order, top to bottom; the first match is the stage owed:
 
 1. **PR is `CONFLICTING` against its base?** Weaver is owed first, before any of the below. Re-evaluate the next-owed stage after the weaver returns.
-2. **PR's diff is design-only (a single `designs/<slug>.md` file or sibling design files, no source / no tests)?** Not in this flow's chain. Skip entirely; the maintainer reviews directly. See the *Design-only PR* variant under *Flow ordering* and the *Designs versus implementations* section above. The orchestrator's per-cycle scan does not dispatch a cleaner, judge, or fixer against such PRs.
-3. **Judge has un-drafted?** PR is no longer draft. Flow complete; the PR is in the maintainer's queue. Nothing owed.
-4. **Panel `--approve` (or `--comment` with no in-scope must-fix) submitted, with no later builder/fixer push, but the PR is still draft?** The judge should have un-drafted but did not. The orchestrator un-drafts directly (`gh pr ready <N>`) and surfaces the discipline lapse. Owed: un-draft.
-5. **Panel verdict has must-fix items, and the fixer has not yet pushed addressing commits since?** Fixer is owed.
-6. **Fixer pushed since the last panel verdict, and the judge has not re-dispatched the panel since the fixer's HEAD?** Judge re-dispatch is owed.
-7. **Cleaner pushed and CI is green (or only documented pre-existing infra red), and no panel verdict yet?** Judge is owed. (On the cleaner-skipped tiny-PR variant, the orchestrator dispatches the judge directly when no cleaner is owed and no panel verdict exists; see the qualifier in step 8.)
-8. **Builder's PR is open and no cleaner push exists yet?** Cleaner is owed (default). On the tiny-PR variant (pure docs, lockfile-only, one-file format sweep, single-line bug fix with test fixture already in the diff), skip the cleaner and dispatch the judge instead. The orchestrator decides which variant applies by inspecting the diff.
+2. **Judge has un-drafted?** PR is no longer draft. Flow complete; the PR is in the maintainer's queue. Nothing owed.
+3. **Panel `--approve` (or `--comment` with no in-scope must-fix) submitted, with no later builder/fixer push, but the PR is still draft?** The judge should have un-drafted but did not. The orchestrator un-drafts directly (`gh pr ready <N>`) and surfaces the discipline lapse. Owed: un-draft.
+4. **Panel verdict has must-fix items, and the fixer has not yet pushed addressing commits since?** Fixer is owed.
+5. **Fixer pushed since the last panel verdict, and the judge has not re-dispatched the panel since the fixer's HEAD?** Judge re-dispatch is owed.
+6. **Cleaner pushed and CI is green (or only documented pre-existing infra red), and no panel verdict yet?** Judge is owed. (On the cleaner-skipped tiny-PR variant or the design-only-PR variant, the orchestrator dispatches the judge directly when no cleaner is owed and no panel verdict exists; see the qualifiers in step 7.)
+7. **Builder's PR is open and no cleaner push exists yet?** Cleaner is owed (default). On the tiny-PR variant (pure docs, lockfile-only, one-file format sweep, single-line bug fix with test fixture already in the diff), skip the cleaner and dispatch the judge instead. On the design-only-PR variant (every changed path under `<project>/designs/`, no source or test changes), skip both the assayer and the cleaner and dispatch the judge directly; the judge will pick the design panel per `roles/judge/AGENT.md` § Panel-kind discrimination. The orchestrator decides which variant applies by inspecting the diff.
 
-A *panel verdict* is a `kriscendobot`-authored formal `gh pr review` (state `CHANGES_REQUESTED`, `COMMENTED`, or `APPROVED`) whose body matches the panel-review shape (in-scope / out-of-scope sections, must-fix / should-fix verdicts). A plain `gh pr comment` is not a panel verdict and does not advance the flow; the judge's role file requires the formal-review submission.
+A *panel verdict* is a `kriscendobot`-authored formal `gh pr review` (state `CHANGES_REQUESTED`, `COMMENTED`, or `APPROVED`) whose body matches the panel-review shape (in-scope / out-of-scope sections, must-fix / should-fix verdicts). A plain `gh pr comment` is not a panel verdict and does not advance the flow; the judge's role file requires the formal-review submission. The verdict shape is the same for both panel kinds; the body's seat list and word count vary.
 
 The orchestrator decides whether to dispatch concurrently (multiple PRs' next stages in one cycle) or rate-limit (one stage per PR per cycle) based on its own load. The steward's default is concurrent dispatch; the liaison's default is sequential and explicit (the user is in the loop and watching).
 
@@ -242,4 +266,5 @@ The orchestrator decides whether to dispatch concurrently (multiple PRs' next st
 - _2026-05-14_: backlog of garden-authored draft PRs accumulated on `endojs/endo-but-for-bots` (#236, #237, #238, #239, #240, #241, #242, #243) because builder dispatches landed and the orchestrator stopped, treating the open draft as "done". The maintainer framed it as a systemic failure of chaining. Repair: the *Orchestrator chaining is load-bearing* section and the next-stage-owed heuristic above are now mandatory reading for the orchestrator, and the steward's per-cycle PR-creation-flow scan (see `roles/steward/AGENT.md` § PR-creation-flow scan) enforces the chain automatically.
 - _2026-05-14_: jury-judge redesign. The single generic `juror` role split into five named seats (assessor, stylist, archivist, curator, locksmith) plus the existing saboteur for six total, with deliberate overlap so every inquiry area is touched by at least two seats. The judge role was added as the panel's foreperson (dispatches the jurors, aggregates, submits one verdict, un-drafts on loop completion). The cleaner moved from last-in-the-chain to between-builder-and-jury, and lost un-draft authority. Old single-stage juror-plus-saboteur panels remain valid by maintainer override; the default is the six-seat panel.
 - _2026-05-14_ (same day, later): twelve-seat panel. The maintainer's directive was to halve each seat's responsibilities. Each of the six prior seats split into two successor seats: assessor → assessor + typist, stylist → stylist + packager, archivist → archivist + prover, curator → curator + migrator, locksmith → locksmith + warden, saboteur → saboteur + breaker. Concurrent dispatch became the explicit default at this size; sequential dispatch is an override. Smaller panels (3 to 6 seats) remain valid when the dispatch brief names a reduced composition.
-- _2026-05-14_ (same day, later still): design / implementation split codified. Maintainer directive after the SES top-level-await and SES import-attributes designers landed: designers default to opening draft PRs against the project's bot-fork roadmap branch (today `llm` on `endojs/endo-but-for-bots`); design PRs are not in this flow's chain (no cleaner, no judge, no jury); implementations of those designs are separate builder dispatches that land on the project's natural implementation base (today `master`). Node-18-drop pattern (`#232` design on `llm`, `#246` master-base mirror) is the reference shape. The next-stage-owed heuristic gained a step 2 that skips design-only PRs; the *Design-only PR* variant under Flow ordering and the new *Designs versus implementations* section above carry the rule.
+- _2026-05-14_ (same day, later still): design / implementation split codified. Maintainer directive after the SES top-level-await and SES import-attributes designers landed: designers default to opening draft PRs against the project's bot-fork roadmap branch (today `llm` on `endojs/endo-but-for-bots`); implementations of those designs are separate builder dispatches that land on the project's natural implementation base (today `master`). Node-18-drop pattern (`#232` design on `llm`, `#246` master-base mirror) is the reference shape. The *Designs versus implementations* section above carries the base-split rule.
+- _2026-05-14_ (later same day): design panel landed. The maintainer's framing: "Designs should be reviewed by a critic, a skeptic, a copy editor, a Chicago Manual style guide enthusiast, and a naive reader who only understands short sentences with clear logical progress." The judge gained panel-kind discrimination per `roles/judge/AGENT.md` § Panel-kind discrimination: design-only PRs (paths only under `<project>/designs/`) get the five-seat design panel; everything else gets the existing twelve-seat code panel. The design-only flow skips both the assayer and the cleaner and dispatches the judge directly after the builder. This supersedes the same-day, earlier "design-only PRs skip the flow chain" stance: design-only PRs now run through the chain with the design panel rather than being skipped entirely. The first design-panel rounds will run against PR #249 (SES top-level-await design) and the SES import-attributes design PR once its builder lands; the steward's per-cycle scan picks them up.

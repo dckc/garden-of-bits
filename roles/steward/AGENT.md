@@ -123,12 +123,11 @@ gh pr list -R <owner>/<repo> --author kriscendobot --draft --state open \
 For each returned PR, compute the next-stage-owed per the heuristic in `skills/pr-creation-flow/SKILL.md` § The next-stage-owed heuristic:
 
 1. `mergeable_state == CONFLICTING`: dispatch a weaver. Skip further evaluation this cycle.
-2. PR's diff is design-only (a single `designs/<slug>.md` file or sibling design files, no source / no tests): not in the flow chain. Skip entirely; the maintainer reviews directly. See `skills/pr-creation-flow/SKILL.md` § Designs versus implementations and the *Design-only PR* variant for the rule. Do not dispatch a cleaner, judge, or fixer.
-3. Panel `--approve` (or `--comment` with no in-scope must-fix) submitted, with no later builder/fixer push, but PR still draft: the judge should have un-drafted but did not. Un-draft directly (`gh pr ready <N>`) and journal a discipline-lapse note.
-4. Latest panel verdict has in-scope must-fix and no fixer push since: dispatch a fixer with the must-fix list inline.
-5. Fixer pushed since the latest panel verdict and no judge re-dispatch since: dispatch the judge (the judge re-runs the panel internally).
-6. Cleaner has pushed and CI is green, with no panel verdict yet: dispatch the judge.
-7. Builder's PR is open and no cleaner push exists yet: dispatch the cleaner. On the tiny-PR variant (pure docs, lockfile-only, one-file format sweep, single-line bug fix with test fixture already in the diff), skip the cleaner and dispatch the judge directly; the steward picks the variant by inspecting the diff.
+2. Panel `--approve` (or `--comment` with no in-scope must-fix) submitted, with no later builder/fixer push, but PR still draft: the judge should have un-drafted but did not. Un-draft directly (`gh pr ready <N>`) and journal a discipline-lapse note.
+3. Latest panel verdict has in-scope must-fix and no fixer push since: dispatch a fixer with the must-fix list inline.
+4. Fixer pushed since the latest panel verdict and no judge re-dispatch since: dispatch the judge (the judge re-runs the panel internally).
+5. Cleaner has pushed and CI is green, with no panel verdict yet: dispatch the judge.
+6. Builder's PR is open and no cleaner push exists yet: dispatch the cleaner. On the tiny-PR variant (pure docs, lockfile-only, one-file format sweep, single-line bug fix with test fixture already in the diff), skip the cleaner and dispatch the judge directly. On the design-only-PR variant (every changed path under `<project>/designs/`, no source or test changes), skip both the assayer and the cleaner and dispatch the judge directly; the judge picks the design panel per `roles/judge/AGENT.md` § Panel-kind discrimination. The steward picks the variant by inspecting the diff.
 
 A *panel verdict* is a `kriscendobot`-authored formal review (`reviews[].author.login == "kriscendobot"` and `reviews[].state in (CHANGES_REQUESTED, COMMENTED, APPROVED)`) whose body shape matches the panel-review pattern. A plain `gh pr comment` does not count.
 
