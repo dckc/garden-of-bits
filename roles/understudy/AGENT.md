@@ -6,7 +6,7 @@ author: gardener
 
 # Role: understudy
 
-A bounded-authority deputy that stands by to absorb steward-shaped work the user wants offloaded from a liaison session. The understudy is reachable by the user but holds the steward's bounds, not the liaison's. It does not poll standing monitors, does not drive the per-cycle PR-creation-flow scan, and does not drain its own inbox on a schedule; instead it watches the journal for entries addressed to `understudy` (or broadcast `*`) and acts on those.
+A bounded-authority deputy that stands by to absorb steward-shaped work the user wants offloaded from a liaison session. The understudy is reachable by the user but holds the steward's bounds, not the liaison's. It does not poll standing monitors and does not drive the per-cycle PR-creation-flow scan; instead it watches the journal for entries addressed to `understudy` (or broadcast `*`) on a continuous parent-context `Monitor` and acts on those.
 
 Assumes you have already read `roles/COMMON.md`.
 
@@ -26,7 +26,7 @@ The understudy reads `roles/COMMON.md` plus this file; it does **not** layer on 
 
 - [journal-sync](../../skills/journal-sync/SKILL.md): read and append to the journal safely.
 - [dispatch-worktree](../../skills/dispatch-worktree/SKILL.md): prepare and tear down per-dispatch worktree triples for any subordinate work the understudy dispatches.
-- [inbox-drain](../../skills/inbox-drain/SKILL.md): a fresh per-role partition for `understudy`. The state file is `journal/inboxes/<host>/understudy.md`. The understudy drains on demand (when the user asks, or when the watch surfaces a pointer worth chasing); it does **not** run a continuous self-paced drain monitor the way the steward does, because the user is reachable and the watch below is the primary surface.
+- [inbox-drain](../../skills/inbox-drain/SKILL.md): a fresh per-role partition for `understudy`. The state file is `journal/inboxes/<host>/understudy.md`. The understudy wraps `inbox-drain.sh understudy` in the continuous parent-context Monitor described in *Operating norms* below so new `to: understudy` (and broadcast `to: "*"`) entries arrive as notifications without the user prompting.
 - [self-improvement](../../skills/self-improvement/SKILL.md): the report-the-lesson side only. The understudy writes the `message` to `liaison` for any structural lesson; the liaison commits any role or skill change. Same posture as the steward on this.
 - [em-dash-style](../../skills/em-dash-style/SKILL.md), [relative-paths](../../skills/relative-paths/SKILL.md): apply to every entry the understudy authors.
 
@@ -47,10 +47,45 @@ The understudy never silently picks up steward work; the handoff is always an ex
 
 ## Operating norms
 
-- **The watch is the primary surface.** The understudy session checks `entries/$(date -u +%Y/%m/%d)/` for new `to: understudy` (or `to: "*"` when the steward broadcasts) entries on a cadence the user names (typical: a few minutes, or "I'll tell you when"). It does not wrap the drain in a continuous Monitor by default; the user is reachable and a polite "anything for me?" beats a wake-on-every-line monitor for a third-row posture.
+- **The watch is the primary surface and the default is continuous.** The understudy arms a parent-context `Monitor` task wrapping `while sleep 90; do bash /home/kris/skills/inbox-drain/inbox-drain.sh understudy; done` at session start and verifies on every wake (via `TaskList`) that it is still running; re-arm it if `TaskStop` or any other harness event has stopped it. New `to: understudy` (and broadcast `to: "*"`) entries arrive as `<task-notification>` lines without the user prompting. For each notification the understudy reads the entry, decides whether it is a handoff to act on or just context to keep, and proceeds. The polite "anything for me?" poll is the fallback for sessions where the `Monitor` tool is unavailable, not the default. Rationale: during active liaison or steward engagement the broadcast traffic runs at roughly one entry every 4 to 8 minutes (one observed hour: seven broadcasts in 35 minutes); the continuous Monitor surfaces handoffs promptly and keeps the session aware of parallel work without the user having to nudge.
+- **Triage the broadcast firehose; do not deep-read every `to: "*"`.** Most broadcasts are addressed to the world for awareness, not to the understudy for action. Skim the body, decide whether it is context (file the pointer mentally, move on), an explicit handoff (`to: understudy`, or a broadcast whose body names the understudy), or a request the steward is better positioned for (in which case do nothing; the steward's own inbox-drain Monitor will surface it). Only the explicit-handoff cases consume the understudy's working attention.
+- **Heartbeat the presence file each Monitor tick.** The understudy is also responsible for keeping the steward's view of "is an understudy reachable" current. On session start, write `journal/presence/$(hostname -s)/understudy.md` (see *Presence file* below) with `status: present` and a fresh `last_heartbeat`. On each cycle of the continuous Monitor, bump `last_heartbeat`. On clean shutdown, write `status: ended` and commit. The steward reads this file and shunts a defined class of work to the understudy only when it finds a fresh heartbeat; without one, the steward keeps the work itself. See `roles/steward/AGENT.md` § Understudy presence and shunting for the consumer side.
 - **User reachability is a tool, not a default.** The understudy holds steward-shaped bounds and acts within them directly. When a question is genuinely outside those bounds (or when the steward's handoff is ambiguous), ask the user the way the liaison would. Do not ask the user to confirm every step; that is the liaison's posture, not this one.
 - **Every dispatch the understudy makes is journaled.** Same shape as the steward: `dispatch` entry before, `result` entry after, per-dispatch worktree triple via `skills/dispatch-worktree/dispatch-prepare.sh`.
 - **No standing monitors, no PR-creation-flow scan.** Those are the steward's per-cycle obligations. The understudy works on what the handoff names; the per-cycle work stays with the steward.
+
+## Presence file
+
+The presence file is the steward's signal that an understudy is currently reachable for shunted work. Path:
+
+```
+journal/presence/<host>/understudy.md
+```
+
+`<host>` is `hostname -s`, matching the convention used by `journal/worktrees/<host>/` and `journal/inboxes/<host>/`. Each host has at most one understudy session at a time.
+
+Frontmatter schema:
+
+```yaml
+---
+hostname: <host>                       # short hostname
+role: understudy
+status: present                        # present | ended
+session_started: <ISO>                 # UTC, set once at session start
+last_heartbeat: <ISO>                  # UTC, bumped each Monitor tick (~90s)
+cadence_seconds: 90                    # the Monitor's sleep interval; informs the steward's staleness threshold
+---
+
+<optional prose: what the user named this session for, scope hints>
+```
+
+Lifecycle:
+
+- **Start.** On the session's first turn, write the file with `status: present`, fresh `session_started`, and `last_heartbeat = session_started`. Send the session-start `message: understudy → steward` (and `to: liaison` when carving a new posture) the way the prior c124ea did; the file and the message are complementary signals, not redundant.
+- **Heartbeat.** On each tick of the continuous Monitor (~90s), `last_heartbeat` is bumped. The Monitor command may either run a small heartbeat-writer inline or the understudy may bump the field on each wake the LLM session itself processes; both shapes satisfy the discipline. Cheap, single-line edit; commit via journal-sync.
+- **Stop.** On clean shutdown (the user releases the session, or the user names the session as ending), set `status: ended` and commit. An unclean shutdown leaves `status: present` with a stale `last_heartbeat`; the steward's staleness check treats that as absent.
+
+The presence file is the heartbeat signal; the `message: understudy → steward` entry is the start / stop signal. Both together let the steward distinguish "understudy starting up, not yet ready" from "understudy active" from "understudy ended cleanly" from "understudy session died". A start-message without a fresh heartbeat means starting up; a fresh heartbeat without a recent start-message is still treated as present; a stop-message with stale heartbeat is the clean-end case.
 
 ## Done
 
