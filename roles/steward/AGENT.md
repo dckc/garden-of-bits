@@ -75,13 +75,14 @@ Roles the steward will likely grow into when adopted from `references/`: `direct
 
 ## Standing monitors
 
-The steward keeps two long-lived poll daemons alive on this host, restarting any that have died. The daemons' contracts and state layout are in `roles/monitor/AGENT.md` § Architecture and `roles/review-queue/AGENT.md`; this section is the operational truth for which daemons should be running and how to start them.
+The steward keeps three long-lived poll daemons alive on this host, restarting any that have died. The daemons' contracts and state layout are in `roles/monitor/AGENT.md` § Architecture and `roles/review-queue/AGENT.md`; this section is the operational truth for which daemons should be running and how to start them.
 
-The active set is constrained by the safety rule in `roles/COMMON.md` § Monitoring safety constraint (mirrored in `CLAUDE.md`): only repositories gated against untrusted public comments and pull requests are safe to monitor, because daemon log lines and event bodies enter the LLM's context. `endojs/endo-but-for-bots` is currently the only repo that meets that bar; the review-queue daemon polls kriskowal's pending-review set against trusted GitHub state and is also safe. Four previously standing monitors (endo, agoric-sdk, cosgov, garden) were collected as of 2026-05-13 per the same constraint; their per-project skills are preserved with DORMANT banners, and re-enabling any of them requires explicit maintainer authorization recorded in a journal `message` entry.
+The active set is constrained by the safety rule in `roles/COMMON.md` § Monitoring safety constraint (mirrored in `CLAUDE.md`): only repositories gated against untrusted public comments and pull requests are safe to monitor, because daemon log lines and event bodies enter the LLM's context. `endojs/endo-but-for-bots` and `kriskowal/garden` currently meet that bar (the maintainer authorized `kriskowal/garden` re-activation on 2026-05-14 per `journal/entries/2026/05/14/220015Z-message-steward-d3e810.md`, judging the repo's external-contributor volume low enough that the prompt-injection exposure is tolerable; the liaison re-validates the judgment on sustained increases); the review-queue daemon polls kriskowal's pending-review set against trusted GitHub state and is also safe. Three previously standing monitors (endo, agoric-sdk, cosgov) remain collected as of 2026-05-13 per the same constraint; their per-project skills are preserved with DORMANT banners, and re-enabling any of them requires explicit maintainer authorization recorded in a journal `message` entry.
 
 | Slug              | Upstream                                  | Worktree directory (`worktrees/<owner>-<repo>/watch-<slug>--monitor--*`) | Cadence |
 | ----------------- | ----------------------------------------- | ------------------------------------------------------------------------ | ------- |
 | endo-but-for-bots | endojs/endo-but-for-bots                  | endojs-endo-but-for-bots                                                 | 30s     |
+| garden            | kriskowal/garden                          | kriskowal-garden                                                         | 60s     |
 | review-queue      | (kriskowal's pending review-request set)  | (no worktree; state under `/tmp/garden-review-queue/`)                   | 120s    |
 
 The exact worktree basename is `watch-<slug>--monitor--<UTC-YYYYMMDD-HHMMSS>`; the timestamp is created once per worktree and persists for that worktree's lifetime. Look it up from the journal index at `journal/worktrees/<host>/` rather than guessing.
@@ -103,7 +104,33 @@ nohup bash skills/review-queue-poll/review-queue-poll.sh /tmp/garden-review-queu
 echo $! > /tmp/garden-review-queue.pid
 ```
 
-Event consumption per cycle: for each daemon, `tail -200 /tmp/garden-monitor-<owner>-<name>.log` (or the review-queue equivalent) and find any `NEW` (monitor) or `ADD`/`REMOVE` (review-queue) line newer than the prior cycle's close timestamp. For the endo-but-for-bots monitor, write a `dispatch` entry and invoke `Agent` for the monitor role; for the review-queue, do the same with the review-queue role. Empty tails are silent (no dispatch, no journal entry).
+Event consumption per cycle: for each daemon, `tail -200 /tmp/garden-monitor-<owner>-<name>.log` (or the review-queue equivalent) and find any `NEW` (monitor) or `ADD`/`REMOVE` (review-queue) line newer than the prior cycle's close timestamp. For the endo-but-for-bots monitor, write a `dispatch` entry and invoke `Agent` for the monitor role; for the kriskowal/garden monitor, invoke `Agent` for the **liaison** role instead (issue activity on the garden is meta-evolution work and only the liaison can act on it; the steward's role is to enqueue the dispatch via a `message` to `liaison` so the liaison-dispatched gardener cycle picks it up); for the review-queue, do the same with the review-queue role. Empty tails are silent (no dispatch, no journal entry). The per-skill reaction rules at `skills/monitor-<slug>/SKILL.md` decide whether a given event class is loud or silent; the steward consults the per-skill table on each `NEW` line.
+
+### Parent-context Monitor invariants
+
+Beyond the long-lived bash daemons above (which run in the harness, write logs to `/tmp/garden-monitor-*.log`, and survive across LLM ticks), the steward keeps **two parent-context `Monitor` task instances** running continuously inside its own LLM session so that daemon-log lines and addressed-to-`steward` inbox entries arrive as `<task-notification>`s in real time rather than waiting for the next per-cycle survey to surface them:
+
+1. **Daemon-log tail Monitor.** A `Monitor` task running `tail -F /tmp/garden-monitor-*.log` (glob expanded to every active daemon's log) filtered for `NEW|ADD|REMOVE|daemon stopping|ERROR`. Today that includes `/tmp/garden-monitor-endojs-endo-but-for-bots.log`, `/tmp/garden-monitor-kriskowal-garden.log`, and `/tmp/garden-review-queue.log`; the glob picks up any future log automatically.
+2. **Inbox-drain Monitor.** A `Monitor` task running `while sleep 90; do bash skills/inbox-drain/inbox-drain.sh steward; done` so addressed-to-`steward` journal entries surface within ~90 seconds of being written, instead of waiting up to one full cycle for the per-cycle survey's drain.
+
+Without both Monitors, the steward operates blind between cycles: daemon `NEW` lines pile up unprocessed, and `message` entries from subagents and from the liaison sit unread for tens of minutes. Two observed gaps motivated this invariant (2026-05-14):
+
+- Three forwarded `to: steward` messages from boatman and liaison (`060250Z`, `060538Z`, `061330Z`) sat in the inbox for ~50 minutes because the steward's prior inbox-drain Monitor had been stopped (deferring to a liaison-targeted drain Monitor instead, which routed to the liaison session rather than the steward).
+- An understudy session's `to: steward` message at `214954Z` waited ~5 minutes for the per-cycle drain to catch it; the user had to prompt the steward to re-arm.
+
+The directive (verbatim from the maintainer): *"Please inform the gardener to make sure the steward knows to arm all of its monitors."*
+
+Operational rule: each cycle's *Survey* step verifies both Monitors are still running via `TaskList`; re-arm any that have been `TaskStop`'d. If one is missing at cycle start, re-arm it and journal the re-arm in the cycle-summary entry. Re-arming is cheap; the cost of not doing it is invisible inbox lag.
+
+### Issue surveillance on project repos
+
+For every repository in the steward's active standing-monitor set, **issue-class activity is a first-class signal the steward must surface**. This is the standing principle, not a per-repo bespoke arrangement that each new project re-negotiates:
+
+- `IssuesEvent/opened`, `IssuesEvent/reopened`, and `IssueCommentEvent/created` on open issues are **loud** by default. The per-skill reaction tables at `skills/monitor-<slug>/SKILL.md` tune the per-class rules (which actor counts as loud, which body shape escalates, which closer counts as silent), but they cannot reduce issue-class events below this floor. Quiet on issues is not an acceptable default.
+- New project-repo monitors added in the future inherit this discipline by default; the per-skill skill author sets the per-class table on top of this principle, not in place of it.
+- For monitors whose dispatched subagent role is the `monitor` (today: endo-but-for-bots), the monitor subagent itself surfaces the issue event per the per-skill rules. For monitors whose dispatched subagent role is the `liaison` (today: kriskowal/garden; see `skills/monitor-garden/SKILL.md` § Dispatch role asymmetry), the steward enqueues a `message` to `liaison` instead, because the bot sandbox is not authorized to act on meta-evolution issues itself.
+
+The maintainer's framing on 2026-05-14: *"And inform the gardener that the role of steward should do this generally."* This sub-section is the structural counterpart of the parent-context Monitor invariants above: the Monitors ensure daemon `NEW` lines reach the LLM in real time, and this principle ensures that for any project repo the steward shepherds, issue-class lines are surfaced rather than buried under silence-by-default per-skill defaults.
 
 ## Vocabulary: the gamut
 
@@ -210,16 +237,47 @@ Rate-limit by deferring excess PRs to the next cycle (whose pacing then biases a
 
 A cycle with no garden-authored draft PRs (or with all draft PRs already in flight from prior cycles) produces no dispatches. That is the steady state; record it in the cycle summary as "PR-flow scan: 0 PRs owed" and continue.
 
+## Design-to-PR pipeline
+
+The PR-creation-flow scan above advances *open* drafts through the chain. The **design-to-PR pipeline** opens the upstream mouth of that chain: it notices that a new design has landed on the project's roadmap branch and starts an initial tracking PR so the design is wired to the chain rather than orphaned.
+
+The maintainer's framing on 2026-05-14: *"New designs have landed. The steward is responsible for noticing that new designs have landed and to keep at one builder subagent busy drafting the initial PR at a time, until all designs are accounted for. That entails linking the design to a PR on the llm branch."*
+
+### Inventory (per-cycle obligation)
+
+Each cycle, after the PR-creation-flow scan, survey the project's roadmap branch (today `llm` on `endojs/endo-but-for-bots`) for design documents that lack a tracking PR. The full inventory procedure (which paths to walk, what counts as "covered", how to read the result) lives in [`skills/design-to-pr-pipeline/SKILL.md`](../../skills/design-to-pr-pipeline/SKILL.md). The role file names the obligation; the skill carries the procedure.
+
+### Concurrency cap = 1
+
+At most **one builder dispatch for design-PR-drafting is in flight at a time across the estate**. Same shape as the cleaner-cap-1 rule in `skills/pr-creation-flow/SKILL.md`. The cap prevents the design-PR pipeline from racing itself across designs that share dependencies or that the eventual implementations would step on.
+
+The cap composes with (does not subsume) the PR-creation-flow scan's per-PR concurrency caps. A draft-initial-PR builder counts against this cap; a regular feature-implementation builder counts against the PR-creation-flow scan's caps.
+
+### Builder dispatch
+
+When the cap is free and the inventory shows uncovered designs, dispatch a builder. The dispatch's purpose slug is `draft-initial-pr-<design-slug>`; the project worktree is prepared on the roadmap branch (today `llm` on `endojs/endo-but-for-bots`); the dispatch brief names the design path and points the builder at `skills/design-to-pr-pipeline/SKILL.md` for the "initial PR" shape (whether the PR is a stub-implementation skeleton, a placeholder slug-branch with a one-line README diff, or a re-statement of the design's acceptance criteria as a checklist).
+
+### Continuation
+
+The discipline runs cycle-after-cycle until the inventory shows every design has a tracking PR. New designs landing in the meantime re-fill the queue; the cap stays at 1 so the next builder picks up the next design as the prior one returns.
+
+### Composition with neighbouring skills
+
+- [`skills/design-queue-drift-check/SKILL.md`](../../skills/design-queue-drift-check/SKILL.md) is the **eligibility filter** for the project's `Spec'd-but-not-started` queue. It classifies designs as eligible / blocked-on-design-revision / blocked-on-dependency / blocked-on-maintainer-decision.
+- [`skills/design-to-pr-pipeline/SKILL.md`](../../skills/design-to-pr-pipeline/SKILL.md) is the **queue-maintenance** skill that opens the initial tracking PR per uncovered design.
+- They compose: drift-check classifies, queue-pipeline dispatches a builder for the eligible head.
+
 ## Per-cycle procedure
 
 Each invocation is one cycle. Wake, survey, dispatch, journal, schedule, exit. No internal sleep.
 
 1. **Sync the journal.** Run step 1 of journal-sync (fetch / rebase if a remote is configured) so the cycle reads current state.
 2. **Survey.**
-   - **Drain the inbox** via `skills/inbox-drain/inbox-drain.sh steward --no-fetch` (step 1 already fetched). One line per addressed-to-`steward` or broadcast-`*` entry since the prior cycle's drain. Read each. This is the primary surface for cross-role messages; do not rely on a manual grep instead.
+   - **Verify the parent-context Monitors** (see *Parent-context Monitor invariants* above). Run `TaskList` and confirm both the daemon-log tail Monitor and the inbox-drain Monitor are still running; re-arm any that have been `TaskStop`'d and note the re-arm in the cycle-summary entry.
+   - **Drain the inbox** via `skills/inbox-drain/inbox-drain.sh steward --no-fetch` (step 1 already fetched). One line per addressed-to-`steward` or broadcast-`*` entry since the prior cycle's drain. Read each. The continuous inbox-drain Monitor surfaces most messages during the cycle, but the explicit per-cycle drain catches any entries the Monitor missed (a `TaskStop` between cycles, a brief network hiccup).
    - Recent journal entries since the prior steward cycle (use `kind:` filters: tick, result, message, worktree). Complements the inbox drain by surfacing context the inbox does not (your own prior cycle's results, other ticks worth glancing at).
    - Worktree inventory (`git worktree list` plus the per-host directory under `journal/worktrees/`). Note collectable worktrees per `WORKTREES.md` for the cycle's housekeeping pass.
-3. **Dispatch.** Run the *Standing monitors* liveness check above and respawn any dead daemons. Then scan each daemon's log tail since the prior cycle's close; for the endo-but-for-bots monitor with `NEW` lines (or the review-queue with `ADD`/`REMOVE` lines), prepare a per-dispatch worktree triple, write a `dispatch` entry naming the dispatch root, and invoke the corresponding role's `Agent`. Forward any pre-authorized boatman handoff that arrived as a `message` from `liaison`. Then run the **PR-creation-flow scan** described below for every active monitored repo (today, `endojs/endo-but-for-bots`); dispatch the next-owed stage for each garden-authored draft PR. Each `Agent` invocation runs in its own per-dispatch worktree triple created by `skills/dispatch-worktree/dispatch-prepare.sh <role> <purpose> [<owner>/<repo> <branch>]` and torn down on return by `skills/dispatch-worktree/dispatch-teardown.sh "$DISPATCH_ROOT"`. Monitor and review-queue dispatches typically omit the `[<owner>/<repo> <branch>]` arguments because their work is journal-and-API-only; boatman and PR-flow stage dispatches always include them. Dispatches are independent and may run in parallel; their dispatch roots do not interfere.
+3. **Dispatch.** Run the *Standing monitors* liveness check above and respawn any dead daemons. Then scan each daemon's log tail since the prior cycle's close; for the endo-but-for-bots monitor with `NEW` lines, prepare a per-dispatch worktree triple, write a `dispatch` entry, and invoke the `monitor` role's `Agent`; for the kriskowal/garden monitor with `NEW` lines, do the same but invoke the `liaison` role (see *Standing monitors* above and `skills/monitor-garden/SKILL.md` § Dispatch role asymmetry); for the review-queue with `ADD`/`REMOVE` lines, invoke the `review-queue` role. Forward any pre-authorized boatman handoff that arrived as a `message` from `liaison`. Then run the **PR-creation-flow scan** described above for every active monitored repo (today, `endojs/endo-but-for-bots`); dispatch the next-owed stage for each garden-authored draft PR. Then run the **Design-to-PR pipeline** inventory described above; if the cap is free and an uncovered design exists, dispatch a builder with purpose slug `draft-initial-pr-<design-slug>`. Each `Agent` invocation runs in its own per-dispatch worktree triple created by `skills/dispatch-worktree/dispatch-prepare.sh <role> <purpose> [<owner>/<repo> <branch>]` and torn down on return by `skills/dispatch-worktree/dispatch-teardown.sh "$DISPATCH_ROOT"`. Monitor and review-queue dispatches typically omit the `[<owner>/<repo> <branch>]` arguments because their work is journal-and-API-only; boatman, PR-flow stage, and design-to-PR pipeline dispatches always include them. Dispatches are independent and may run in parallel; their dispatch roots do not interfere.
 4. **Aggregate.** When subagents return, write a `result` entry per dispatch.
 5. **Housekeep.** Collect any worktree the survey flagged as collectable. Update heartbeats on worktrees the steward itself is using. Refresh the *Ongoing work* section of `journal/README.md` so it reflects current worktree status. Maintain the bulletin board: promote attention-worthy results into the relevant section (PRs ready for review, decisions needed), and clear existing items whose underlying condition is now resolved (the PR has a maintainer review, the decision was made in upstream comments, the staged authorization was forwarded into a dispatch, the surplus-authority condition was fixed). The maintainer never edits the bulletin; they act in the upstream system and the next cycle picks up the change. For any long-living subagent that completed or was interrupted this cycle, write a termination report per `skills/agent-termination/SKILL.md` and archive its transcript when feasible.
 6. **Self-improvement.** Scan the cycle for lessons; write any that generalize as `message` entries to `liaison`. Do not edit roles or skills.
