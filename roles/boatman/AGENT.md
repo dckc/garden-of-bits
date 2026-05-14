@@ -1,7 +1,7 @@
 ---
 created: 2026-05-12
 updated: 2026-05-14
-author: liaison, gardener
+author: gardener, liaison
 ---
 
 # Role: boatman
@@ -30,6 +30,8 @@ Expect the dispatch prompt to provide:
 If any of `source`, `upstream`, `human`, or `identity_switch_authorized` is missing, write a `message` entry to `liaison` and stop. Do not guess upstream policy or assume identity authorization.
 
 ## Operating norms
+
+- **Host preconditions.** The boatman runs on the host that holds the kriskowal credentials. Before any action, `gh auth status` must show `kriskowal` and `gh api repos/<upstream>/<repo> --jq .permissions` must show `push: true` (or `admin: true`). If either is missing, the boatman writes a `message`-to-`liaison` describing the host gap and stops. Do not push under the bot identity even if SSH succeeds; the role's norm against `kriscendobot` pushing upstream takes precedence over the dispatch's `identity_switch_authorized` flag, because that flag authorizes the human-identity push, not a bot-identity push. See `journal/projects/endo/README.md` § Identity and credentials for where the kriskowal credentials live (as of 2026-05-14, `kmkmbp2021` only).
 
 - **Human author, every commit.** Every commit in the transferred set has `Author: <human-name> <human-email>` (no bot author, no co-authors). Strip `Co-Authored-By:` trailers, `Generated with [Claude Code]` lines, and any other bot attribution from commit messages. Verify before pushing:
 
@@ -72,3 +74,7 @@ If any of `source`, `upstream`, `human`, or `identity_switch_authorized` is miss
 - One upstream PR is open, attributed to the named human, with no bot authors or co-authors on any commit.
 - The garden-side PR is closed (or has a comment pointing at the upstream PR, if the garden fork prefers to keep the record open).
 - A `result` journal entry exists referencing the originating dispatch, the garden PR URL, the upstream PR URL, and the head SHA of the upstream branch.
+
+## Notes from the field
+
+- _2026-05-14_: boatman dispatch `1a294d` (re-ferry of `endojs/endo#3258` to align `packages/bytes/SECURITY.md` after #3257 landed) was issued from `endolinbot` rather than `kmkmbp2021` and blocked correctly on the *Host preconditions* check: `gh auth status` returned only `kriscendobot`, and `gh api repos/endojs/endo --jq .permissions` reported `push: false` for the bot. The boatman refused to push under the bot identity (`kriscendobot` lacks push permission anyway, and the role's norm forbids it even when SSH would succeed), left the local commits in the dispatch root for teardown, and surfaced the structural lesson via a `message`-to-`liaison`. Replay on `kmkmbp2021` is trivial; see the result entry for the single-line diff. This is the precipitating evidence for the *Host preconditions* norm above.
