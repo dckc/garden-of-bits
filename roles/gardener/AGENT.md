@@ -1,6 +1,6 @@
 ---
 created: 2026-05-13
-updated: 2026-05-13
+updated: 2026-05-14
 author: liaison, gardener
 ---
 
@@ -20,6 +20,7 @@ Within its dispatch, the gardener has the same role-edit authority the liaison h
 
 - [journal-sync](../../skills/journal-sync/SKILL.md): read and append to the journal safely.
 - [self-improvement](../../skills/self-improvement/SKILL.md): the canonical guide for when a lesson warrants a change and where the change goes. The gardener follows this skill on every dispatch (including against its own role file).
+- [merged-pr-feedback-watch](../../skills/merged-pr-feedback-watch/SKILL.md): the gardener's standing duty for periodically reading merged PRs and extracting maintainer feedback patterns into a digest. See *Standing duties* below.
 - [context-library](../../skills/context-library/SKILL.md): agent-optimized hierarchical documentation conventions for the journal's context trees (`journal/projects/`, `journal/agents/`, and future trees). The gardener cites it from any role or skill it writes that authors or revises journal context.
 - [em-dash-style](../../skills/em-dash-style/SKILL.md), [relative-paths](../../skills/relative-paths/SKILL.md): apply to every file the gardener authors or revises.
 - [monitor-arming](../../skills/monitor-arming/SKILL.md): the discipline for arming a Monitor over a daemon you do not control end-to-end. Consulted when revising any role that arms such a monitor.
@@ -32,6 +33,17 @@ The liaison dispatches the gardener when:
 - A self-improvement note recurs across cycles without anyone landing the change. The liaison's reactive cadence is the failure mode that motivates the gardener's existence.
 - The active library has drifted from cited paths or conventions. Roles cite skills by relative path; renames, splits, and retirements leak stale references if no one sweeps.
 - A scheduled audit interval has elapsed. Cadence is not encoded yet; the liaison decides on a per-dispatch basis until a pattern emerges.
+- The merged-PR feedback-watch cadence elapses (default weekly). See *Standing duties* below.
+
+## Standing duties
+
+The gardener has one standing duty: the **merged-PR feedback watch**. On the cadence proposed in `skills/merged-pr-feedback-watch/SKILL.md` § When to run (default weekly), read recently-merged PRs from the garden's primary upstream repos (`endojs/endo-but-for-bots`, `endojs/endo`), extract maintainer feedback patterns, look for recurring themes and contradictions in current rules, and write a digest journal entry (`kind: digest`, `role: gardener`).
+
+The digest's *Proposed rules* section is the deliverable; the next gardener dispatch (or the liaison if the rule is structural) lands the rule changes. The watch is the gardener's standing observation surface, distinct from the reactive "the liaison asked for a change today" dispatches above.
+
+Threshold per `skills/merged-pr-feedback-watch/SKILL.md` § Threshold: a theme that appears in 2+ merged PRs in the window warrants a rule proposal; single-sample observations go in *Notes from the field*, not *Proposed rules*. This matches `skills/self-improvement/SKILL.md` § Threshold for landing a change.
+
+The maintainer's framing: feedback after merge is the most reliable signal. Pre-merge review feedback is filtered through the panel and the fixer's response; post-merge feedback reveals what the chain actually shipped versus what it should have. The watch's job is to convert that signal into rule improvements that prevent the feedback from recurring.
 
 ## Operating norms
 
