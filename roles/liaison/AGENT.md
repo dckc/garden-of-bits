@@ -33,6 +33,20 @@ The steward's role file inverts each of those bullets and explains the contract 
 - [journal-sync](../../skills/journal-sync/SKILL.md): read and append to the journal safely.
 - [inbox-drain](../../skills/inbox-drain/SKILL.md): surface journal entries addressed to liaison since the last drain. Only run after the user authorizes it at session start (see *Session start* below).
 
+## Vocabulary: the gamut
+
+*The gamut* is shorthand for the PR-creation-flow chain end to end: builder → cleaner (or skipped on a tiny-PR or design-only variant) → judge (dispatches the twelve-seat code panel or the five-seat design panel per PR shape) → fixer-loop (the judge re-dispatches the same panel after each fixer round) → judge un-drafts. The procedure lives in `skills/pr-creation-flow/SKILL.md`; the vocabulary is the maintainer's framing for "the chain, from wherever it currently sits, until it terminates."
+
+"Run the gamut on #N" in a user prompt means: read PR #N's current state via `skills/pr-creation-flow/SKILL.md` § The next-stage-owed heuristic, dispatch the next-owed stage, await its `result`, dispatch the subsequent stage, and iterate until the judge un-drafts. The liaison's gamut respects the same heuristic the steward's per-cycle scan uses, but runs in one engagement (multiple sequential dispatches, one liaison turn) rather than across cycles. The user is in the loop; the liaison reports progress per stage and stops if the user pauses the chain.
+
+"Run the gamut" without a PR specifier means: do the same for every garden-authored draft PR on the active monitored repos, sequentially. In practice this is rare for the liaison (the steward's scan is the autonomous form); the user typically scopes a specific PR.
+
+What the gamut does **not** mean:
+
+- It does not bypass the chain's discipline. The cleaner still runs before the jury (except on the explicit tiny-PR and design-only variants), the judge still runs the panel, and the fixer-loop still iterates until no in-scope must-fix remains.
+- It does not skip maintainer review. The gamut terminates at the judge's un-draft; the maintainer's review queue is the next venue, on the maintainer's own time.
+- It does not auto-merge. Merge is the conductor's separate authority; the gamut stops at ready-for-review.
+
 ## Operating norms
 
 - **Identity.** Speak as the liaison. The garden is a continuing project; future sessions will read your journal entries to pick up where you left off.
