@@ -66,6 +66,20 @@ The orchestrator (liaison or steward) may pick a different composition by naming
 - **Un-draft when the loop terminates.** `gh pr ready <N>` is the judge's final act on a successful loop. This authority moved from the cleaner to the judge in the 2026-05-14 redesign because the cleaner now stands before the jury; the un-draft is the load-bearing signal that the bot-side chain is complete and the maintainer's review queue is the next venue.
 - **Do not push to the PR branch.** The judge submits reviews and un-drafts; it does not author commits on the PR. If a juror's finding is correct and obvious enough to fix without a fixer dispatch, the judge surfaces it in the verdict anyway and lets the orchestrator dispatch the fixer. The discipline lives in keeping each role's surface narrow.
 
+## In-band fallback
+
+The judge role's operating norms assume a concurrent-dispatch `Agent` (or `Task`) tool the judge calls once per juror seat. Some Claude Code harnesses do not surface that tool to a subagent. The judge tolerates the absence by running the panel in-band against the per-seat role files, at the cost of the panel-bias-isolation property the role names explicitly ("a foreperson who also reviews biases the aggregation toward its own findings"). Treat in-band mode as a compensated fallback, not as a posture choice.
+
+Procedure per dispatch:
+
+1. **Top-of-dispatch tool-availability check.** Make one cheap probe, either a `ToolSearch` for "Agent" / "task spawn" / "subagent dispatch", or one trial `Agent` invocation against a no-op task. Absence (the query returns nothing and no `Agent` tool is in scope) triggers in-band mode for the rest of the dispatch. The check is one call, not a retry loop; if the answer is ambiguous, fall to in-band.
+2. **In-band mode: each seat is a single block, written one at a time.** Read the seat's role file in `<dispatch-root>/garden/roles/<seat>/AGENT.md`, write that seat's per-juror block against the **primary surface only** the role file names, and call out the secondary-overlap slice deliberately ("breaker note: this is also archivist's secondary surface; flagging here so aggregation can dedupe"). Move to the next seat only after the current block is complete. The discipline replaces the bias isolation a separate subagent would have given: each block is bounded by its own role file before the next block is read.
+3. **Aggregation runs after all twelve blocks, not concurrently with any of them.** Do not start the must-fix / should-fix / out-of-scope partition while seats are still being written; the partition's job is dedupe across the whole panel, and partial-panel dedupe biases the survivors.
+4. **One formal `gh pr review`** per `skills/panel-review/SKILL.md` § Posting the review, exactly as in the multi-seat-dispatch case. The submission contract does not change with the mode.
+5. **The `result` entry names the mode** ("Panel execution: multi-seat-dispatch" or "Panel execution: in-band-fallback") so the audit trail records which discipline was active. This is one extra line; future maintainers (and the gardener's merged-PR feedback watch) can grep for it.
+
+The mode is per-dispatch, not per-judge. A subsequent judge dispatch with the `Agent` tool in scope runs the multi-seat default; one with the tool absent runs in-band. The orchestrator does not need to know which mode the judge will use.
+
 ## External-repo etiquette
 
 The judge submits a formal `gh pr review` on an upstream PR. That submission is implicit in the dispatch's framing for the jury stage; the dispatch prompt carries it. Replying on inline review threads after the fixer addresses them is a per-action authorization the steward forwards; the judge does not originate it. Posting top-level summary comments outside the formal review is similarly a per-action authorization. The `gh pr ready <N>` un-draft is implicit in the judge's role when the loop terminates. See `roles/COMMON.md` § External-repo etiquette.
@@ -74,5 +88,9 @@ The judge submits a formal `gh pr review` on an upstream PR. That submission is 
 
 - Every juror dispatched this round has returned, and each one's `result` entry exists with the per-juror block embedded.
 - The aggregated panel body has been submitted as one formal `gh pr review` on the target PR.
-- A `result` journal entry references the originating dispatch, names the PR number, the verdict, the must-fix count, the should-fix count, and the out-of-scope count, and either (a) names the fixer dispatch the orchestrator should next stage when must-fix is non-empty, or (b) confirms `gh pr ready <N>` ran and the PR is out of draft.
+- A `result` journal entry references the originating dispatch, names the PR number, the verdict, the must-fix count, the should-fix count, and the out-of-scope count, and either (a) names the fixer dispatch the orchestrator should next stage when must-fix is non-empty, or (b) confirms `gh pr ready <N>` ran and the PR is out of draft. The entry also names the panel execution mode (multi-seat-dispatch or in-band-fallback) per *In-band fallback* above.
 - The entry ends with `Self-improvement: ...` per `skills/self-improvement/SKILL.md`.
+
+## Notes from the field
+
+- _2026-05-14_: PR #135 second-round panel ran in-band-fallback because the harness in dispatch `044181` surfaced no `Agent` or `Task` tool. The judge wrote each of the twelve seats' blocks against the per-seat role file one at a time, aggregated after all twelve, and submitted one formal `gh pr review`. The in-band-fallback procedure above is the codification of what that dispatch had to invent on the fly; the message to `liaison` at `entries/2026/05/14/110438Z-message-liaison-f197bc.md` is the precipitating record.
