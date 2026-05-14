@@ -88,6 +88,18 @@ The orchestrator's choice: dispatch the two seats **sequentially or concurrently
 
 Larger panels are supported by the same machinery (the reference's 12-perspective panel is one such larger composition); the orchestrator names the composition in the dispatch brief.
 
+### Copilot as a third reviewer
+
+Whenever the orchestrator dispatches a jury round, it also requests GitHub's Copilot PR review on the same PR. One shell call, fire-and-forget, run alongside the juror and saboteur `Agent` invocations (not as a separate dispatch):
+
+```sh
+gh pr edit <N> -R <owner>/<repo> --add-reviewer @copilot
+```
+
+The `@copilot` token is `gh`'s canonical handle for the Copilot reviewer; the login that appears in `reviewRequests` and `reviews[].author.login` afterward is `copilot-pull-request-reviewer`. Copilot leaves a `COMMENTED` review on its own schedule (typically minutes); the orchestrator does not poll or block on it. The juror and saboteur wrap on their own deliverables independently; if Copilot's review has landed by the time the panel writes its formal `gh pr review`, the juror considers it part of the panel's reading, otherwise the panel proceeds without it. Re-requesting on each jury round is intentional (the same `gh pr edit` is idempotent for the same reviewer; on a second round it re-requests after Copilot's prior review).
+
+Copilot is added only when the orchestrator dispatches a jury. The orchestrator does not add Copilot to PRs outside the jury-dispatch flow, and does not retroactively add Copilot to existing draft PRs that have not yet had a jury dispatched in this scheme.
+
 ## Jury-fixer loop
 
 After the jury submits its verdict:
