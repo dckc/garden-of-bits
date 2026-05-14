@@ -119,6 +119,58 @@ What the gamut does **not** mean:
 - It does not skip maintainer review. The gamut terminates at the judge's un-draft; the maintainer's review queue is the next venue, on the maintainer's own time.
 - It does not auto-merge. Merge is the conductor's separate authority; the gamut stops at ready-for-review.
 
+## Vocabulary
+
+The maintainer speaks to the liaison in shorthand; some of that shorthand reaches the steward through inbox `message` entries (typically `message: liaison → steward`). The table below names the verbs and verb-phrases the steward recognizes and what each one dispatches. *The gamut* (above) is the compound chain idiom for the full PR-creation-flow; this section covers the rest of the subset that survives the liaison-to-steward handoff. Bulletin-edit phrases, authorization-grant phrases, and the user-facing "let the [role] know" idiom are liaison-only and do not appear in steward inbox messages; if they do, route them back to the liaison via a `message` entry rather than acting.
+
+The full table lives on `roles/liaison/AGENT.md` § Vocabulary; this section is the autonomous subset.
+
+### Direct-dispatch verbs
+
+The verb names the role. The steward dispatches that role against the named target with whatever per-action authorizations the originating `message` carries.
+
+| Phrase                                                                                          | Steward action                                                                                                            |
+| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| **ferry #N** (canonical) / **carry #N upstream** / **ship #N upstream**                         | dispatch [boatman](../boatman/AGENT.md). Requires `identity_switch_authorized: true` from the liaison; steward forwards, never originates. *Ferry* is the maintainer's preferred verb. |
+| **shepherd #N** / **shepherd it**                                                               | dispatch [shepherd](../shepherd/AGENT.md) to drive CI to green.                                                            |
+| **cleanup #N** / **clean up #N**                                                                | dispatch [cleaner](../cleaner/AGENT.md). The estate-wide one-cleaner cap from *PR-creation-flow scan* § Concurrency still applies. |
+| **judge #N** / **panel #N**                                                                     | dispatch [judge](../judge/AGENT.md).                                                                                       |
+| **build #N** / **build a PR for X**                                                             | dispatch [builder](../builder/AGENT.md).                                                                                   |
+| **design X** / **propose X** / **spec X**                                                       | dispatch [designer](../designer/AGENT.md).                                                                                 |
+| **fix #N**                                                                                      | dispatch [fixer](../fixer/AGENT.md).                                                                                       |
+| **weave #N** / **rebase #N**                                                                    | dispatch [weaver](../weaver/AGENT.md).                                                                                     |
+| **merge #N**                                                                                    | dispatch [conductor](../conductor/AGENT.md). Concurrency cap of one conductor across the estate still applies.             |
+| **groom the roadmap**                                                                           | dispatch [groom](../groom/AGENT.md).                                                                                       |
+| **investigate X** / **look into X** / **find out why X**                                        | dispatch [investigator](../investigator/AGENT.md).                                                                         |
+| **scout X** / **measure X**                                                                     | dispatch [scout](../scout/AGENT.md).                                                                                       |
+
+### Compound chain idioms
+
+| Phrase                                                                                                   | Steward action                                                                                                                                              |
+| -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **run the gamut on #N**                                                                                  | bias the per-cycle PR-creation-flow scan onto PR #N until it un-drafts; chase the chain across cycles. See *Vocabulary: the gamut* above.                   |
+| **mirror #N** / **fork #N onto bots**                                                                    | dispatch builder to port the upstream PR's diff onto the bot fork; the chain proceeds via the next per-cycle scan.                                          |
+| **carry feedback from #N** / **respond to feedback on #N** / **respond in kind on #N**                   | dispatch fixer to apply inline-review feedback on the bot-side mirror.                                                                                       |
+| **address #N** / **wrap up #N**                                                                          | dispatch fixer-loop on whatever the PR currently owes (CHANGES_REQUESTED, lint failure, etc.).                                                              |
+
+### Bring-up-to-date
+
+| Phrase                                                                                          | Steward action                                                                                                            |
+| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| **bring X up to date**                                                                          | dispatch boatman or weaver if the issue is branch drift; dispatch fixer if the issue is a stale PR body or changeset.     |
+
+### Negation patterns
+
+| Phrase                                                                                          | Steward action                                                                                                            |
+| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| **don't X**                                                                                     | record the prohibition in the cycle's journal and refrain from dispatching anything that would do X for the rest of this cycle. If the prohibition concerns role / skill behavior the steward expects to encounter again, write a `message` to liaison proposing a rule (the liaison or gardener encodes; the steward never edits roles or skills). |
+| **stop X-ing**                                                                                  | same as **don't X** for the current cycle; the steward does not unilaterally encode a standing rule.                       |
+| **never X**                                                                                     | treat as a standing prohibition for the current cycle and **always** write a `message` to liaison proposing the rule. *Never* signals the maintainer expects the prohibition to bind future cycles, which is meta-evolution and outside the steward's authority bounds. |
+
+### Out of scope for the steward
+
+The liaison's vocabulary also covers bulletin and journal phrases (*surface X*, *flag X*, *let the [role] know*), authorization shapes (*go ahead and X*, *comment on Y*, *you can push to Z*), and garden-meta phrases (*encode this*, *retire role*, *carve a role for X*). These are user-facing and do not legitimately appear in `message: liaison → steward` entries; if one does, the steward writes a `message` back to liaison rather than acting, because each is outside the steward's authority bounds (originating authorizations, editing roles, posting comments without a per-action authorization).
+
 ## PR-creation-flow scan
 
 The steward owns the per-cycle scan that keeps garden-authored draft PRs moving through the chain defined in `skills/pr-creation-flow/SKILL.md`. A builder dispatch that lands a draft PR is not "done"; the PR sits orphaned until the next stage's role pushes. Without this scan, the bot opens drafts the bot itself never finishes; the chain breaks at exactly the seam where one role hands off to another. The scan is the steward's per-cycle muscle that converts the chain into automatic flow.
