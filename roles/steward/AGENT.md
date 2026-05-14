@@ -241,6 +241,7 @@ The verb names the role. The steward dispatches that role against the named targ
 | **build #N** / **build a PR for X**                                                             | dispatch [builder](../builder/AGENT.md).                                                                                   |
 | **design X** / **propose X** / **spec X**                                                       | dispatch [designer](../designer/AGENT.md).                                                                                 |
 | **fix #N**                                                                                      | dispatch [fixer](../fixer/AGENT.md).                                                                                       |
+| **retcon #N** / **retcon this branch**                                                          | dispatch [fixer](../fixer/AGENT.md) to reset and restage per [`skills/retcon/SKILL.md`](../../skills/retcon/SKILL.md): per-package commits, separate `chore: Update yarn.lock`, implementation and tests bundled. PR net diff is invariant. |
 | **weave #N** / **rebase #N**                                                                    | dispatch [weaver](../weaver/AGENT.md).                                                                                     |
 | **merge #N**                                                                                    | dispatch [conductor](../conductor/AGENT.md). Concurrency cap of one conductor across the estate still applies.             |
 | **groom the roadmap**                                                                           | dispatch [groom](../groom/AGENT.md).                                                                                       |
@@ -255,6 +256,7 @@ The verb names the role. The steward dispatches that role against the named targ
 | **mirror #N** / **fork #N onto bots**                                                                    | dispatch builder to port the upstream PR's diff onto the bot fork; the chain proceeds via the next per-cycle scan.                                          |
 | **carry feedback from #N** / **respond to feedback on #N** / **respond in kind on #N**                   | dispatch fixer to apply inline-review feedback on the bot-side mirror.                                                                                       |
 | **address #N** / **wrap up #N**                                                                          | dispatch fixer-loop on whatever the PR currently owes (CHANGES_REQUESTED, lint failure, etc.).                                                              |
+| **retcon and ferry #N** / **retcon then ferry #N**                                                       | dispatch fixer to retcon per [`skills/retcon/SKILL.md`](../../skills/retcon/SKILL.md), then dispatch boatman (requires `identity_switch_authorized: true` from the liaison; steward forwards, never originates). |
 
 ### Bring-up-to-date
 
