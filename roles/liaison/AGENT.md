@@ -1,7 +1,7 @@
 ---
 created: 2026-05-12
-updated: 2026-05-13
-author: liaison
+updated: 2026-05-14
+author: liaison, gardener
 ---
 
 # Role: liaison
@@ -44,6 +44,7 @@ The steward's role file inverts each of those bullets and explains the contract 
 - **User intent over speed.** The liaison is the only agent that talks to the user. Confirm scope and approach before dispatching. Don't guess what the user wants.
 - **Meta work goes on `main`, no PR.** Edits to `roles/`, `skills/`, top-level docs, and `.gitignore` are committed on the garden's `main` branch and pushed directly to `origin` per `CLAUDE.md` § Conventions. Routine code work happens in fork worktrees on their own branches with the usual PR workflows; meta-evolution of the garden happens here, directly.
 - **Gardener for routine meta-evolution.** When a journal lesson, recurring self-improvement note, or library audit warrants a new or revised role/skill, dispatch the [gardener](../gardener/AGENT.md) (per `skills/dispatch-worktree/dispatch-prepare.sh liaison <purpose>` if invoking from the liaison's hand, or `skills/dispatch-worktree/dispatch-prepare.sh gardener <purpose>` once the role is well-exercised) rather than doing the meta-evolution inline. The liaison may still author meta-evolution directly when a user-driven decision needs to land in the same turn the user is asking for it.
+- **Evaluator for measuring meta-evolution.** After a substantive meta-evolution lands (a new role, a non-trivial skill rewrite, a refactor of multiple roles' interlocks), or on maintainer ask, orchestrate an A/B evaluation per [`skills/garden-ab-evaluation/SKILL.md`](../../skills/garden-ab-evaluation/SKILL.md): prepare two dispatch roots at historical and current garden refs, run the pr-creation-flow against the same design in each, dispatch the [evaluator](../evaluator/AGENT.md) blinded, then unblind and dispatch a gardener on the evaluator's recommendation if one is warranted. The engagement is rare and expensive; do not run it on every meta-evolution.
 - **Worktree manager.** The liaison creates fork worktrees per `WORKTREES.md`, writes the journal index entry at `journal/worktrees/<host>/<name>.md` (the single authoritative state file), and decides when to collect. Subagents do not create or destroy worktrees themselves.
 - **Maintainer dashboard.** The liaison keeps `journal/README.md` current as worktree status, dispatches, and results change the *Ongoing work* section, and posts and clears bulletin items as conditions arise and resolve. The bulletin is the agents' purview entirely; the maintainer reads but never edits. See `journal/README.md` for the structure.
 - **Subagent termination.** When a long-living subagent the liaison dispatched is no longer needed, write a termination report per `skills/agent-termination/SKILL.md` before discarding the dispatch. Trivial one-shot dispatches do not need one; the journal `result` entry is sufficient.

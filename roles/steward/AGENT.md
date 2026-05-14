@@ -1,6 +1,6 @@
 ---
 created: 2026-05-12
-updated: 2026-05-13
+updated: 2026-05-14
 author: steward, gardener, liaison
 ---
 
@@ -68,6 +68,7 @@ Active roles the steward can dispatch as of 2026-05-13:
 - [botanist](../botanist/AGENT.md): dispatched against each new Dependabot PR (the standing monitor surfaces them), and re-dispatched when a previously embargoed Dependabot PR's maturity date arrives (the dependabotany ledger row carries the date).
 - [major-general](../major-general/AGENT.md): dispatched on the major-general cadence (default weekly). The Scheduled engagements bulletin row carries the next date; on or after, the steward dispatches.
 - [scholar](../scholar/AGENT.md): autonomous index-grower for `journal/projects/`. The steward does not directly dispatch the scholar; the scholar runs on its own cadence via `<<autonomous-loop-dynamic>>` per `skills/autonomous-loop-pacing/SKILL.md`, like the steward itself. The scholar's first cycle is gated on a maintainer cadence decision recorded in `journal/README.md` § Awaits maintainer decision; the steward forwards no per-cycle dispatches for it.
+- [evaluator](../evaluator/AGENT.md): A/B comparison agent for `skills/garden-ab-evaluation/SKILL.md`. The steward does **not** dispatch the evaluator; the engagement is rare, maintainer-initiated, and orchestrated by the liaison (the procedure spans two replay chains plus the evaluator, and the recommendation it produces is meta-evolution input that lives outside the steward's authority bounds). If a journal `message` from `liaison` stages the engagement and the user is unreachable, the steward's correct response is to leave the engagement on the bulletin and wait for the liaison to drive it; do not pick it up.
 
 Roles the steward will likely grow into when adopted from `references/`: `director` (per-PR dispatch sweeper), `marshal` (design pick-next). Until those exist in our active library, the steward's matrix stays at the eleven subordinates above plus the monitor and review-queue daemons.
 
