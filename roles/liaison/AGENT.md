@@ -47,6 +47,94 @@ What the gamut does **not** mean:
 - It does not skip maintainer review. The gamut terminates at the judge's un-draft; the maintainer's review queue is the next venue, on the maintainer's own time.
 - It does not auto-merge. Merge is the conductor's separate authority; the gamut stops at ready-for-review.
 
+## Vocabulary
+
+The maintainer speaks to the liaison in shorthand. The table below maps the recognized verbs and verb-phrases to the orchestrator action they trigger. *The gamut* (above) is the compound chain idiom for the full PR-creation-flow; this section covers the rest. When a user prompt matches one of these, the liaison reads it as the named action, confirms scope (per *User intent over speed*), and dispatches.
+
+### Direct-dispatch verbs
+
+The verb names the role. The orchestrator dispatches that role against the named target.
+
+| Phrase                                                                                          | Orchestrator action                                                                                                       |
+| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| **ferry #N** (canonical) / **carry #N upstream** / **ship #N upstream**                         | dispatch [boatman](../boatman/AGENT.md) to ferry the bot-side PR upstream. *Ferry* is the maintainer's preferred verb.    |
+| **shepherd #N** / **shepherd it**                                                               | dispatch [shepherd](../shepherd/AGENT.md) to drive CI to green.                                                            |
+| **cleanup #N** / **clean up #N**                                                                | dispatch [cleaner](../cleaner/AGENT.md) (coverage + dead-code pass).                                                       |
+| **judge #N** / **panel #N**                                                                     | dispatch [judge](../judge/AGENT.md) (runs the panel + fixer-loop until in-scope clean; un-drafts on termination).         |
+| **build #N** / **build a PR for X**                                                             | dispatch [builder](../builder/AGENT.md).                                                                                   |
+| **design X** / **propose X** / **spec X**                                                       | dispatch [designer](../designer/AGENT.md) (draft PR against `llm` per the design-PR policy).                              |
+| **fix #N**                                                                                      | dispatch [fixer](../fixer/AGENT.md).                                                                                       |
+| **weave #N** / **rebase #N**                                                                    | dispatch [weaver](../weaver/AGENT.md).                                                                                     |
+| **merge #N**                                                                                    | dispatch [conductor](../conductor/AGENT.md).                                                                               |
+| **groom the roadmap**                                                                           | dispatch [groom](../groom/AGENT.md).                                                                                       |
+| **investigate X** / **look into X** / **find out why X**                                        | dispatch [investigator](../investigator/AGENT.md).                                                                         |
+| **scout X** / **measure X**                                                                     | dispatch [scout](../scout/AGENT.md).                                                                                       |
+
+### Compound chain idioms
+
+Each phrase triggers multiple sequential dispatches.
+
+| Phrase                                                                                                   | Orchestrator action                                                                                                                  |
+| -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| **run the gamut on #N**                                                                                  | the full PR-creation-flow chain to un-draft. See *Vocabulary: the gamut* above and `skills/pr-creation-flow/SKILL.md` § Vocabulary.  |
+| **mirror #N** / **fork #N onto bots**                                                                    | builder ports the upstream PR's diff onto the bot fork; chain proceeds from there.                                                   |
+| **carry feedback from #N** / **respond to feedback on #N** / **respond in kind on #N**                   | fixer applies inline-review feedback on the bot-side mirror.                                                                         |
+| **address #N** / **wrap up #N**                                                                          | fixer-loop on whatever is owed (CHANGES_REQUESTED, lint failure, etc.).                                                              |
+
+### Garden-meta phrases
+
+Phrases that name a meta-evolution action on the role / skill library. All route to the [gardener](../gardener/AGENT.md).
+
+| Phrase                                                                                          | Orchestrator action                                                                                                       |
+| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| **encode this** / **encode the lesson** / **make this a rule**                                  | dispatch gardener to author or revise the relevant role / skill files.                                                    |
+| **amend [role\|skill]** / **the [role] should know that X**                                     | dispatch gardener to edit the named file.                                                                                  |
+| **carve a role for X** / **add a role for X**                                                   | dispatch gardener to author a new role file.                                                                               |
+| **retire [role\|skill]**                                                                        | dispatch gardener to remove / deprecate with a redirect.                                                                   |
+| **what should we improve** / **self-improve**                                                   | dispatch gardener to run a cycle on recently-surfaced lessons.                                                             |
+
+### Bulletin and journal phrases
+
+Liaison-direct actions on the journal and the bulletin in `journal/README.md`. These do not dispatch a subagent; the liaison handles them inline.
+
+| Phrase                                                                                          | Liaison action                                                                                                            |
+| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| **surface X** / **note X on the bulletin** / **flag X**                                         | add a bulletin row in the appropriate section of `journal/README.md`.                                                      |
+| **make sure X is tracked**                                                                      | bulletin row plus, when appropriate, a journal `message` entry to the relevant role.                                       |
+| **let the [role] know that X**                                                                  | write a `message: liaison → [role]` journal entry.                                                                         |
+| **remember X** / **don't forget X**                                                             | persistent memory (a journal entry) or a bulletin row, depending on what survives best.                                    |
+
+### Authorization shapes
+
+Phrases by which the user grants the liaison permission to originate an action that the standing rules in `roles/COMMON.md` would otherwise forbid. The liaison records the authorization in the journal (or in the bulletin's *Pre-staged authorizations* section) and forwards it into the relevant dispatch prompt.
+
+| Phrase                                                                                          | What it authorizes                                                                                                        |
+| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| **go ahead and X** / **feel free to X**                                                         | per-action authorization, scope = X.                                                                                       |
+| **comment on Y** / **post X**                                                                   | per-action comment authorization on a non-standing repo (see `roles/COMMON.md` § External-repo etiquette).                 |
+| **you can push to Z**                                                                           | pre-staged push authorization recorded as a bulletin row.                                                                  |
+
+### Negation and discipline observations
+
+| Phrase                                                                                          | Orchestrator action                                                                                                       |
+| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| **don't X**                                                                                     | if recurring, dispatch gardener to encode as a rule; otherwise treat as a one-shot reactive correction.                    |
+| **stop X-ing**                                                                                  | discipline observation; reactive in the current engagement. Promote to a rule via gardener only if it recurs.              |
+| **never X**                                                                                     | standing rule; dispatch gardener to encode (the verb signals that the maintainer expects it to bind future sessions too). |
+
+### Bring-up-to-date
+
+| Phrase                                                                                          | Orchestrator action                                                                                                       |
+| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| **bring X up to date**                                                                          | dispatch boatman or weaver if the issue is branch drift; dispatch fixer if the issue is a stale PR body or changeset.     |
+
+### Disambiguation notes
+
+- *Ferry* is the canonical verb for the boatman; *carry upstream* and *ship upstream* are recognized synonyms. The boatman entry stands out because the maintainer reaffirmed *ferry* as the preferred phrasing (2026-05-14).
+- *Carry feedback from #N* (fixer on bot-side mirror) is distinct from *carry #N upstream* (boatman to upstream). The orchestrator reads the prepositional phrase or the surrounding context to disambiguate.
+- *Cleanup #N* (cleaner) is distinct from *wrap up #N* (fixer-loop on whatever is owed). The cleaner is the coverage / dead-code stage of the PR-creation-flow; wrap-up is the catch-all for "drive the PR to a finished state, whatever is currently blocking it."
+- *Encode* (gardener authors a rule) is distinct from *encode the lesson* in a journal entry (`scholar` / `librarian` work on `journal/projects/`). The maintainer typically means the former; if context names a project-context document, route to the right role.
+
 ## Operating norms
 
 - **Identity.** Speak as the liaison. The garden is a continuing project; future sessions will read your journal entries to pick up where you left off.
