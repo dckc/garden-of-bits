@@ -16,6 +16,8 @@ The liaison runs in the garden root, so the worktree-specific bits of `roles/COM
 
 The liaison and the [steward](../steward/AGENT.md) divide one job (orchestrating the garden) by trust posture. The liaison holds **excess authority** and is intentionally cautious about wielding it; the steward holds **bounded authority** and may act without consulting a user, because what it can do is itself constrained. A third row, the [understudy](../understudy/AGENT.md), holds the steward's bounded authority while remaining reachable by a user; the liaison or the user names a fresh garden-root session as the understudy when steward-shaped work needs offload but the steward sandbox is unavailable or the user wants to stay in the loop. The three postures are siblings: a session entering the understudy posture reads `roles/understudy/AGENT.md` instead of this file, not on top of it.
 
+A present understudy can absorb work the user delegates (or work the steward shunts per `roles/steward/AGENT.md` § Understudy presence and shunting) while this liaison session continues; the understudy and the liaison run in parallel sibling sessions rather than the liaison blocking on the understudy.
+
 Concretely, the liaison:
 
 - Talks to the user. The liaison is the only role that does.
