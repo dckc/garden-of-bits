@@ -1,128 +1,37 @@
-# Skills
+# Skills (residual reference shelf)
 
-Each file in this directory documents one self-contained technique that
-proved load-bearing during a long PR-orchestration session against
-`endojs/endo` and the `endojs/endo-but-for-bots` mirror.
+The garden has adopted most reference skills into its own active library at `<garden-root>/skills/`. What remains here is the **residual set**: skills whose substance has not yet been folded in (or, for the endo-specific lore, whose right home is `journal/projects/endo/` rather than the generic skill library).
 
-The intent is reproducibility: if you came back six months from now,
-each file should let you re-acquire the technique without re-deriving
-the whole context.
+For how references work, see [`../../README.md`](../../README.md).
 
-## Trigger-and-filter convention
+## Residual generic skills
 
-The role / skill hierarchy is **trigger-broad at the parent,
-filter-narrow at the child**:
+These are not endo-specific; they could be adopted as garden skills when the relevant pattern next arises.
 
-- The role index in `CLAUDE.md` lists each role with one
-  succinct trigger line. The line should be **slightly
-  overbroad on purpose**: it casts a wide enough net that an
-  agent skimming the index will follow the link in any
-  plausibly-relevant case.
-- Each role file then narrows: it states what *would not*
-  warrant entering the role, and lists its skills with their
-  own one-line triggers. Same overbroad-at-parent rule applies
-  to the skill list.
-- Each skill file is the deepest layer; it can be **specific
-  and a little verbose** to filter out the false positives the
-  parent's overbroad trigger let through.
+- [defer-stacking-on-in-flight-pr.md](./defer-stacking-on-in-flight-pr.md) — wait for the foundation PR to stabilize (CI green + maintainer review) before stacking dependents. Worth adopting when stacked PRs become routine.
+- [design-precondition-discovery.md](./design-precondition-discovery.md) — verify the foundation package actually has the cited capability before forwarding a directive that assumes it. Useful when designs cite primitives that may not exist yet.
+- [pr-cycle-state.md](./pr-cycle-state.md) — the two-file `PR-DISPATCH-STATE.md` + `PR-CYCLE-LOG.md` pattern and the no-op-rebase pitfall (compare commit content, not head SHA). The garden uses journal entries instead of state files, but the no-op-rebase content-check is novel and worth adopting into `pr-creation-flow` or a sibling skill.
+- [pr-mirror-for-offline-review.md](./pr-mirror-for-offline-review.md) — strict-review vs working-mirror dispatch shapes for upstream PRs that the garden cannot monitor under the monitoring-safety constraint. Likely path for review of un-gated upstream repos.
+- [ssh-fallback-workflow-scope.md](./ssh-fallback-workflow-scope.md) — swap to SSH push when an OAuth token lacks `workflow` scope and the diff touches `.github/workflows/`. Generic git-operations pitfall.
+- [subagent-batching.md](./subagent-batching.md) — batch-list + parallel-wave dispatch with idempotent re-entry. Matters when corpus-wide sweeps land in the garden.
+- [todo-link-classification.md](./todo-link-classification.md) — linked / unlinked / ambiguous TODO classification with the `@ts-expect-error XXX` reclassification gotcha. Useful for codebase-hygiene audits.
 
-Practical effect: a skill is allowed to lead with "Read this
-when X" and "Skip this when Y" before any technique. A role's
-skill list is allowed to read "[skill](./skill.md): when X
-matches even loosely". The cost of an unnecessary read is small
-compared to the cost of a missed match.
+## Endo-specific lore
 
-## Index
+These are well-formed skill files whose right home is the journal's per-project context tree under `journal/projects/endo/` (per [context-library](../../../skills/context-library/SKILL.md)) rather than the generic `skills/` library. They are kept here until the migration happens.
 
-### Git and worktree workflow
+- [babel-visitor-exhaustiveness.md](./babel-visitor-exhaustiveness.md) — `assertNever`-based Babel visitor sentinel discipline; `@endo/module-source` footguns.
+- [fixture-naming-after-diagnostic.md](./fixture-naming-after-diagnostic.md) — endo `packages/<x>/{demo,test/_*,fixtures-*}/` shape; `import/no-relative-packages` lint rule.
+- [lerna-ecycle-fix.md](./lerna-ecycle-fix.md) — Lerna + Turbo cyclic dependency diagnosis in the endo monorepo.
+- [no-backward-compat-stage.md](./no-backward-compat-stage.md) — daemon / familiar / chat trio's no-backward-compat policy.
+- [package-rename-cascade.md](./package-rename-cascade.md) — workspace package rename checklist for the endo monorepo (`.changeset/`, AVA test file rename, `repository.directory`, etc.).
+- [ses-intrinsic-naming.md](./ses-intrinsic-naming.md) — `%Foo%` vs `Foo` vs `SharedFoo` in permits / code / prose contexts.
+- [surface-module-pattern.md](./surface-module-pattern.md) — public-API surface modules in endo packages.
+- [threat-model-jsdoc.md](./threat-model-jsdoc.md) — module-header threat-model JSDoc on ambient-authority attenuators.
+- [ts-pin-skew-prepack-fail.md](./ts-pin-skew-prepack-fail.md) — endo monorepo TypeScript pin skew producing cross-workspace TS2578 errors.
 
-- [worktree-per-pr.md](./worktree-per-pr.md)
-- [rebase-before-followup.md](./rebase-before-followup.md)
-- [conflict-resolution.md](./conflict-resolution.md)
-- [yarn-lock-separate-commit.md](./yarn-lock-separate-commit.md)
-- [cherry-pick-followup.md](./cherry-pick-followup.md)
-- [ssh-fallback-workflow-scope.md](./ssh-fallback-workflow-scope.md)
+## Adopted (no longer in this shelf)
 
-### PR review
+The following reference skills have been fully adopted into the active library and the snapshots removed: adversarial-tests, autonomous-loop-pacing, benchmark-comparative-report, changeset-discipline, cherry-pick-followup, ci-runtime-comparison, ci-status-summary, conflict-resolution, coverage-driven-testing, dependency-graph-maintenance, design-queue-drift-check, em-dash-style-rule (renamed `em-dash-style`), groom-open-questions, panel-review-12-perspectives (substantially redesigned for the twelve-seat panel as `panel-review`), pre-pr-checklist, process-documents, prompt-section-discovery, pr-review-thread-replies, reactji-acknowledgment, rebase-before-followup, rebase-hygiene-audit, regression-evidence, relative-paths-rule (renamed `relative-paths`), review-feedback-followup-commits, roadmap-projection, saboteur-adversarial-review, self-improvement, velocity-recalibration, verify-upstream-state-before-pinning, worktree-per-pr, yarn-lock-separate-commit.
 
-- [panel-review-12-perspectives.md](./panel-review-12-perspectives.md)
-- [pr-mirror-for-offline-review.md](./pr-mirror-for-offline-review.md)
-- [review-feedback-followup-commits.md](./review-feedback-followup-commits.md)
-- [pr-review-thread-replies.md](./pr-review-thread-replies.md)
-- [regression-evidence.md](./regression-evidence.md)
-
-### Subagent orchestration
-
-- [subagent-batching.md](./subagent-batching.md)
-- [autonomous-loop-pacing.md](./autonomous-loop-pacing.md)
-- [pr-cycle-state.md](./pr-cycle-state.md) — the two-file
-  `process/` state pattern for a periodic queue-managing role
-  whose context clears between cycles.
-
-### CI and quality
-
-- [ci-status-summary.md](./ci-status-summary.md)
-- [ci-runtime-comparison.md](./ci-runtime-comparison.md)
-- [pre-pr-checklist.md](./pre-pr-checklist.md)
-- [fixture-naming-after-diagnostic.md](./fixture-naming-after-diagnostic.md)
-- [lerna-ecycle-fix.md](./lerna-ecycle-fix.md)
-- [coverage-driven-testing.md](./coverage-driven-testing.md) — run
-  c8, write tests for reachable code, delete unreachable code.
-- [adversarial-tests.md](./adversarial-tests.md) — the
-  brainstorming list for invariant-attacking gotcha tests.
-
-### Package-specific conventions
-
-- [ses-intrinsic-naming.md](./ses-intrinsic-naming.md) — the
-  `%Foo%` / `globalThis.Foo` / bare-`Foo` three-context rule
-  for shared SES intrinsics. Read when working in
-  `packages/ses/` (the package has a scoped `CLAUDE.md`
-  pointing here).
-- [surface-module-pattern.md](./surface-module-pattern.md) — a
-  package's public API lives in physical surface modules at the
-  package root (`packages/<pkg>/<name>.js`), not under `src/`.
-  Each surface module re-exports the public subset and masks
-  test-only helpers. Read when adding to a package's `exports`
-  map, or when a maintainer review asks for a "physical
-  `./<name>.js`".
-
-### Code archaeology
-
-- [todo-link-classification.md](./todo-link-classification.md)
-- [rebase-hygiene-audit.md](./rebase-hygiene-audit.md)
-- [babel-visitor-exhaustiveness.md](./babel-visitor-exhaustiveness.md)
-- [prompt-section-discovery.md](./prompt-section-discovery.md)
-
-### Roadmap grooming
-
-- [velocity-recalibration.md](./velocity-recalibration.md)
-- [roadmap-projection.md](./roadmap-projection.md)
-- [dependency-graph-maintenance.md](./dependency-graph-maintenance.md)
-- [groom-open-questions.md](./groom-open-questions.md)
-- [design-queue-drift-check.md](./design-queue-drift-check.md) — the
-  triage-pass procedure that re-classifies
-  `process/DESIGNS-WITHOUT-PR.md`'s Spec'd-but-not-started entries by
-  drift-pattern A (design vs. later code refactor) and drift-pattern B
-  (compose-pattern with unsatisfied phase dependency) so the marshal's
-  eligibility filter stops sending builders into walls.
-
-### Cross-cutting
-
-- [self-improvement.md](./self-improvement.md) — every role's final
-  task is to update its own role and skills with what it learned.
-- [process-documents.md](./process-documents.md) — what counts as
-  a process document, where it lives, and the isolation-commit
-  rule that lets process commits drop cleanly when porting work
-  upstream.
-- [no-backward-compat-stage.md](./no-backward-compat-stage.md) —
-  daemon / familiar / chat do not preserve backward compatibility
-  at this stage of the project. Rename / remove freely, update
-  in-tree call sites in the same PR, do not add deprecation
-  shims. Other `@endo/*` packages remain semver-stable.
-
-### Reporting
-
-- [benchmark-comparative-report.md](./benchmark-comparative-report.md)
-- [em-dash-style-rule.md](./em-dash-style-rule.md)
-- [relative-paths-rule.md](./relative-paths-rule.md) — every link
-  and path in a documentation file must be relative, never absolute.
+The full adoption history is in the journal; `git log -- references/endo-but-for-bots/skills/` on `main` traces the deletions.

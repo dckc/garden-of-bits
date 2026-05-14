@@ -25,10 +25,12 @@ git -C <garden-root>/worktrees/endojs-endo-but-for-bots.git fetch origin garden
 
 The live working tree of the `garden` branch is at `../../worktrees/endojs-endo-but-for-bots/integrate--liaison--20260512-194515/` (subject to collection per [`../../WORKTREES.md`](../../WORKTREES.md); the snapshot here is the durable copy).
 
-## What's in this shelf
+## What's in this shelf (as of 2026-05-14 audit)
 
-- [`roles/`](./roles/): 26 role files plus a heavy `README.md` with a per-PR state-machine diagram. Roles use **single-file** layout (`<name>.md`), not our directory-per-role layout. Read the index first.
-- [`skills/`](./skills/): 47 skill files plus a `README.md` that explains the "trigger-and-filter" convention they use to keep role and skill indices navigable.
+The original snapshot held 26 role files and 47 skill files. After the 2026-05-14 audit against the active library, most have been adopted and removed; the residual shelf carries only the roles and skills the garden has not yet incorporated.
+
+- [`roles/`](./roles/): 7 residual role files (chronicler, juror, marshal, namer, scribe, stratego, triager). See [`roles/README.md`](./roles/README.md) for the per-role rationale and the adopted-list.
+- [`skills/`](./skills/): 16 residual skill files split into generic-future-use (7) and endo-specific lore awaiting migration to `journal/projects/endo/` (9). See [`skills/README.md`](./skills/README.md).
 - [`CLAUDE.md`](./CLAUDE.md): the project-level guidance loaded by Claude Code at the bots repo's root. Heavily endo-flavored (SES, harden, JSDoc, Yarn workspaces, Exo); useful as context for what an adopted endo role assumes about the host project.
 - [`AGENTS.md`](./AGENTS.md): short agent-instruction file alongside CLAUDE.md; mostly TypeScript / type-export conventions for endo packages.
 
