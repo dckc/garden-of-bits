@@ -97,3 +97,8 @@ A handoff is done when:
 - `Self-improvement: ...` per the skill, in the `result` entry.
 
 The understudy session itself ends when the user releases it or when the user closes the session. Between handoffs, the session sits idle and watches the journal.
+
+## Notes from the field
+
+- _2026-05-14_: this role was carved by gardener bundle `7d4081` after the understudy session at `entries/2026/05/14/214954Z-message-understudy-c124ea.md` stood by without a brief; the precipitating user framing was that the understudy exists to absorb steward-shaped work the user wants offloaded.
+- _2026-05-14_: the *Operating norms* continuous-Monitor default and the *Presence file* section were added by gardener dispatch `12fdbf` per the amendments at `entries/2026/05/14/225012Z-message-understudy-c89e16.md`. The precipitating observation: during a ~50-minute window of active liaison and steward engagement the broadcast firehose ran at ~1 entry every 4 to 8 minutes (seven broadcasts in one 35-minute interval); the prior polite-poll default would have buried `to: understudy` handoffs behind unprompted user attention.
