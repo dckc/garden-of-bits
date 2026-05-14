@@ -4,6 +4,7 @@ updated: 2026-05-14
 author: gardener, steward, liaison
 ---
 
+
 # Role: steward
 
 The autonomous counterpart to the [liaison](../liaison/AGENT.md). The steward runs in the bot sandbox under safe bot credentials, on a schedule or signal, with bounded authority by design. Wakes up, surveys state, dispatches subordinate work, journals, schedules its own next wakeup, and exits. There is no user in the loop.
@@ -53,10 +54,10 @@ Active roles the steward can dispatch as of 2026-05-13:
 - [boatman](../boatman/AGENT.md): only when a journal `message` entry from `liaison` carries `identity_switch_authorized: true` for the specific source PR and target upstream. The steward forwards the authorization in the dispatch prompt; it never originates one.
 - [builder](../builder/AGENT.md): dispatched when an issue, design directive, or maintainer message points at code that does not exist yet. Opens the PR in draft state per `skills/pr-creation-flow/SKILL.md`. The steward forwards staged push and PR-comment authorizations as the dispatch brief requires.
 - [assayer](../assayer/AGENT.md): dispatched in concert with the builder by default (per `skills/pr-creation-flow/SKILL.md` § Assayer placement). Edits tests and test fixtures only; does not move PRs out of draft.
-- **Jury (juror plus saboteur as a fixed pair, plus Copilot as a third reviewer)**: dispatched as a single round per `skills/pr-creation-flow/SKILL.md` § Jury composition. The two human-replicating seats may go concurrent or sequential at the steward's discretion; the panel's deliverable is one aggregated formal `gh pr review`. The dispatch carries per-action authorization for the review submission. Alongside the juror and saboteur `Agent` invocations, the steward runs `gh pr edit <N> -R <owner>/<repo> --add-reviewer @copilot` once to request Copilot's autonomous review per `skills/pr-creation-flow/SKILL.md` § Copilot as a third reviewer (one shell call, fire-and-forget, no separate dispatch).
-- **Jury-fixer loop**: after every jury round that surfaces in-scope must-fix items, the steward dispatches the fixer with the must-fix list inline; then re-dispatches the jury. The loop exits when the jury surfaces no further in-scope complaints. See `skills/pr-creation-flow/SKILL.md` § Jury-fixer loop. Out-of-scope findings become candidate follow-up PRs or issues; the steward does not loop on them.
+- [cleaner](../cleaner/AGENT.md): dispatched after the builder (and any in-concert assayer) per `skills/pr-creation-flow/SKILL.md` § Cleaner placement. The cleaner stands between the builder and the jury; it pushes coverage and dead-code commits, watches CI converge, and reports done. The cleaner does **not** un-draft; that authority moved to the judge in the 2026-05-14 redesign.
+- [judge](../judge/AGENT.md): dispatched after the cleaner's `result` lands (or directly after the builder on the cleaner-skipped tiny-PR variant) per `skills/pr-creation-flow/SKILL.md`. The judge is the panel's foreperson; it dispatches the six-seat jury panel (assessor, stylist, archivist, curator, locksmith, saboteur) internally and runs `gh pr edit <N> -R <owner>/<repo> --add-reviewer @copilot` alongside, aggregates the per-juror blocks, submits one formal `gh pr review`, and runs `gh pr ready <N>` when the jury-fixer loop terminates. The dispatch carries per-action authorization for the review submission and the un-draft. The steward does **not** dispatch individual jurors; that is the judge's job.
+- **Jury-fixer loop**: after every judge `result` that names in-scope must-fix items, the steward dispatches the fixer with the must-fix list inline; then re-dispatches the judge (the judge re-runs the panel internally). The loop exits when the judge declares the loop done. See `skills/pr-creation-flow/SKILL.md` § Jury-fixer loop. Out-of-scope findings become candidate follow-up PRs or issues; the steward does not loop on them.
 - [fixer](../fixer/AGENT.md): dispatched against an open PR with a substantive `CHANGES_REQUESTED` (or `COMMENTED`) review from kriskowal, when the brief addresses inline comments. Also dispatched as part of the jury-fixer loop above. The dispatch carries per-action authorization for re-requesting review after the fix lands and CI is green. The steward forwards staged authorizations.
-- [cleaner](../cleaner/AGENT.md): dispatched when the jury declares the loop done (no further in-scope complaints) per `skills/pr-creation-flow/SKILL.md`. The cleaner is the only role that moves the PR out of draft; the dispatch carries the implicit un-draft authorization.
 - [groom](../groom/AGENT.md): dispatched when a maintainer roadmap-edit directive surfaces (e.g. an issue comment proposing a milestone change); the steward forwards the per-action authorization. The groom edits the project's `designs/README.md` (or equivalent) and pushes to the roadmap branch.
 - [investigator](../investigator/AGENT.md): dispatched when a maintainer-flagged behavioral mystery surfaces (a CI failure with no obvious root cause, a runtime regression, a request for hypothesis-driven investigation on SES / hardened-JS / Endo daemon / etc.); the steward forwards the per-action authorization. The investigator's deliverable is a journal `result` (and, for large audits, a topic file under `journal/projects/<slug>/`); concrete fixes hand off to a later builder or fixer dispatch.
 - [weaver](../weaver/AGENT.md): dispatched against an open PR whose `mergeable_state` is `CONFLICTING` (or whose base has moved enough that a rebase is necessary before any other role can act). One rebase per dispatch; the weaver does not also fix substance.
@@ -119,22 +120,22 @@ gh pr list -R <owner>/<repo> --author kriscendobot --draft --state open \
   --json number,headRefName,baseRefName,reviews,statusCheckRollup,mergeable,labels,updatedAt
 ```
 
-For each returned PR, compute the next-stage-owed per the heuristic in `skills/pr-creation-flow/SKILL.md` § The next-stage owed heuristic:
+For each returned PR, compute the next-stage-owed per the heuristic in `skills/pr-creation-flow/SKILL.md` § The next-stage-owed heuristic:
 
 1. `mergeable_state == CONFLICTING`: dispatch a weaver. Skip further evaluation this cycle.
-2. No jury review yet: dispatch the jury (juror + saboteur) and run `gh pr edit <N> -R <owner>/<repo> --add-reviewer @copilot` once in the same step.
-3. Jury review with must-fix in-scope, no fixer push since that review's commit SHA: dispatch a fixer with the must-fix list inline.
-4. Fixer push more recent than the latest jury review: re-dispatch the jury (same juror + saboteur + Copilot composition; the `--add-reviewer @copilot` call is idempotent and re-requests Copilot's review).
-5. Jury most recent verdict is `--approve` or `--comment` with no in-scope must-fix, and no later builder/fixer push: dispatch a cleaner.
-6. Cleaner has pushed and CI is green, but PR is still draft: un-draft directly (`gh pr ready <N>`) and journal a discipline-lapse note.
+2. Panel `--approve` (or `--comment` with no in-scope must-fix) submitted, with no later builder/fixer push, but PR still draft: the judge should have un-drafted but did not. Un-draft directly (`gh pr ready <N>`) and journal a discipline-lapse note.
+3. Latest panel verdict has in-scope must-fix and no fixer push since: dispatch a fixer with the must-fix list inline.
+4. Fixer pushed since the latest panel verdict and no judge re-dispatch since: dispatch the judge (the judge re-runs the panel internally).
+5. Cleaner has pushed and CI is green, with no panel verdict yet: dispatch the judge.
+6. Builder's PR is open and no cleaner push exists yet: dispatch the cleaner. On the tiny-PR variant (pure docs, lockfile-only, one-file format sweep, single-line bug fix with test fixture already in the diff), skip the cleaner and dispatch the judge directly; the steward picks the variant by inspecting the diff.
 
-A *jury review* is a `kriscendobot`-authored formal review (`reviews[].author.login == "kriscendobot"` and `reviews[].state in (CHANGES_REQUESTED, COMMENTED, APPROVED)`) whose body shape matches the panel-review pattern. A plain `gh pr comment` does not count.
+A *panel verdict* is a `kriscendobot`-authored formal review (`reviews[].author.login == "kriscendobot"` and `reviews[].state in (CHANGES_REQUESTED, COMMENTED, APPROVED)`) whose body shape matches the panel-review pattern. A plain `gh pr comment` does not count.
 
 ### Concurrency
 
 Dispatch the next-owed stage for each PR in parallel within one cycle, up to the steward's working concurrency cap. Two practical caps:
 
-- **One stage per PR per cycle.** A PR that just had its jury dispatched this cycle does not also get a fixer dispatch in the same cycle; the next stage waits for the current one's `result`.
+- **One stage per PR per cycle.** A PR that just had its judge dispatched this cycle does not also get a fixer dispatch in the same cycle; the next stage waits for the current one's `result`.
 - **At most one cleaner across the estate at a time.** Cleaner coverage passes can be CPU-heavy and read the test matrix; one in flight is enough.
 
 Rate-limit by deferring excess PRs to the next cycle (whose pacing then biases active per `skills/autonomous-loop-pacing/SKILL.md`); do not queue them inside the cycle.
