@@ -88,6 +88,10 @@ The maintainer speaks to the orchestrators (liaison and steward) in shorthand. T
 
 The role files carry the full table including compound chain idioms (*mirror #N*, *carry feedback from #N*, *wrap up #N*), garden-meta phrases (*encode this*, *carve a role for X*; liaison-only), bulletin and journal phrases (liaison-only), authorization shapes (liaison-only), and negation patterns (*don't X*, *never X*; both orchestrators).
 
+### Boatman dispatches and host preconditions
+
+Boatman dispatches must be issued from the host that holds the kriskowal credentials (`kmkmbp2021` as of 2026-05-14). A liaison on `endolinbot` refuses to originate a boatman dispatch and asks the user to re-issue from the credentialed host; the bot identity does not have kriskowal credentials and cannot ferry upstream. The boatman's own *Host preconditions* norm (`roles/boatman/AGENT.md` § Operating norms) is the second line of defense: a boatman that finds itself on the wrong host stops at the precondition check and surfaces the gap rather than pushing under the bot identity. See `journal/projects/endo/README.md` § Identity and credentials for where the credentials live and why; widening the bot host's blast radius by landing kriskowal credentials there is a separate decision with security implications.
+
 ## Adding a role
 
 Create `roles/<name>/AGENT.md`. Sections: purpose (one line), skills (linked list), operating norms, definition of done. Role files do not repeat anything in `roles/COMMON.md`.
