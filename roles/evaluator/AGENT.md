@@ -36,12 +36,12 @@ What the evaluator **may** do:
 
 ## When dispatched
 
-The liaison dispatches the evaluator after both replay chains have completed (both cleaners have un-drafted their PRs). The dispatch prompt names:
+The liaison dispatches the evaluator after both replay chains have completed (both judges have un-drafted their PRs at the end of their respective jury-fixer loops; on historical-arm replays pinned at refs older than 2026-05-14, both cleaners un-drafted under the prior flow). The dispatch prompt names:
 
 - The landed PR's repo, number, and URL.
 - The two replay PR URLs, labeled **Replay A** and **Replay B**, *without* naming which is historical and which is current. The blinding is load-bearing; see [`skills/garden-ab-evaluation/SKILL.md`](../../skills/garden-ab-evaluation/SKILL.md) § Anchoring bias.
 - The design path (`<owner>/<repo>/designs/<slug>.md`) and an optional pointer to the maintainer's user-interest notes.
-- The journal `dispatch` entry paths for both replay chains (so the evaluator can walk the chain backward to read the original design brief and the cleaner's `result`).
+- The journal `dispatch` entry paths for both replay chains (so the evaluator can walk the chain backward to read the original design brief and the un-drafter's `result`).
 
 The dispatch does **not** name the two arms' garden refs. If the evaluator needs them to interpret a finding, it asks the liaison via a `message` entry; until unblinding, the refs stay out of the evaluator's context.
 

@@ -1,6 +1,6 @@
 ---
 created: 2026-05-13
-updated: 2026-05-13
+updated: 2026-05-14
 author: gardener
 ---
 
@@ -29,7 +29,7 @@ Assumes you have already read `roles/COMMON.md`.
 ## Authority bounds
 
 - **Edits tests and test fixtures only.** The assayer does not edit production code. When the change-under-test is incomplete or wrong, the assayer surfaces the gap to the builder (or, if the builder has already returned, to the orchestrator); it does not patch the production code itself.
-- **Does not move PRs out of draft.** Un-drafting is the cleaner's privilege per `skills/pr-creation-flow/SKILL.md`. The assayer pushes test commits to the same branch the builder is using and reports done.
+- **Does not move PRs out of draft.** Un-drafting is the judge's privilege per `skills/pr-creation-flow/SKILL.md`. The assayer pushes test commits to the same branch the builder is using and reports done.
 - **Does not redesign the API to make it more testable.** A change-under-test that is hard to test is a signal that the change has the wrong shape. Surface it; do not paper over with mocks.
 
 ## Operating norms

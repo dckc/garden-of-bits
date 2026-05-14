@@ -23,7 +23,7 @@ Assumes you have already read `roles/COMMON.md`.
 - [worktree-per-pr](../../skills/worktree-per-pr/SKILL.md): operate inside the dispatch root's `project/` worktree.
 - [pre-pr-checklist](../../skills/pre-pr-checklist/SKILL.md): format, lint, docs, tests run locally before pushing.
 - [pr-formation](../../skills/pr-formation/SKILL.md): authoring the PR title and body from the upstream template.
-- [pr-creation-flow](../../skills/pr-creation-flow/SKILL.md): canonical procedure for the builder, assayer, jury, fixer, and cleaner handoff. The builder opens the PR in draft state; only the cleaner un-drafts.
+- [pr-creation-flow](../../skills/pr-creation-flow/SKILL.md): canonical procedure for the builder, assayer, cleaner, judge (jury), and fixer handoff. The builder opens the PR in draft state; only the judge un-drafts.
 - [regression-evidence](../../skills/regression-evidence/SKILL.md): prove every new test is load-bearing by demonstrating it fails when the target code path is broken. Equivalence claims in comments or docs get the same backing assertion.
 - [rename-discipline](../../skills/rename-discipline/SKILL.md): leave existing identifiers alone unless the rename earns its place in the diff.
 - [yarn-lock-separate-commit](../../skills/yarn-lock-separate-commit/SKILL.md): lockfile churn ships in its own commit.
@@ -33,7 +33,7 @@ Assumes you have already read `roles/COMMON.md`.
 
 ## Operating norms
 
-- **Open the PR in draft state.** This is the load-bearing flag for the rest of the flow. `gh pr create --draft` (or the API equivalent). The PR leaves draft only when the cleaner has confirmed CI is green and signs off; no other role un-drafts. See `skills/pr-creation-flow/SKILL.md` § Draft discipline.
+- **Open the PR in draft state.** This is the load-bearing flag for the rest of the flow. `gh pr create --draft` (or the API equivalent). The PR leaves draft only when the judge declares the jury-fixer loop done and runs `gh pr ready <N>`; no other role un-drafts. See `skills/pr-creation-flow/SKILL.md` § Draft discipline.
 - **Implement the smallest change that satisfies the acceptance criteria.** Do not refactor adjacent code unless the task calls for it.
 - **Verify no open PR already implements the issue** before opening a worktree. The cheap pre-flight is `gh pr list --repo <owner>/<repo> --state all --search "<N> in:title"` plus a search on the head-branch convention the project uses. Skip and surface the existing PR number if a duplicate would result.
 - **Pre-flight design-status drift.** When implementing from a design with status `In Progress` or `Not Started`, walk `git log -- <key-file>` between the design's last update and HEAD. A refactor commit may have undone a sub-item the design still claims as done. Stop at impasse and surface the discrepancy rather than building against either side.

@@ -70,7 +70,7 @@ Practical shape:
 
 Per-arm parallelism is a liaison decision: the two arms may run concurrently (cheaper wall-clock; the two arms share no working tree) or sequentially (lets the liaison spot a fatal error in arm one before paying for arm two). Default: concurrent.
 
-When each arm's cleaner has un-drafted the PR, the arm is done. The cleaner's `result` entry names the PR; the liaison records both PR URLs and waits for both arms to land.
+When each arm has un-drafted the PR (the judge in the current flow; the cleaner in historical-arm replays pinned at refs older than 2026-05-14), the arm is done. The un-drafter's `result` entry names the PR; the liaison records both PR URLs and waits for both arms to land.
 
 ### Step 3: Dispatch the evaluator
 
@@ -180,7 +180,7 @@ The two replay PRs are not real product PRs; they are experiment artifacts. They
 - PR body opens with a one-line callout: "This is a garden A/B evaluation replay. See `<evaluator-result-entry-path>` for context. Do not merge."
 - A label like `garden-evaluation` (if the project's label set supports it). Not load-bearing; the prefix is.
 
-The cleaner's un-draft still happens (step 2 calls for the full pr-creation-flow), so the replay PRs *are* technically open for review. The maintainer should not review them. The bulletin's *Pending kriskowal reviews* section must filter the replay PRs out by title prefix; see § Bulletin handling below.
+The un-draft still happens at the end of each arm (step 2 calls for the full pr-creation-flow), so the replay PRs *are* technically open for review. The maintainer should not review them. The bulletin's *Pending kriskowal reviews* section must filter the replay PRs out by title prefix; see § Bulletin handling below.
 
 After the evaluator's `result` lands, the liaison closes both replay PRs with `gh pr close` (a per-action authorization the dispatching liaison originates because they are garden-meta artifacts, not upstream contributions). The replay branches are pruned in the same step.
 
