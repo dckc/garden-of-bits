@@ -1,14 +1,14 @@
 ---
 created: 2026-05-13
-updated: 2026-05-13
-author: liaison
+updated: 2026-05-14
+author: liaison, gardener
 ---
 
 # Skill: changeset-discipline
 
 Adopted from `references/endo-but-for-bots/skills/changeset-discipline.md`.
 
-A changeset (e.g., `@changesets/cli`'s `.changeset/<adjective-noun-thing>.md`) is written only when the change is user-observable.
+A changeset (e.g., `@changesets/cli`'s `.changeset/<adjective-noun-thing>.md`) is written only when the change is user-observable. When one is warranted, the body addresses a dependency updater reading the published release notes, nothing else.
 
 ## When to write one
 
@@ -34,6 +34,16 @@ A noisy changelog full of "removed unused devDep" or "moved tests" entries train
 
 A changeset is easier to add than to remove (after publish, the entry ships forever). When unsure, ask the maintainer in the PR description rather than defaulting to writing one. The PR description's `[Documentation]` line should say "no changeset (internal hygiene)" when omission is deliberate.
 
+## What goes inside
+
+A changeset's audience is a downstream package author reading the published release notes and deciding whether to upgrade. Write to that reader.
+
+- **One changeset per PR per release cycle.** A PR is a single release-cycle change; fix-up commits responding to review feedback are part of that one change, not new ones. Do not add a second `.changeset/*.md` for a subsequent fix; revise the existing entry. Multiple files in `.changeset/` for one PR almost always wants consolidating.
+- **Keep the changeset current as the PR evolves.** A description of the interface from an earlier draft is worse than no description; it actively misleads. When the PR's interface, naming, or migration path changes during review, sweep the changeset in the same commit. "No longer true" review comments on a changeset are the regression mode.
+- **Omit implementation details.** A reader updating a dependency cares about the new affordance, the obligation on upgrade, and the breakage shape. They do not care about which internal helper was extracted, why the third revision changed the scratch-buffer layout, or how the test harness was rewired. Cite the user-visible fact; let the diff carry the rest.
+- **No process commentary.** A changeset is not a place to narrate the PR's review history, the rationale for splitting from a sibling PR, or the agent's own scope decisions. "Reverted from earlier draft", "split out of #N", "addresses reviewer ask" all belong in the PR body or in the commit message, not in the published release notes.
+
 ## Notes from the field
 
 - _2026-05-13_: adopted from the reference. The project-specific origin (kriskowal on PR #209 / #210) was dropped; the discipline applies wherever Changesets is in use. Per-project conventions (the file path under `.changeset/`, the YAML front-matter shape) belong in a journal entry tagged with the relevant project slug.
+- _2026-05-14_: the *What goes inside* section was extracted from kriskowal's review of [endojs/endo#3232](https://github.com/endojs/endo/pull/3232), specifically comments [3239062983](https://github.com/endojs/endo/pull/3232#discussion_r3239062983) (no process commentary), [3239064618](https://github.com/endojs/endo/pull/3232#discussion_r3239064618) and [3239067688](https://github.com/endojs/endo/pull/3232#discussion_r3239067688) (stale interface in the changeset body), [3239068864](https://github.com/endojs/endo/pull/3232#discussion_r3239068864) (implementation detail not interesting to package authors updating dependencies), and [3239072009](https://github.com/endojs/endo/pull/3232#discussion_r3239072009) (consolidate when a single release cycle produces multiple `.changeset/*.md` files).

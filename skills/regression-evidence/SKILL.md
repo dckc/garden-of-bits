@@ -1,7 +1,7 @@
 ---
 created: 2026-05-13
-updated: 2026-05-13
-author: liaison
+updated: 2026-05-14
+author: liaison, gardener
 ---
 
 # Skill: regression-evidence
@@ -9,6 +9,8 @@ author: liaison
 Adopted from `references/endo-but-for-bots/skills/regression-evidence.md`.
 
 Every new test should be proven load-bearing by demonstrating that it fails when the code path it exercises is broken. A test that passes whether or not the implementation is correct is not a regression test.
+
+The same discipline extends to any claim of equivalence the code, comments, or docs make; see *Equivalence claims need a backing test* below.
 
 ## Procedure
 
@@ -37,6 +39,22 @@ This catches three classes of mistake:
 - **Property-based tests** need a different demonstration: shrink the property to deterministically exercise the boundary, or seed the generator.
 - **"Existing test already covers this area" is not regression-tested.** Async iterators have several teardown shapes (resolution-done, resolution-not-done from a sink intending to stay open, rejection mid-stream, upstream-driven `throw`). A test exercising one shape will not catch a regression on another. When borrowing an existing test as regression posture, name which shape it covers and confirm the fix's failure mode matches.
 
+## Equivalence claims need a backing test
+
+When a code comment, JSDoc, README, or commit message claims that one form is "equivalent to" another (`random()` returns `randomUint53(source) * 2 ** -53`; the IETF nonce convention is "equivalent to" the DJB 8-byte form at counter 0; the new helper produces the "same bytes" as the prior inlined version), that claim is a load-bearing contract whether the author intended it or not. A future contributor will read the claim and rely on it.
+
+An equivalence claim with no backing assertion drifts. Either side can change in a refactor and the claim becomes silently false, with no test to fail.
+
+The discipline:
+
+1. State the equivalence as a test: pick a small input (or a deterministic seed if randomness is involved), compute both sides, assert they match by the strongest available comparator (`t.is` for primitives, `t.deepEqual` for byte arrays, a fixed golden vector for very large outputs).
+2. Run it against the current implementation to confirm the equivalence actually holds. If it does not, the comment was wrong; correct the comment and the test together.
+3. Run the regression check from the section above: break one side, confirm the equivalence test fails, revert.
+
+The output of the equivalence test is the same kind of artifact as a regression test. Both prove a claim the prose alone could not.
+
 ## Notes from the field
 
 - _2026-05-13_: adopted from the reference. Per-PR session lore lives in the journal.
+- _2026-05-14_: the *Equivalence claims* section was prompted by kriskowal's review of [endojs/endo#3232](https://github.com/endojs/endo/pull/3232), comment [3239085874](https://github.com/endojs/endo/pull/3232#discussion_r3239085874) on a JSDoc line claiming `random()` was equivalent to `readU53() * POW2_M53`: "Let's add an assertion to the test suite to make sure this equivalence sticks."
+

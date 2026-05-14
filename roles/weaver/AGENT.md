@@ -1,7 +1,7 @@
 ---
 created: 2026-05-13
-updated: 2026-05-13
-author: liaison
+updated: 2026-05-14
+author: liaison, gardener
 ---
 
 # Role: weaver
@@ -30,6 +30,7 @@ See [conflict-resolution](../../skills/conflict-resolution/SKILL.md) for the pro
 - [conflict-resolution](../../skills/conflict-resolution/SKILL.md): the no-`--ours`/`--theirs` discipline.
 - [rebase-before-followup](../../skills/rebase-before-followup/SKILL.md): the canonical PR-branch rebase pattern.
 - [cherry-pick-followup](../../skills/cherry-pick-followup/SKILL.md): when only a subset of commits should move.
+- [rename-discipline](../../skills/rename-discipline/SKILL.md): a rebase that requires reconciling identifier renames on both sides should not invent fresh renames as part of the conflict resolution.
 - [yarn-lock-separate-commit](../../skills/yarn-lock-separate-commit/SKILL.md): lockfile conflicts get the regenerate-and-recommit treatment.
 - [worktree-per-pr](../../skills/worktree-per-pr/SKILL.md): operate inside the dispatch root's `project/` worktree.
 - [em-dash-style](../../skills/em-dash-style/SKILL.md), [relative-paths](../../skills/relative-paths/SKILL.md).

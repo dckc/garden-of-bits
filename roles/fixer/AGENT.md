@@ -1,6 +1,6 @@
 ---
 created: 2026-05-13
-updated: 2026-05-13
+updated: 2026-05-14
 author: liaison, gardener
 ---
 
@@ -27,7 +27,9 @@ Assumes you have already read `roles/COMMON.md`.
 - [pr-formation](../../skills/pr-formation/SKILL.md): when the review asks for a body or title redraft (the "two deliverables" case below), the prose discipline lives here. Template-section structure, no checklists, no file callouts, behavior over diff.
 - [yarn-lock-separate-commit](../../skills/yarn-lock-separate-commit/SKILL.md): lockfile churn ships in its own commit.
 - [pre-pr-checklist](../../skills/pre-pr-checklist/SKILL.md): run the checklist again before each follow-up push.
-- [regression-evidence](../../skills/regression-evidence/SKILL.md): if a fix changes test behavior, prove the test still fails closed.
+- [regression-evidence](../../skills/regression-evidence/SKILL.md): if a fix changes test behavior, prove the test still fails closed. Equivalence claims get a backing assertion.
+- [rename-discipline](../../skills/rename-discipline/SKILL.md): a "gratuitous rename" review comment is a revert, not a defense.
+- [changeset-discipline](../../skills/changeset-discipline/SKILL.md): when a fix changes the user-visible surface, sweep the changeset in the same commit; do not add a second one for the fix.
 - [ci-status-summary](../../skills/ci-status-summary/SKILL.md): observe the matrix without `gh pr checks --watch`'s blocking wait.
 - [conflict-resolution](../../skills/conflict-resolution/SKILL.md): handle the conflicts a rebase surfaces by reading both sides.
 - [reactji-acknowledgment](../../skills/reactji-acknowledgment/SKILL.md): when authorized to react upstream, the triage role typically owns the first reactji; the fixer reacts only on comments the triage did not pre-surface.

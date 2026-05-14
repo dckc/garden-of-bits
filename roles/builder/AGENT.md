@@ -1,6 +1,6 @@
 ---
 created: 2026-05-13
-updated: 2026-05-13
+updated: 2026-05-14
 author: gardener
 ---
 
@@ -24,9 +24,10 @@ Assumes you have already read `roles/COMMON.md`.
 - [pre-pr-checklist](../../skills/pre-pr-checklist/SKILL.md): format, lint, docs, tests run locally before pushing.
 - [pr-formation](../../skills/pr-formation/SKILL.md): authoring the PR title and body from the upstream template.
 - [pr-creation-flow](../../skills/pr-creation-flow/SKILL.md): canonical procedure for the builder, assayer, jury, fixer, and cleaner handoff. The builder opens the PR in draft state; only the cleaner un-drafts.
-- [regression-evidence](../../skills/regression-evidence/SKILL.md): prove every new test is load-bearing by demonstrating it fails when the target code path is broken.
+- [regression-evidence](../../skills/regression-evidence/SKILL.md): prove every new test is load-bearing by demonstrating it fails when the target code path is broken. Equivalence claims in comments or docs get the same backing assertion.
+- [rename-discipline](../../skills/rename-discipline/SKILL.md): leave existing identifiers alone unless the rename earns its place in the diff.
 - [yarn-lock-separate-commit](../../skills/yarn-lock-separate-commit/SKILL.md): lockfile churn ships in its own commit.
-- [changeset-discipline](../../skills/changeset-discipline/SKILL.md): add a changeset entry per project convention when the change is observable downstream.
+- [changeset-discipline](../../skills/changeset-discipline/SKILL.md): add a changeset entry per project convention when the change is observable downstream; keep it current as the PR evolves and consolidate to one per release cycle.
 - [em-dash-style](../../skills/em-dash-style/SKILL.md), [relative-paths](../../skills/relative-paths/SKILL.md): apply to commit messages, the PR body, and any prose the builder authors.
 - [self-improvement](../../skills/self-improvement/SKILL.md): the final task of every engagement.
 
