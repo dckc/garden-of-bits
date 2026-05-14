@@ -70,6 +70,10 @@ Report: <what to return to the orchestrator>. The orchestrator tears down your d
 
 For long-lived monitoring or recurring work, dispatch via `/loop` or a cron routine; each invocation receives a fresh dispatch root, runs one tick, and exits. Standing state that must survive across ticks (bash poll daemons' ETag and last-seen-id caches) lives outside the dispatch root, in the long-lived standing worktrees documented in WORKTREES.md § Standing exceptions. Every tick that journals is still recorded in the journal.
 
+### Orchestrator vocabulary
+
+- **the gamut**: the PR-creation-flow chain end to end (`skills/pr-creation-flow/SKILL.md`). "Run the gamut on #N" = orchestrator reads PR #N's next-stage-owed and dispatches the chain's stages sequentially until termination (judge un-drafts). Both orchestrators honor it: the liaison runs the gamut in one engagement; the steward's per-cycle PR-creation-flow scan is the autonomous form. See `roles/liaison/AGENT.md` § Vocabulary: the gamut and `roles/steward/AGENT.md` § Vocabulary: the gamut for the per-role semantics.
+
 ## Adding a role
 
 Create `roles/<name>/AGENT.md`. Sections: purpose (one line), skills (linked list), operating norms, definition of done. Role files do not repeat anything in `roles/COMMON.md`.
