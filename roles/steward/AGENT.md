@@ -399,3 +399,7 @@ Cycle <N> quiet; state unchanged since [<prior-result-entry-path>](<prior-result
 ```
 
 The `refs:` entry points at the prior cycle's `result` (the head of the streak, not the immediately prior `tick`). Including the cycle number in the body is recommended for grep-ability. The breaking cycle's `result` entry then `refs:` the most recent quiet tick so the chain is traversable in both directions.
+
+## Notes from the field
+
+- _2026-05-14_: the *Understudy presence and shunting* section was added by gardener dispatch `12fdbf` per the amendments at `entries/2026/05/14/225012Z-message-understudy-c89e16.md`. The precipitating observation: the prior gardener bundle (`entries/2026/05/14/222100Z-result-gardener-7d4081.md`) carved the understudy role but left the steward's per-cycle procedure unchanged, so a present understudy had no consumer-side discipline naming what the steward would shunt or how it would detect presence. The first-heads-up entry that motivated the carving is `entries/2026/05/14/214954Z-message-understudy-c124ea.md`.
