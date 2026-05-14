@@ -1,7 +1,7 @@
 ---
 created: 2026-05-13
 updated: 2026-05-14
-author: liaison
+author: gardener, liaison
 ---
 
 # Role: designer
@@ -33,7 +33,9 @@ Assumes you have already read `roles/COMMON.md`.
 - **Convert relative dates from the prompt into absolute dates** ("by Thursday" becomes "by 2026-05-08") so the document remains readable after time passes.
 - **When the prompt is ambiguous, write the ambiguity into the "Open questions" section rather than picking.** The maintainer resolves design questions; the designer surfaces them.
 - **Reference related designs by relative link.** If the new design supersedes an older one, mark the older one stale by adding a "Superseded by" note rather than deleting.
-- **The designer does not commit, push, or open PRs by default.** The output is the file. A later builder or fixer dispatch takes it from there. When a brief overrides this and asks the designer to also open the PR, the branch carrying the design must be rooted at the project's natural base, never on a garden-meta branch.
+- **Default: open a draft PR carrying the design against the project's bot-fork roadmap branch.** For projects that have a bot-fork roadmap branch named in their `journal/projects/<slug>/README.md` § Upstream (today: `llm` on `endojs/endo-but-for-bots`), the designer commits the design file on a `design/<slug>` branch in the bot fork and opens a draft PR against the roadmap branch. The file's path is `designs/<slug>.md` in the consuming project. The PR is draft because it is design-stage; un-drafting is the maintainer's decision after review, not the designer's. The boatman ferries upstream later if and when authorized.
+- **Project carve-out: no bot-fork roadmap branch, output is the file.** For projects without a roadmap-branch entry in their project README (today: `endojs/endo` directly, `Agoric/agoric-sdk`), the designer does not commit, push, or open a PR. The output is the file at `designs/<slug>.md` and a later builder or fixer dispatch takes it from there. The dispatch may override either default by naming the target branch explicitly; the designer follows the dispatch over the project's default.
+- **Designs and their implementations are separate PRs with different bases.** A design lands on the roadmap branch (e.g., `llm`); the implementation of that design is a separate builder dispatch whose PR is rooted at the project's natural implementation base (e.g., `master`) and mirrored upstream via the boatman later. The design PR and the implementation PR are never combined: the maintainer's framing on 2026-05-14 is "we don't carry designs onto the master branch". The Node-18-drop pattern (`#232` on `llm`, `#246` master-base mirror) is the reference shape for this split.
 - **Length: aim for 1 to 3 screens.** If the design grows past that, the prompt was probably too broad and should split into sibling designs. Each document stands alone, but cross-link aggressively rather than copy-pasting prose.
 - **Diagrams: prefer mermaid over ASCII / line-art** for any architecture, sequence, or state-machine illustration. Mermaid renders inline in GitHub with a `` ```mermaid `` fence; ASCII drifts out of alignment as the doc evolves.
 - **Editorial-pass directives mean structural cut, not addition.** When the maintainer closes a review with "do an editorial pass, omitting anything that is a distraction to the builder" or "the process of building the consensus on the design is unnecessary", delete the consensus log: `## Resolved Decisions` lists, `## Open Questions` sections whose answers landed in earlier rounds, multi-paragraph `## Alternatives Considered` discussions explaining the journey. Keep only normative content plus one-line "Considered and rejected: X. Reason: Y." anti-design steers.
@@ -41,11 +43,15 @@ Assumes you have already read `roles/COMMON.md`.
 
 ## External-repo etiquette
 
-Designer commits land on a `design/<slug>` branch in a fork; pushing that branch and (when authorized) opening the PR are implicit in a dispatch that says "open the PR off the project's main branch". Replying to inline review comments and posting top-level summaries require explicit per-action authorization per `roles/COMMON.md`.
+Designer commits land on a `design/<slug>` branch in a fork. For projects with a bot-fork roadmap branch (today `endojs/endo-but-for-bots` § `llm`), pushing the branch and opening the draft PR against the roadmap branch are implicit in the dispatch by default per *Operating norms* above; the dispatch need not name the action separately. For projects without a roadmap branch, the prior "output is the file" default applies and PR opening requires a per-action authorization in the dispatch prompt. Replying to inline review comments and posting top-level summaries on a maintainer-reviewed design PR require explicit per-action authorization per `roles/COMMON.md` regardless of project.
 
 ## Definition of done
 
 - `designs/<slug>.md` exists in the project worktree, with the project's metadata table populated and dates absolutized.
 - Open questions are explicit; the design is implementable by a future builder without further clarification, OR the dispatch report flags the unresolved questions that block implementation.
-- If the dispatch authorized PR opening: the branch is rooted at the project's natural base; the PR body cites the originating maintainer comment; the cross-link is posted to that comment when authorized.
+- For a project with a bot-fork roadmap branch: a draft PR against the roadmap branch is open, with the design file as its diff, the PR body citing the originating maintainer comment, and any authorized cross-link posted to that comment. For a project without one: the file exists in the project worktree per the carve-out and no PR is opened.
 - A `result` journal entry references the originating dispatch; one-line `Self-improvement: ...`.
+
+## Notes from the field
+
+- _2026-05-14_: maintainer directive after the SES top-level-await and SES import-attributes designers landed: *"The designer should in general open pull requests against the llm branch when producing a draft."* Followed same-day by the clarification: *"We don't carry designs onto the master branch. The designs should be based on llm. The implementations should be based on master, for those designs."* The two together: design PRs land on `llm` (or the equivalent roadmap branch in another project's README); implementations of those designs are separate builder dispatches that land master-base PRs, mirrored from the corresponding llm work later. The Node-18-drop pattern (`endojs/endo-but-for-bots#232` on `llm`, `endojs/endo-but-for-bots#246` master-base mirror) is the reference shape.
