@@ -1,0 +1,195 @@
+#!/bin/bash
+# run-steward-cycle.sh — one steward cycle for the opencode harness.
+#
+# Usage:
+#   ./run-steward-cycle.sh [--dry-run] [--quiet]
+#
+# This is the cron entry point. It runs the deterministic parts of one
+# steward cycle inline (journal sync, monitor liveness, inbox drain) and
+# then invokes `opencode run` for the LLM-driven parts (dispatch decisions,
+# subagent orchestration, journaling).
+#
+# The opencode session starts with a prompt that overrides the liaison
+# default in CLAUDE.md so the agent acts as the steward.
+#
+# Environment:
+#   OPENCODE_MODEL   Model to use (default: deepseek/deepseek-v4-flash-free)
+#   STEWARD_DRY      If set, skip the opencode invocation
+#   STEWARD_QUIET    If set, suppress non-error output
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR"
+
+HOST="$(hostname -s)"
+DATE_UTC="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+DATE_YMD="$(date -u +%Y/%m/%d)"
+CYCLE_FILE="/tmp/garden-steward-cycle-${HOST}.txt"
+
+DRY_RUN="${STEWARD_DRY:-${1:-}}"
+[ "$DRY_RUN" = "--dry-run" ] && DRY_RUN=1 || DRY_RUN=0
+QUIET="${STEWARD_QUIET:-0}"
+if [ "${1:-}" = "--quiet" ] || [ "${2:-}" = "--quiet" ]; then
+    QUIET=1
+fi
+
+log() { [ "$QUIET" -eq 0 ] && echo "$*"; }
+err() { echo "$*" >&2; }
+
+log "=== Steward cycle starting at $DATE_UTC on $HOST ==="
+
+# --- Step 1: Journal sync ---
+log "--- Syncing journal ---"
+JRN="$SCRIPT_DIR/journal"
+if git -C "$JRN" remote get-url origin &>/dev/null; then
+    git -C "$JRN" fetch --quiet origin journal 2>/dev/null || true
+    AHEAD=$(git -C "$JRN" rev-list --count origin/journal..HEAD 2>/dev/null || echo 0)
+    BEHIND=$(git -C "$JRN" rev-list --count HEAD..origin/journal 2>/dev/null || echo 0)
+    if [ "$AHEAD" = "0" ] && [ "$BEHIND" != "0" ]; then
+        git -C "$JRN" reset --hard origin/journal
+        log "  journal fast-forwarded"
+    elif [ "$AHEAD" != "0" ] && [ "$BEHIND" != "0" ]; then
+        git -C "$JRN" rebase origin/journal 2>/dev/null || {
+            git -C "$JRN" rebase --abort 2>/dev/null || true
+            err "  journal rebase conflict; proceeding with local state"
+        }
+    fi
+else
+    log "  no remote configured; local-only"
+fi
+
+CUR_HEAD="$(git -C "$JRN" rev-parse HEAD)"
+log "  journal HEAD: ${CUR_HEAD:0:12}"
+
+# --- Step 2: Standing monitor liveness check ---
+log "--- Checking standing monitors ---"
+MONITOR_STATE=""
+
+check_daemon() {
+    local pid_file="$1"
+    local name="$2"
+    if [ -f "$pid_file" ]; then
+        local pid
+        pid=$(cat "$pid_file" 2>/dev/null || echo "")
+        if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+            log "  $name: alive (pid $pid)"
+            echo "alive"
+        else
+            log "  $name: DEAD (pid $pid stale)"
+            echo "dead"
+        fi
+    else
+        log "  $name: not started"
+        echo "not-started"
+    fi
+}
+
+MON_EBF=$(check_daemon "/tmp/garden-monitor-endojs-endo-but-for-bots.pid" "endo-but-for-bots")
+MON_GARDEN=$(check_daemon "/tmp/garden-monitor-kriskowal-garden.pid" "kriskowal/garden")
+MON_RQ=$(check_daemon "/tmp/garden-review-queue.pid" "review-queue")
+MONITOR_STATE="endo-but-for-bots=$MON_EBF garden=$MON_GARDEN review-queue=$MON_RQ"
+
+# Check daemon logs for NEW/ADD/REMOVE lines
+check_log_lines() {
+    local log_file="$1"
+    if [ -f "$log_file" ]; then
+        wc -l < "$log_file" 2>/dev/null || echo "0"
+    else
+        echo "0"
+    fi
+}
+
+LOG_EBF_LINES=$(check_log_lines "/tmp/garden-monitor-endojs-endo-but-for-bots.log")
+LOG_GARDEN_LINES=$(check_log_lines "/tmp/garden-monitor-kriskowal-garden.log")
+LOG_RQ_LINES=$(check_log_lines "/tmp/garden-review-queue.log")
+
+# --- Step 3: Inbox drain ---
+log "--- Draining steward inbox ---"
+INBOX_OUTPUT=""
+if [ -f "$SCRIPT_DIR/skills/inbox-drain/inbox-drain.sh" ]; then
+    INBOX_OUTPUT=$(bash "$SCRIPT_DIR/skills/inbox-drain/inbox-drain.sh" steward --no-fetch 2>&1 || true)
+fi
+INBOX_COUNT=$(echo "$INBOX_OUTPUT" | grep -c . || true)
+
+# --- Step 4: Check for lingering dispatch worktrees ---
+log "--- Checking dispatch worktrees ---"
+DISPATCH_COUNT=0
+DISPATCH_LIST=""
+if [ -d "$SCRIPT_DIR/dispatches" ]; then
+    DISPATCH_COUNT=$(find "$SCRIPT_DIR/dispatches" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l)
+    DISPATCH_LIST=$(find "$SCRIPT_DIR/dispatches" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; 2>/dev/null | tr '\n' ' ')
+fi
+
+# --- Step 5: Write pre-flight state file ---
+cat > "$CYCLE_FILE" <<PREFLIGHT
+steward_cycle_ts: $DATE_UTC
+host: $HOST
+journal_head: ${CUR_HEAD:0:12}
+monitors: $MONITOR_STATE
+inbox_count: $INBOX_COUNT
+dispatch_worktrees: $DISPATCH_COUNT
+inbox_lines: |
+$(echo "$INBOX_OUTPUT" | sed 's/^/  /')
+PREFLIGHT
+
+# --- Step 6: Invoke opencode for LLM-driven cycle ---
+if [ "$DRY_RUN" -eq 1 ]; then
+    log "=== DRY RUN — skipping opencode invocation ==="
+    log "Pre-flight state written to $CYCLE_FILE"
+    exit 0
+fi
+
+# Check that opencode is available
+if ! command -v opencode &>/dev/null; then
+    err "opencode not found in PATH"
+    exit 1
+fi
+
+MODEL="${OPENCODE_MODEL:-deepseek/deepseek-v4-flash-free}"
+
+log "=== Invoking opencode for steward cycle ==="
+log "  model: $MODEL"
+log "  inbox: $INBOX_COUNT new messages"
+log "  dispatches: $DISPATCH_COUNT pending"
+
+# Build the steward dispatch prompt. This overrides the liaison framing
+# in CLAUDE.md by explicitly naming the role and providing the same
+# per-cycle procedure the original steward uses.
+STEWARD_PROMPT="You are operating as role=steward in the garden at $SCRIPT_DIR.
+
+This is an autonomous steward cycle started by cron on $HOST at $DATE_UTC.
+
+IMPORTANT: Despite what CLAUDE.md says, you are the STEWARD, not the liaison.
+The liaison is not present. There is no user in the loop.
+
+PRE-FLIGHT STATE:
+- Host: $HOST
+- Journal HEAD: ${CUR_HEAD:0:12}
+- Monitors: endo-but-for-bots=$MON_EBF, garden=$MON_GARDEN, review-queue=$MON_RQ
+- Inbox messages: $INBOX_COUNT
+- Pending dispatch worktrees: $DISPATCH_COUNT
+
+INBOX LINES:
+$(echo "$INBOX_OUTPUT" | sed 's/^/> /')
+
+Run one steward cycle using the per-cycle procedure in garden/roles/steward/AGENT.md.
+Read garden/roles/COMMON.md first, then garden/roles/steward/AGENT.md.
+
+OPencode ADAPTATION NOTES (this is opencode, not Claude Code):
+1. Use the \`Task\` tool to dispatch subagents, NOT the \`Agent\` tool (it does not exist).
+2. There is no ScheduleWakeup tool. This cycle runs once and exits; cron handles the next cycle.
+3. There are no parent-context Monitor tasks. Check daemon logs inline.
+4. Use \`bash\` to run shell commands (git, gh, journal operations).
+5. Use \`bash\` to call dispatch-prepare.sh / dispatch-teardown.sh for worktree management.
+6. The \`garden\` worktree is at $SCRIPT_DIR, the \`journal\` worktree is at $SCRIPT_DIR/journal.
+7. For github operations, \`gh\` is authenticated as dctinybrain.
+
+Write a cycle-summary 'result' journal entry when done. Then report back a
+concise summary of what happened this cycle."
+
+exec opencode run \
+    --dir "$SCRIPT_DIR" \
+    --model "$MODEL" \
+    --dangerously-skip-permissions \
+    "$STEWARD_PROMPT"
