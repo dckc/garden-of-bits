@@ -113,7 +113,7 @@ if [ "$#" -ge 4 ]; then
   # Coq build environment detection: _CoqProject is a strong signal.
   if [ -f "$ROOT/project/_CoqProject" ]; then
     echo "dispatch-prepare: warning: project contains Coq build files (_CoqProject)." >&2
-    echo "                  Ensure 'eval \$(opam env)' is in scope before running coqc." >&2
+    echo "                  Run 'nix develop --no-pure-eval' in the project root for coqc." >&2
   fi
 
   # Project hooks: source project-hooks/<owner>-<repo>.sh if present.
