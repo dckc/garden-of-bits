@@ -1,11 +1,11 @@
 # Project: dctinybrain/jesc24
 
-JavaScript to Coq compilation target for the JES MOOC (c20). The garden engages with this project primarily through fixer dispatches on PRs; the repo is a student project that uses Coq 8.9.1 via opam on a dedicated build host `bldbox`.
+JavaScript to Coq compilation target for the JES MOOC (c20). The garden engages with this project primarily through fixer dispatches on PRs; the repo is a student project that uses Coq 8.9.1 via opam on host `yolo1`.
 
 ## Build toolchain
 
 - Build system: Coq 8.9.1 via opam, `coq_makefile` + Makefile
-- Opam switch: `ocpl-coq-8.9.1-ocaml-4.07.1` on host `bldbox`
+- Opam switch: `ocpl-coq-8.9.1-ocaml-4.07.1` on host `yolo1`
 - Codegen: Python 3 needed for `js_to_coq_source.py`
 - Coq is NOT available on the garden's bot hosts by default; a fixer dispatched against this repo must `eval $(opam env)` before running `coqc`. The exact commands:
 

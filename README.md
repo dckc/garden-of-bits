@@ -207,7 +207,7 @@ author: liaison, gardener
 
 ### Awaits maintainer ferry
 
-PRs synced + green on `endo-but-for-bots`'s master-base; ready for the maintainer to ferry upstream from another session (kriskowal-identity push required, not available from `endolinbot`).
+PRs synced + green on `endo-but-for-bots`'s master-base; ready for the maintainer to ferry upstream from another session (kriskowal-identity push required, not available from a bot identity).
 
 - **[#244](https://github.com/endojs/endo-but-for-bots/pull/244) — `chore(eslint-plugin): require underscore-delimited groups in numeric literals`** (master-base mirror of #243, now synced with upstream [#3263](https://github.com/endojs/endo/pull/3263)). Reverse-ferry from upstream completed; bot-side reset to upstream's commit boundaries. Head `b583f9259`. CI converging. Per fixer [`024619Z-result-fixer-e72e0c.md`](entries/2026/05/15/024619Z-result-fixer-e72e0c.md). (Earlier green-state at `746beaf4` was the pre-reverse-ferry head; the maintainer's upstream edits are now absorbed.)
 - **[#109](https://github.com/endojs/endo-but-for-bots/pull/109) — `feat(syrup-frame): syrup-frame package and opt-in framing for OCapN TCP-for-testing`**. Rebase on upstream master was a no-op (already atop `0ec70c6dd`); yarn.lock regenerated and amended into the third commit preserving the three-commit shape. Head `cfa440f2c`. **CI 28/28 SUCCESS** including `test-ocapn-guile-interop`. Per fixer [`024654Z-result-fixer-a80ce6.md`](entries/2026/05/15/024654Z-result-fixer-a80ce6.md). Note: a concurrent boatman dispatch from the maintainer's side is already in flight per the fixer's observation.
@@ -279,12 +279,12 @@ Source of truth: `endojs/endo-but-for-bots@llm`. Coverage rule: a design is *cov
 
 Full index at [`worktrees/README.md`](worktrees/README.md). Currently active or reserved:
 
-- `endolinbot`: 1 active standing monitor (`watch-endo-but-for-bots`) on `endojs/endo-but-for-bots`. The other four standing monitors (`watch-endo`, `watch-agoric-sdk`, `watch-cosgov`, `watch-garden`) were collected on 2026-05-13 per the monitoring safety constraint in `CLAUDE.md` § Monitoring safety constraint; their index entries are kept for the record and the filesystem worktrees survive on disk in case the constraint reverses.
+- `yolo1`: no active standing monitors on project repos (the `watch-endo-but-for-bots` monitor was collected on 2026-05-15 per the maintainer's directive to focus on `dctinybrain/jesc24`). The `kriskowal/garden` monitor (re-activated 2026-05-14) remains active. `watch-endo`, `watch-agoric-sdk`, `watch-cosgov` were collected on 2026-05-13 per the monitoring safety constraint in `CLAUDE.md` § Monitoring safety constraint; their index entries are kept for the record and the filesystem worktrees survive on disk in case the constraint reverses.
 - `kmkmbp2021`: 1 idle integration scratch worktree (`integrate--liaison--20260512-194515`), see the index.
 
 ### Open monitors
 
-`endolinbot` runs 2 long-lived poll daemons via the steward's standing-monitors discipline (see `roles/steward/AGENT.md` § Standing monitors on the `main` branch). Cadences: `endo-but-for-bots` 30s, `review-queue` 120s. PIDs and logs in `/tmp/garden-monitor-*.{pid,log,err}` and `/tmp/garden-review-queue.{pid,log,err}`. The active set is constrained by the monitoring safety rule; re-enabling another monitor requires explicit maintainer authorization recorded in a journal `message` entry.
+`yolo1` runs 1 long-lived poll daemon via the steward's standing-monitors discipline (see `roles/steward/AGENT.md` § Standing monitors on the `main` branch). The review-queue daemon runs on a 120s cadence. PIDs and logs in `/tmp/garden-monitor-*.{pid,log,err}` and `/tmp/garden-review-queue.{pid,log,err}`. The active set is constrained by the monitoring safety rule; re-enabling another monitor requires explicit maintainer authorization recorded in a journal `message` entry.
 
 ### Recent activity
 
