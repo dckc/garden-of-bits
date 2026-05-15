@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# garden — enter a local bot container whose home directory is
-# this script's parent directory on the host.
+# garden — garden management script.
+#
+# In the original garden, this script enters a Docker bot container.
+# Under the opencode adaption, it manages the steward lifecycle.
 
 set -euo pipefail
 
@@ -11,23 +13,33 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 usage() {
     cat <<EOF
-Usage: $(basename "$0") [command]
+Usage: $(basename "$0") <command> [args]
 
 Commands:
-  (no args)   Enter the container, creating or starting it as needed.
-  build       Build (or rebuild) the container image.
-  reset       Remove the container so the next invocation creates a fresh one.
+  (no args)           Enter the Docker container (original garden mode).
+  build               Build the Docker container image.
+  reset               Remove the Docker container.
+
+  dispatch-steward    Run one steward cycle (opencode adaptation).
+  cron                Install or show the steward cron job.
 
 Environment:
   ANTHROPIC_API_KEY   Forwarded to the container for Claude Code auth.
   GARDEN_IMAGE        Override image name (default: garden).
   GARDEN_CONTAINER    Override container name (default: garden).
   GARDEN_HOSTNAME     Override container hostname (default: endolinbot).
+  OPENCODE_MODEL      Model for steward cycles (opencode adaptation).
+  STEWARD_DRY         Set to 1 for dry-run mode.
 
-Notes:
+Notes (original garden):
   Unlike town, garden does NOT forward SSH_AUTH_SOCK. The bot uses its
   own keys under \$HOME/.ssh/ (i.e. /home/kris/garden/.ssh on the host)
   so that an agent-forwarded human identity cannot leak into bot actions.
+
+Notes (opencode adaptation):
+  On this host (bldbox), the Docker commands are not typically used. Use
+  \`garden dispatch-steward\` to run a steward cycle, or \`garden cron\`
+  to manage periodic scheduling.
 EOF
     exit 1
 }
@@ -70,6 +82,46 @@ cmd_enter() {
     exec docker exec -it "$CONTAINER_NAME" /bin/bash -l
 }
 
+cmd_dispatch_steward() {
+    if [ ! -x "$SCRIPT_DIR/run-steward-cycle.sh" ]; then
+        echo "run-steward-cycle.sh not found or not executable. Create it first." >&2
+        exit 1
+    fi
+    exec bash "$SCRIPT_DIR/run-steward-cycle.sh" "$@"
+}
+
+cmd_cron() {
+    local action="${1:-show}"
+    case "$action" in
+        install)
+            local stew_cmd="$SCRIPT_DIR/run-steward-cycle.sh"
+            if [ ! -x "$stew_cmd" ]; then
+                echo "run-steward-cycle.sh not found or not executable." >&2
+                exit 1
+            fi
+            local cron_line="*/30 * * * * cd $SCRIPT_DIR && bash $stew_cmd >> /tmp/garden-steward-cron.log 2>&1"
+            if crontab -l 2>/dev/null | grep -qF "$stew_cmd"; then
+                echo "Steward cron already installed."
+            else
+                (crontab -l 2>/dev/null; echo "$cron_line") | crontab -
+                echo "Installed steward cron (every 30 minutes)."
+            fi
+            ;;
+        remove)
+            if crontab -l 2>/dev/null | grep -vF "$SCRIPT_DIR/run-steward-cycle.sh" | crontab -; then
+                echo "Removed steward cron."
+            fi
+            ;;
+        show)
+            crontab -l 2>/dev/null | grep --color=never -F "$SCRIPT_DIR/run-steward-cycle.sh" || echo "No steward cron installed."
+            ;;
+        *)
+            echo "Usage: $(basename "$0") cron {install|remove|show}" >&2
+            exit 1
+            ;;
+    esac
+}
+
 if [[ $# -eq 0 ]]; then
     cmd_enter
     exit 0
@@ -78,6 +130,8 @@ fi
 case "$1" in
     build) shift; cmd_build "$@" ;;
     reset) shift; cmd_reset "$@" ;;
+    dispatch-steward) shift; cmd_dispatch_steward "$@" ;;
+    cron) shift; cmd_cron "$@" ;;
     -h|--help|help) usage ;;
     *) usage ;;
 esac

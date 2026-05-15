@@ -126,6 +126,30 @@ For a Docker-hosted garden instance, the `garden` script at the garden root crea
 
 Standing-monitor daemons feed event bodies, comment text, and pull-request descriptions into the LLM's context on every wake. Only repositories whose comments and pull requests are gated against untrusted contributors are safe to monitor; anything else exposes the steward and its subordinates to text that an untrusted actor can write, which is a prompt-injection hazard for any role that reads a daemon tail or follows a `NEW` line to its source. As of 2026-05-13 only `endojs/endo-but-for-bots` meets this bar in the garden's active set, and the review-queue daemon (which polls kriskowal's pending-review set against trusted GitHub state, not arbitrary repo bodies) is safe by construction. Re-enabling another monitor requires explicit maintainer authorization recorded in a journal `message` entry, after which the role-author (typically the gardener) lands the standing-monitor row in `roles/steward/AGENT.md` and the dormant-banner removal in the per-project skill. This is a standing constraint, not a one-time decision; the gardener and any future role-author respects it on every dispatch that touches monitoring.
 
+## Opencode adaptation
+
+This garden was designed for a Claude Code harness but has been adapted to run under **opencode** on host `bldbox` (git identity: `dctinybrain`).
+
+Key differences when working in opencode:
+- Use `Task` tool instead of `Agent` for subagent dispatch
+- No `ScheduleWakeup` — the steward runs via `run-steward-cycle.sh` from cron
+- No parent-context `Monitor` tools — the steward checks daemon logs inline each cycle
+- The `garden` script at the garden root has been extended with `dispatch-steward` and `cron` commands
+- See `roles/steward/AGENT.md` § Opencode adaptation for the full mapping
+
+```sh
+# Run one steward cycle manually:
+./garden dispatch-steward
+
+# Dry run (prepare state, skip LLM):
+./garden dispatch-steward --dry-run
+
+# Manage cron:
+./garden cron install   # every 30 minutes
+./garden cron remove
+./garden cron show
+```
+
 ## Current inventory
 
 - Roles: `liaison`, `steward`, `understudy`, `general-contractor`, `monitor`, `review-queue`, `boatman`, `builder`, `assayer`, `cleaner`, `judge`, `assessor`, `typist`, `stylist`, `packager`, `archivist`, `prover`, `curator`, `migrator`, `locksmith`, `warden`, `saboteur`, `breaker`, `critic`, `skeptic`, `copyeditor`, `pedant`, `novice`, `fixer`, `weaver`, `shepherd`, `conductor`, `designer`, `scout`, `botanist`, `major-general`, `gardener`, `evaluator`, `groom`, `investigator`, `journalist`, `librarian`, `scholar`, `timekeeper`. The seventeen jury-seat roles split across two default panels the `judge` dispatches per `skills/pr-creation-flow/SKILL.md` § Jury composition: the **code panel** of twelve seats (`assessor`, `typist`, `stylist`, `packager`, `archivist`, `prover`, `curator`, `migrator`, `locksmith`, `warden`, `saboteur`, `breaker`) reviews source-touching PRs, and the **design panel** of five seats (`critic`, `skeptic`, `copyeditor`, `pedant`, `novice`) reviews design-only PRs (paths under `<project>/designs/`). The judge picks the panel from the PR's file list per `roles/judge/AGENT.md` § Panel-kind discrimination; the orchestrator never dispatches a juror seat directly. The single generic `juror` role was retired in the 2026-05-14 redesign in favor of the named seats; the same day, each of the six initial named seats was halved into two successor seats for the twelve-seat code panel; later the same day, the five-seat design panel landed alongside the code panel.
