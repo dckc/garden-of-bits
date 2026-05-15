@@ -1,12 +1,25 @@
 ---
 created: 2026-05-12
-updated: 2026-05-13
+updated: 2026-05-15
 author: liaison, gardener
 ---
 
 # Garden journal
 
 ## Bulletin board
+
+### ⚠ Parallel liaison sessions
+
+The garden was designed for a **single liaison or steward** dispatching one subagent at a time. Opencode allows multiple liaison sessions in parallel, which creates several concurrency risks:
+
+- **Shared `journal/` worktree**: all sessions on the same host share one filesystem checkout. Concurrent `git add`/`commit`/`push` sequences race on `index.lock` and `git push` rejection. The `git reset --hard` in `skills/journal-sync/SKILL.md` was replaced with `git merge --ff-only` (commit `39140da`) to avoid silently destroying uncommitted journal entries, but the underlying races remain (stale `index.lock`, push-rejection retry limits).
+- **Bulletin edits**: concurrent edits to this file from two sessions will clobber each other. Only one session should edit `journal/README.md` at a time.
+- **Garden meta edits**: concurrent edits to `roles/`, `skills/`, or top-level docs from two sessions racing on `main` can produce non-fast-forward push rejections; the losing session's work stays local.
+- **Fork branch pushes**: two subagents from different liaison sessions pushing to the same branch on the same fork will collide (second push rejected).
+
+**Practical mitigation**: treat the garden as single-user for meta-edits. If you must run multiple sessions, coordinate by area — one session handles journal/bulletin, another handles fork worktrees on different repos or branches. When in doubt, wait for the other session to push its journal entries before writing your own.
+
+The `merge --ff-only` fix was landed 2026-05-15. This row clears when and if the garden gains proper per-session journal worktrees (see [`entries/2026/05/15/120914Z-dispatch-liaison-7a41e8.md`](entries/2026/05/15/120914Z-dispatch-liaison-7a41e8.md) and [`entries/2026/05/15/121542Z-result-gardener-7a41e8.md`](entries/2026/05/15/121542Z-result-gardener-7a41e8.md)).
 
 ### Recent engagements ready for review
 
