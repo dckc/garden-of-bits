@@ -1,7 +1,7 @@
 ---
 created: 2026-05-12
-updated: 2026-05-12
-author: liaison
+updated: 2026-05-15
+author: liaison, gardener
 ---
 
 # Skill: pr-ci-watch
@@ -102,3 +102,4 @@ This shape is line-oriented so a `Monitor` driver can route each line as a singl
 - _2026-05-12_: per-job logs are available via `gh api repos/<repo>/actions/jobs/<job_id>/logs` as soon as that job finishes, even while the parent run is still in progress. `gh run view --log-failed` refuses until the whole run is done. To fetch a specific failure's log mid-run, keep `.detailsUrl` in the rollup query (form `.../actions/runs/<run>/job/<job_id>`) and extract the `<job_id>` from it.
 - _2026-05-12_: GitHub Actions matrix jobs fail-fast by default. When one shard fails (e.g. `test-boot (node-new, 2, 4)`), siblings on the same shard index across the other matrix dimensions get CANCELLED in the same tick. A CANCELLED that lands alongside a sibling FAILURE is a downstream consequence, not an independent failure; the original FAILURE is the actionable one. Report both, but do not pursue the cancellation as its own bug.
 - _2026-05-12_: rollups grow during a run. Downstream jobs register as checks only once their prerequisites complete (a green build job spawns its test jobs, etc.). A PR that starts at ~15 checks can settle at 70+. The procedure's diff on `(name, status, conclusion)` handles new names naturally; do **not** snapshot the initial check set and assume it is the complete set.
+- _2026-05-15_: when a shepherd-side reader of this skill sees a `check: <name> ... conclusion=FAILURE` whose check name matches a retired operational-flake shepherd-ignore broadcast (see `roles/steward/AGENT.md` § Operational-flake handling), and no CI re-run on this PR has fired since the retirement, the reader re-runs the failed job (`gh run rerun <run-id> --failed`) before treating the failure as gating. The retirement message should have included step 5c re-runs in the same transaction; this defensive re-run protects against the gap when step 5c was skipped. Precipitating retro: `journal/entries/2026/05/15/010640Z-message-steward-c4d8e9.md` (four PRs sitting with stale pre-retirement FAILUREs).
