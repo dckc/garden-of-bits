@@ -1,0 +1,43 @@
+# Topic: bundles
+
+> Abstract: How Endo packages module graphs into self-contained units. Covers Compartment module loading (descriptors, redirects, lookup hooks, virtual sources, compiled modules, transforms) and the bundle-source / compartment-mapper / import-bundle / module-source packages that compose the bundling layer. Distinct from `compartments` (the isolation primitive) and from `hardened-javascript` (the substrate).
+
+## Sections
+
+| Section | Source | One-line abstract |
+|---------|--------|-------------------|
+| [agoric-sdk--pkg-swingset-readme--overview](../sections/agoric-sdk--pkg-swingset-readme--overview.md) | agoric-sdk packages/SwingSet/README.md | Frame. |
+| [agoric-sdk--pkg-swingset-readme--vat-cli-and-basedirs](../sections/agoric-sdk--pkg-swingset-readme--vat-cli-and-basedirs.md) | agoric-sdk packages/SwingSet/README.md | The in-package `vat` CLI. |
+| [agoric-sdk--pkg-swingset-readme--vat-sources-and-liveslots](../sections/agoric-sdk--pkg-swingset-readme--vat-sources-and-liveslots.md) | agoric-sdk packages/SwingSet/README.md | Each Vat source file (`vat-foo.js` / `vat-bar.js`) is the starting point of a bundling process that converts the Vat's source tree into a single string (so it can be evaluated in a SES realm). |
+| [agoric-sdk--pkg-zoe-readme--upgrade](../sections/agoric-sdk--pkg-zoe-readme--upgrade.md) | agoric-sdk packages/zoe/README.md | A contract instance can be upgraded to a new source-code bundle via `E(instanceAdminFacet).upgradeContract(newBundleID)`. |
+| [agoric-sdk--readme--build](../sections/agoric-sdk--readme--build.md) | agoric-sdk README.md | The standard build sequence: `corepack enable && yarn install && yarn build`. |
+| [endo--pkg-bundle-source-readme--comment-elision](../sections/endo--pkg-bundle-source-readme--comment-elision.md) | endo packages/bundle-source/README.md | How bundle-source removes JS comments from bundled sources. |
+| [endo--pkg-bundle-source-readme--conditions](../sections/endo--pkg-bundle-source-readme--conditions.md) | endo packages/bundle-source/README.md | Package.json export conditions: how bundle-source resolves which file to bundle for a given package based on conditions (default, node, browser, import, require, etc.) |
+| [endo--pkg-bundle-source-readme--endoscript-module-format](../sections/endo--pkg-bundle-source-readme--endoscript-module-format.md) | endo packages/bundle-source/README.md | Detailed coverage of the endoScript moduleFormat: the canonical format for Endo bundles. |
+| [endo--pkg-bundle-source-readme--module-format](../sections/endo--pkg-bundle-source-readme--module-format.md) | endo packages/bundle-source/README.md | The moduleFormat option's variants and what each one means: nested, getExport, endoScript, etc. |
+| [endo--pkg-bundle-source-readme--overview](../sections/endo--pkg-bundle-source-readme--overview.md) | endo packages/bundle-source/README.md | @endo/bundle-source bundles a JavaScript module graph into a single archive string, suitable for serialization as part of a passable. |
+| [endo--pkg-bundle-source-readme--source-maps](../sections/endo--pkg-bundle-source-readme--source-maps.md) | endo packages/bundle-source/README.md | How bundle-source produces source maps for debugged-bundled-output mapping. |
+| [endo--pkg-bundle-source-readme--typescript-type-erasure](../sections/endo--pkg-bundle-source-readme--typescript-type-erasure.md) | endo packages/bundle-source/README.md | How bundle-source strips TypeScript type annotations during bundling. |
+| [endo--pkg-compartment-mapper-readme--evaluating-from-archive](../sections/endo--pkg-compartment-mapper-readme--evaluating-from-archive.md) | endo packages/compartment-mapper/README.md | Reverse flow: take an archive, instantiate it into Compartments, run the entry point. |
+| [endo--pkg-compartment-mapper-readme--evaluating-from-filesystem](../sections/endo--pkg-compartment-mapper-readme--evaluating-from-filesystem.md) | endo packages/compartment-mapper/README.md | How compartment-mapper resolves and evaluates a module graph rooted at a local file. |
+| [endo--pkg-compartment-mapper-readme--language-extensions](../sections/endo--pkg-compartment-mapper-readme--language-extensions.md) | endo packages/compartment-mapper/README.md | Source-language support: how compartment-mapper handles CommonJS, ES modules, JSON, and transpiled forms. |
+| [endo--pkg-compartment-mapper-readme--overview](../sections/endo--pkg-compartment-mapper-readme--overview.md) | endo packages/compartment-mapper/README.md | @endo/compartment-mapper packages a module graph into Compartments suitable for evaluation or archival. |
+| [endo--pkg-compartment-mapper-readme--writing-archive](../sections/endo--pkg-compartment-mapper-readme--writing-archive.md) | endo packages/compartment-mapper/README.md | How to serialize a module graph into a self-contained archive: capture the import graph, sources, and metadata needed to evaluate the application elsewhere. |
+| [endo--pkg-evasive-transform-readme--license](../sections/endo--pkg-evasive-transform-readme--license.md) | endo packages/evasive-transform/README.md | Apache-2.0 license header. |
+| [endo--pkg-evasive-transform-readme--overview](../sections/endo--pkg-evasive-transform-readme--overview.md) | endo packages/evasive-transform/README.md | Source transform that helps bundled code evade detection or interception by other JS frameworks running in the same realm. |
+| [endo--pkg-evasive-transform-readme--usage](../sections/endo--pkg-evasive-transform-readme--usage.md) | endo packages/evasive-transform/README.md | Two H3 sub-sections consolidated: the options the transform takes and a worked example. |
+| [endo--pkg-import-bundle-readme--module-formats](../sections/endo--pkg-import-bundle-readme--module-formats.md) | endo packages/import-bundle/README.md | The 5 bundle formats import-bundle understands: endoZipBase64 (zip-encoded archive), endoScript (single-script encoding), getExport (legacy format), nestedEvaluate (Compartment-nested form), test (development helper). |
+| [endo--pkg-import-bundle-readme--options](../sections/endo--pkg-import-bundle-readme--options.md) | endo packages/import-bundle/README.md | Configuration options for the loader: endowments, transforms, error policies. |
+| [endo--pkg-import-bundle-readme--overview](../sections/endo--pkg-import-bundle-readme--overview.md) | endo packages/import-bundle/README.md | @endo/import-bundle is the runtime bundle-loader. |
+| [endo--pkg-import-bundle-readme--source-maps](../sections/endo--pkg-import-bundle-readme--source-maps.md) | endo packages/import-bundle/README.md | Source-map handling at load time: how bundled-evaluated code references original source locations for error stacks and debuggers. |
+| [endo--pkg-module-source-readme--overview](../sections/endo--pkg-module-source-readme--overview.md) | endo packages/module-source/README.md | @endo/module-source provides the ModuleSource constructor: a representation of a JavaScript module's source for use in Compartments. |
+| [endo--pkg-module-source-readme--source-maps](../sections/endo--pkg-module-source-readme--source-maps.md) | endo packages/module-source/README.md | ModuleSource carries source-map data alongside the source text so Compartments can produce useful stack traces against the original source. |
+| [endo--pkg-module-source-readme--xs-variant](../sections/endo--pkg-module-source-readme--xs-variant.md) | endo packages/module-source/README.md | A variant of ModuleSource for the XS JS engine (used by Agoric for embedded contexts). |
+| [endo--pkg-ses-readme--usage-modules](../sections/endo--pkg-ses-readme--usage-modules.md) | endo packages/ses/README.md | Module-loading details for Compartments: Modules subsection covers the module map and how Compartments resolve imports; Module Descriptors (source vs namespace), Redirects, moduleMapHook, importNowHook are the lookup hooks; Virtual Module Source explains how non-JS modules can be wired in; Compiled modules covers precompilation; Transforms covers source-rewriting hooks. |
+| [endo-but-for-bots--llm-designs-b64nf--decisions-rollout-and-known-gaps](../sections/endo-but-for-bots--llm-designs-b64nf--decisions-rollout-and-known-gaps.md) | endo-but-for-bots designs/base64-native-fallthrough.md | `endoZipBase64` envelopes (bundle-source → import-bundle round trip) are the dominant megabyte-scale workload that gets the biggest absolute speed-up from the native base64 dispatch. |
+
+## See also
+
+- [`compartments`](compartments.md): the isolation primitive that modules load into.
+- [`hardened-javascript`](hardened-javascript.md): the substrate that bundles run on top of.
+- [`tooling`](tooling.md): broader developer-facing tooling.
