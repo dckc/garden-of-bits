@@ -1,8 +1,10 @@
 ---
 created: 2026-05-12
-updated: 2026-05-13
-author: liaison, gardener
+updated: 2026-05-15
+author: gardener
 ---
+
+> **DORMANT as of 2026-05-15.** This role is paused. The review-queue daemon was discontinued per the maintainer's directive.
 
 # Role: review-queue
 

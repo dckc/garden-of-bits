@@ -1,6 +1,6 @@
 ---
 created: 2026-05-13
-updated: 2026-05-14
+updated: 2026-05-15
 author: gardener
 ---
 
@@ -238,7 +238,7 @@ The discipline lives in two places: the **liaison** when a user-in-session dispa
 
 ### The next-stage-owed heuristic
 
-For each open draft PR authored by the garden (`gh pr list -R <repo> --author kriscendobot --draft --state open`), the next stage owed is the first stage whose preceding stage's artifact exists but whose own artifact does not. Detection reads the PR state directly from GitHub, not from journal entries (which can lag, be misfiled, or describe a stage the orchestrator never dispatched).
+For each open draft PR authored by the garden (`gh pr list -R <repo> --author dctinybrain --draft --state open`), the next stage owed is the first stage whose preceding stage's artifact exists but whose own artifact does not. Detection reads the PR state directly from GitHub, not from journal entries (which can lag, be misfiled, or describe a stage the orchestrator never dispatched).
 
 Reading order, top to bottom; the first match is the stage owed:
 
@@ -250,7 +250,7 @@ Reading order, top to bottom; the first match is the stage owed:
 6. **Cleaner pushed and CI is green (or only documented pre-existing infra red), and no panel verdict yet?** Judge is owed. (On the cleaner-skipped tiny-PR variant or the design-only-PR variant, the orchestrator dispatches the judge directly when no cleaner is owed and no panel verdict exists; see the qualifiers in step 7.)
 7. **Builder's PR is open and no cleaner push exists yet?** Cleaner is owed (default). On the tiny-PR variant (pure docs, lockfile-only, one-file format sweep, single-line bug fix with test fixture already in the diff), skip the cleaner and dispatch the judge instead. On the design-only-PR variant (every changed path under `<project>/designs/`, no source or test changes), skip both the assayer and the cleaner and dispatch the judge directly; the judge will pick the design panel per `roles/judge/AGENT.md` § Panel-kind discrimination. The orchestrator decides which variant applies by inspecting the diff.
 
-A *panel verdict* is a `kriscendobot`-authored formal `gh pr review` (state `CHANGES_REQUESTED`, `COMMENTED`, or `APPROVED`) whose body matches the panel-review shape (in-scope / out-of-scope sections, must-fix / should-fix verdicts). A plain `gh pr comment` is not a panel verdict and does not advance the flow; the judge's role file requires the formal-review submission. The verdict shape is the same for both panel kinds; the body's seat list and word count vary.
+A *panel verdict* is a `dctinybrain`-authored formal `gh pr review` (state `CHANGES_REQUESTED`, `COMMENTED`, or `APPROVED`) whose body matches the panel-review shape (in-scope / out-of-scope sections, must-fix / should-fix verdicts). A plain `gh pr comment` is not a panel verdict and does not advance the flow; the judge's role file requires the formal-review submission. The verdict shape is the same for both panel kinds; the body's seat list and word count vary.
 
 The orchestrator decides whether to dispatch concurrently (multiple PRs' next stages in one cycle) or rate-limit (one stage per PR per cycle) based on its own load. The steward's default is concurrent dispatch; the liaison's default is sequential and explicit (the user is in the loop and watching).
 
