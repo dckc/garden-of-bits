@@ -85,10 +85,9 @@ check_daemon() {
     fi
 }
 
-MON_EBF=$(check_daemon "/tmp/garden-monitor-endojs-endo-but-for-bots.pid" "endo-but-for-bots")
 MON_GARDEN=$(check_daemon "/tmp/garden-monitor-kriskowal-garden.pid" "kriskowal/garden")
 MON_RQ=$(check_daemon "/tmp/garden-review-queue.pid" "review-queue")
-MONITOR_STATE="endo-but-for-bots=$MON_EBF garden=$MON_GARDEN review-queue=$MON_RQ"
+MONITOR_STATE="garden=$MON_GARDEN review-queue=$MON_RQ"
 
 # Check daemon logs for NEW/ADD/REMOVE lines
 check_log_lines() {
@@ -100,7 +99,6 @@ check_log_lines() {
     fi
 }
 
-LOG_EBF_LINES=$(check_log_lines "/tmp/garden-monitor-endojs-endo-but-for-bots.log")
 LOG_GARDEN_LINES=$(check_log_lines "/tmp/garden-monitor-kriskowal-garden.log")
 LOG_RQ_LINES=$(check_log_lines "/tmp/garden-review-queue.log")
 
@@ -166,7 +164,7 @@ The liaison is not present. There is no user in the loop.
 PRE-FLIGHT STATE:
 - Host: $HOST
 - Journal HEAD: ${CUR_HEAD:0:12}
-- Monitors: endo-but-for-bots=$MON_EBF, garden=$MON_GARDEN, review-queue=$MON_RQ
+- Monitors: garden=$MON_GARDEN, review-queue=$MON_RQ
 - Inbox messages: $INBOX_COUNT
 - Pending dispatch worktrees: $DISPATCH_COUNT
 

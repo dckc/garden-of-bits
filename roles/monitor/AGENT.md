@@ -44,11 +44,11 @@ Per-repo polling state (etag, last-seen event id) lives inside the monitor's wor
 
 The base role is project-agnostic; per-project reaction rules live in their own skill so that monitors can evolve their playbook per repo without bloating the role. The dispatch prompt names the project slug; the monitor loads `skills/monitor-<slug>/SKILL.md` on each wake. Active mappings (gated by the safety constraint in `roles/COMMON.md` § Monitoring safety constraint):
 
-- `endo-but-for-bots` → `endojs/endo-but-for-bots` → `skills/monitor-endo-but-for-bots/SKILL.md`
 - `garden` → `kriskowal/garden` → `skills/monitor-garden/SKILL.md` (re-activated 2026-05-14 per `journal/entries/2026/05/14/220015Z-message-steward-d3e810.md`; this is the only active mapping whose dispatched subagent runs as `liaison` rather than `monitor`; see the skill's *Dispatch role asymmetry* for why)
 
-Dormant mappings (skills preserved with a DORMANT banner; daemons stopped and worktree index entries marked `collected` as of 2026-05-13 per the safety constraint; re-enabling any of these requires explicit maintainer authorization recorded in a journal `message` entry):
+Dormant mappings (skills preserved with a DORMANT banner; daemons stopped and worktree index entries marked `collected` as of 2026-05-15 per the maintainer's directive to focus garden activity on `dctinybrain/jesc24`; re-enabling any of these requires explicit maintainer authorization recorded in a journal `message` entry):
 
+- `endo-but-for-bots` → `endojs/endo-but-for-bots` → `skills/monitor-endo-but-for-bots/SKILL.md` (dormant)
 - `endo` → `endojs/endo` → `skills/monitor-endo/SKILL.md` (dormant)
 - `agoric-sdk` → `agoric/agoric-sdk` → `skills/monitor-agoric-sdk/SKILL.md` (dormant)
 - `cosgov` → `dcfoundation/cosmos-proposal-builder` → `skills/monitor-cosgov/SKILL.md` (dormant)

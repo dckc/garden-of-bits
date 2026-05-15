@@ -9,7 +9,7 @@
 
 SWITCH="ocpl-coq-8.9.1-ocaml-4.07.1"
 
-echo "dispatch-prepare (dctinybrain-jesc24 hook): opam switch is ${SWITCH} on host bldbox" >&2
+echo "dispatch-prepare (dctinybrain-jesc24 hook): opam switch is ${SWITCH} on host yolo1" >&2
 echo "dispatch-prepare (dctinybrain-jesc24 hook): ensure 'eval \$(opam env)' is in scope before coqc" >&2
 
 # Write a convenience env script into the dispatch root so the subagent can

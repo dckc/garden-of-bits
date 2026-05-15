@@ -178,19 +178,19 @@ Each tick is one cycle. Wake, survey, advance, refill, journal, schedule, exit. 
 
 4. **Refill.** For each slot in `status: empty`:
 
-   1. **Look for a stuck garden-authored draft PR** on the active repo (today `endojs/endo-but-for-bots`):
+   1. **Look for a stuck garden-authored draft PR** on the active repo (all previous active repos have been collected; no active repo as of 2026-05-15):
 
       ```sh
-      gh pr list -R endojs/endo-but-for-bots --author kriscendobot \
+      gh pr list --author kriscendobot \
         --draft --state open \
-        --json number,updatedAt,headRefName,title
+        --json number,updatedAt,headRefName,title,repository
       ```
 
       A PR whose `updatedAt` is more than 2 hours stale **and** which is not already owned by another slot is a candidate to adopt. Read the PR's design cross-reference (per `skills/design-to-pr-pipeline/SKILL.md` § What counts as covered) to discover which design it implements; adopt by writing the slot file with `status: in-flight`, `pr_number: <N>`, `design_path: <design>`, `current_stage: <inferred from PR state>`. The slot's next cycle dispatches the next-stage-owed.
 
       Prefer adopting a stuck PR over starting a new design when both are options. The contractor's deliverable is *un-drafted PRs in the maintainer's review queue*; advancing an existing stuck draft costs less than opening a fresh one.
 
-   2. **Otherwise pick a fresh design** from the active repo's roadmap branch (today `endojs/endo-but-for-bots` on `llm`):
+   2. **Otherwise pick a fresh design** from the active repo's roadmap branch (no active repo with a roadmap branch as of 2026-05-15):
 
       a. Run the uncovered-designs inventory per `skills/design-to-pr-pipeline/SKILL.md` § Procedure to compute the candidate set.
 

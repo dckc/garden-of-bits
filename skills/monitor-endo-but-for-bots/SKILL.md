@@ -1,10 +1,13 @@
 ---
 created: 2026-05-12
-updated: 2026-05-13
+updated: 2026-05-15
 author: gardener, liaison, monitor
 ---
 
+
 # Skill: monitor-endo-but-for-bots
+
+> **DORMANT as of 2026-05-15.** This skill is not currently active. The `endojs/endo-but-for-bots` standing monitor was collected per the maintainer's directive to focus garden activity on `dctinybrain/jesc24` instead. The rules below are preserved verbatim for the record in case the focus shifts back; re-enabling this monitor requires explicit maintainer authorization recorded in a journal `message` entry, after which the role-author re-adds the row to `roles/steward/AGENT.md` § Standing monitors, restores the active mapping in `roles/monitor/AGENT.md`, and removes this banner.
 
 Per-event-class reaction rules for the [monitor](../../roles/monitor/AGENT.md) when dispatched against `endojs/endo-but-for-bots`. The base role and its polling discipline live in `roles/monitor/AGENT.md` and `skills/github-activity-poll/SKILL.md`; this skill is consulted on each `NEW`-line wake to decide whether and how to react.
 
