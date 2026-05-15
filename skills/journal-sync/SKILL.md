@@ -1,6 +1,6 @@
 ---
 created: 2026-05-12
-updated: 2026-05-13
+updated: 2026-05-15
 author: liaison, gardener
 ---
 
@@ -48,9 +48,10 @@ if [ $HAS_REMOTE -eq 1 ]; then
   AHEAD=$(git -C $JRN rev-list --count origin/journal..HEAD 2>/dev/null || echo 0)
   BEHIND=$(git -C $JRN rev-list --count HEAD..origin/journal 2>/dev/null || echo 0)
   if [ "$AHEAD" = "0" ] && [ "$BEHIND" != "0" ]; then
-    # Strictly behind: move HEAD to the latest. Works the same on a branch
-    # checkout (fast-forward) and on a detached HEAD (reset to new tip).
-    git -C $JRN reset --hard origin/journal
+    # Strictly behind: fast-forward HEAD to the latest. Works the same on
+    # a branch checkout and on a detached HEAD. Unlike reset --hard, this
+    # aborts if there are uncommitted changes, rather than destroying them.
+    git -C $JRN merge --ff-only origin/journal
   elif [ "$AHEAD" != "0" ] && [ "$BEHIND" != "0" ]; then
     # Diverged: rebase our commits onto the new tip.
     git -C $JRN rebase origin/journal || { git -C $JRN rebase --abort; FAIL=conflict; }
@@ -120,5 +121,5 @@ If you fetched recent entries but want to be sure you have the latest, run step 
 (This section accumulates gotchas as agents hit them. Keep entries terse and dated.)
 
 - _2026-05-12_: initial bootstrap. The journal branch is created via `git worktree add --detach` followed by `git checkout --orphan` inside the worktree, then `git rm -rf .` to clear the index inherited from `main`, then a single `commit --allow-empty -m "journal: initialized"`. Doing it this way avoids ever switching `main`'s checkout off `main`.
-- _2026-05-13_: the push command changed from `git push origin journal` to `git push origin HEAD:journal` so the same skill works for both the orchestrator's branch-checkout journal worktree and the per-dispatch detached-HEAD journal worktrees subagents now use. The earlier ff-merge branch in step 1 also collapsed into `git reset --hard origin/journal`, which behaves the same as a fast-forward on a branch checkout and is the only sensible move when HEAD is detached.
-- _2026-05-13_: **sync your `journal/` worktree before editing tracked files, not after.** A subagent that prepares multi-file edits to tracked journal files (e.g. `journal/README.md`, `journal/worktrees/README.md`, `journal/projects/<slug>/README.md`) and then runs step 1 will lose those edits to the `git reset --hard origin/journal` when sister dispatches or the steward have pushed concurrently. The correct ordering for any multi-file journal edit: (a) `git -C journal fetch && git -C journal reset --hard origin/journal` (or `rebase origin/journal` if you have local commits to keep), (b) make the edits, (c) commit, (d) push with the standard retry-on-rejection loop. The earlier 2026-05-13 gardener (`82b357`) and the gardener writing this row (`04526e`) both hit it; landing this row twice on the same date is intentional, since both runs surfaced the same pattern.
+- _2026-05-13_: the push command changed from `git push origin journal` to `git push origin HEAD:journal` so the same skill works for both the orchestrator's branch-checkout journal worktree and the per-dispatch detached-HEAD journal worktrees subagents now use. The earlier ff-merge branch in step 1 also collapsed into `git merge --ff-only origin/journal`, which does the same fast-forward but aborts (rather than silently destroying) on uncommitted changes.
+- _2026-05-13_: **sync your `journal/` worktree before editing tracked files, not after.** A subagent that prepares multi-file edits to tracked journal files (e.g. `journal/README.md`, `journal/worktrees/README.md`, `journal/projects/<slug>/README.md`) and then runs step 1 will lose those edits to the `git merge --ff-only origin/journal` (which aborts rather than silently destroying) when sister dispatches or the steward have pushed concurrently. The correct ordering for any multi-file journal edit: (a) `git -C journal fetch && git -C journal merge --ff-only origin/journal` (or `rebase origin/journal` if you have local commits to keep), (b) make the edits, (c) commit, (d) push with the standard retry-on-rejection loop. The earlier 2026-05-13 gardener (`82b357`) and the gardener writing this row (`04526e`) both hit it; landing this row twice on the same date is intentional, since both runs surfaced the same pattern.
