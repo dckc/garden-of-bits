@@ -1,6 +1,6 @@
 ---
 created: 2026-05-12
-updated: 2026-05-14
+updated: 2026-05-15
 author: gardener, liaison
 ---
 
@@ -81,7 +81,7 @@ Each phrase triggers multiple sequential dispatches.
 | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | **run the gamut on #N**                                                                                  | the full PR-creation-flow chain to un-draft. See *Vocabulary: the gamut* above and `skills/pr-creation-flow/SKILL.md` § Vocabulary.  |
 | **mirror #N** / **fork #N onto bots**                                                                    | builder ports the upstream PR's diff onto the bot fork; chain proceeds from there.                                                   |
-| **carry feedback from #N** / **respond to feedback on #N** / **respond in kind on #N**                   | fixer applies inline-review feedback on the bot-side mirror.                                                                         |
+| **carry feedback from #N** / **respond to feedback on #N** / **respond in kind on #N** / **rsvp #N**     | fixer applies inline-review feedback on the bot-side mirror. *Rsvp* (maintainer's framing 2026-05-15: "rsvp means 'Please respond'") is the shortest synonym; bare "rsvp" without a number is recognized when a PR has just been named in context. |
 | **address #N** / **wrap up #N**                                                                          | fixer-loop on whatever is owed (CHANGES_REQUESTED, lint failure, etc.).                                                              |
 | **retcon and ferry #N** / **retcon then ferry #N**                                                       | fixer retcons the branch per [`skills/retcon/SKILL.md`](../../skills/retcon/SKILL.md), then boatman ferries upstream (requires `identity_switch_authorized: true`).                                            |
 
