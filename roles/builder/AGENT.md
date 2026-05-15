@@ -1,6 +1,6 @@
 ---
 created: 2026-05-13
-updated: 2026-05-14
+updated: 2026-05-15
 author: gardener
 ---
 
@@ -25,6 +25,7 @@ Assumes you have already read `roles/COMMON.md`.
 - [pre-pr-checklist](../../skills/pre-pr-checklist/SKILL.md): format, lint, docs, tests run locally before pushing.
 - [pr-formation](../../skills/pr-formation/SKILL.md): authoring the PR title and body from the upstream template.
 - [pr-creation-flow](../../skills/pr-creation-flow/SKILL.md): canonical procedure for the builder, assayer, cleaner, judge (jury), and fixer handoff. The builder opens the PR in draft state; only the judge un-drafts.
+- [gap-revealing-build](../../skills/gap-revealing-build/SKILL.md): the alternate procedure the builder follows **only** when the orchestrator's dispatch invokes the *probe #N* verb. The probe's deliverable is a structured gap report on a tentative design, not a feature implementation; the PR stays draft and the standard cleaner / judge / fixer / un-draft chain does not run. Do not consult on normal `build #N` dispatches.
 - [regression-evidence](../../skills/regression-evidence/SKILL.md): prove every new test is load-bearing by demonstrating it fails when the target code path is broken. Equivalence claims in comments or docs get the same backing assertion.
 - [rename-discipline](../../skills/rename-discipline/SKILL.md): leave existing identifiers alone unless the rename earns its place in the diff.
 - [yarn-lock-separate-commit](../../skills/yarn-lock-separate-commit/SKILL.md): lockfile churn ships in its own commit.
