@@ -109,6 +109,23 @@ if [ "$#" -ge 4 ]; then
   git --git-dir="$BARE" worktree add --detach "$ROOT/project" "$BRANCH" >/dev/null
   git -C "$ROOT/project" config user.name  "$bot_name"
   git -C "$ROOT/project" config user.email "$bot_email"
+
+  # Coq build environment detection: _CoqProject is a strong signal.
+  if [ -f "$ROOT/project/_CoqProject" ]; then
+    echo "dispatch-prepare: warning: project contains Coq build files (_CoqProject)." >&2
+    echo "                  Ensure 'eval \$(opam env)' is in scope before running coqc." >&2
+  fi
+
+  # Project hooks: source project-hooks/<owner>-<repo>.sh if present.
+  # Hooks run in dispatch-prepare.sh's context and can print warnings, set up
+  # files in the dispatch root, or validate the environment. Exit safely so a
+  # buggy hook does not abort the dispatch.
+  HOOK_DIR="$(cd "$(dirname "$0")" && pwd)/project-hooks"
+  HOOK_FILE="${HOOK_DIR}/${OWNER}-${NAME_}.sh"
+  if [ -f "$HOOK_FILE" ]; then
+    # shellcheck disable=SC1090
+    ( . "$HOOK_FILE" ) || echo "dispatch-prepare: project hook $HOOK_FILE had non-zero exit" >&2
+  fi
 fi
 
 echo "$ROOT"
