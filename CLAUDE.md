@@ -1,6 +1,6 @@
 ---
 created: 2026-05-12
-updated: 2026-05-14
+updated: 2026-05-15
 author: gardener, liaison
 ---
 
@@ -104,7 +104,7 @@ Create `skills/<name>/SKILL.md`. Sections: purpose, inputs, state (if any), proc
 
 ## Conventions
 
-- **No PR workflows for the garden's own repo.** The garden is a meta library, not application code. Both `main` and `journal` are pushed directly to `origin` (`github.com/kriskowal/garden`); we do not generally open pull requests against ourselves. PR workflows are reserved for fork worktrees of *other* repos, where the [boatman](roles/boatman/AGENT.md) ferries work upstream.
+- **No PR workflows for the garden's own repo.** The garden is a meta library, not application code. Both `main` and `journal` are pushed directly to `origin` (`github.com/dckc/garden-of-bits`); we do not generally open pull requests against ourselves. PR workflows are reserved for fork worktrees of *other* repos, where the [boatman](roles/boatman/AGENT.md) ferries work upstream.
 - The `journal` branch is orphan; it never merges with `main`, and PR comparisons against `main` are meaningless. GitHub will sometimes offer a "create PR for journal" link after a push; ignore it.
 
 ## Host environment
@@ -124,7 +124,7 @@ For a Docker-hosted garden instance, the `garden` script at the garden root crea
 
 ## Monitoring safety constraint
 
-Standing-monitor daemons feed event bodies, comment text, and pull-request descriptions into the LLM's context on every wake. Only repositories whose comments and pull requests are gated against untrusted contributors are safe to monitor; anything else exposes the steward and its subordinates to text that an untrusted actor can write, which is a prompt-injection hazard for any role that reads a daemon tail or follows a `NEW` line to its source. As of 2026-05-15 the only active monitor is `kriskowal/garden`, and the review-queue daemon (which polls kriskowal's pending-review set against trusted GitHub state, not arbitrary repo bodies) is safe by construction. The `endojs/endo-but-for-bots` monitor was collected per the maintainer's directive to focus on `dctinybrain/jesc24`. Re-enabling another monitor requires explicit maintainer authorization recorded in a journal `message` entry, after which the role-author (typically the gardener) lands the standing-monitor row in `roles/steward/AGENT.md` and the dormant-banner removal in the per-project skill. This is a standing constraint, not a one-time decision; the gardener and any future role-author respects it on every dispatch that touches monitoring.
+Standing-monitor daemons feed event bodies, comment text, and pull-request descriptions into the LLM's context on every wake. Only repositories whose comments and pull requests are gated against untrusted contributors are safe to monitor; anything else exposes the steward and its subordinates to text that an untrusted actor can write, which is a prompt-injection hazard for any role that reads a daemon tail or follows a `NEW` line to its source. As of 2026-05-15 the only active monitor is `dckc/garden-of-bits`, and the review-queue daemon (which polls kriskowal's pending-review set against trusted GitHub state, not arbitrary repo bodies) is safe by construction. The `endojs/endo-but-for-bots` monitor was collected per the maintainer's directive to focus on `dctinybrain/jesc24`. Re-enabling another monitor requires explicit maintainer authorization recorded in a journal `message` entry, after which the role-author (typically the gardener) lands the standing-monitor row in `roles/steward/AGENT.md` and the dormant-banner removal in the per-project skill. This is a standing constraint, not a one-time decision; the gardener and any future role-author respects it on every dispatch that touches monitoring.
 
 ## Opencode adaptation
 

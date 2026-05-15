@@ -1,17 +1,17 @@
 ---
 created: 2026-05-13
-updated: 2026-05-14
+updated: 2026-05-15
 author: gardener, liaison
 ---
 
 # Skill: monitor-garden
 
-Per-event-class reaction rules for the [monitor](../../roles/monitor/AGENT.md) when dispatched against `kriskowal/garden`. The base role and its polling discipline live in `roles/monitor/AGENT.md` and `skills/github-activity-poll/SKILL.md`; this skill is consulted on each `NEW`-line wake to decide whether and how to react. The garden is **this repo**, so the skill is issue-focused: it watches for external contributors or the maintainer opening, reopening, or commenting on issues, and surfaces those events as a liaison-proxy dispatch so the in-session liaison can decide how to react.
+Per-event-class reaction rules for the [monitor](../../roles/monitor/AGENT.md) when dispatched against `dckc/garden-of-bits`. The base role and its polling discipline live in `roles/monitor/AGENT.md` and `skills/github-activity-poll/SKILL.md`; this skill is consulted on each `NEW`-line wake to decide whether and how to react. The garden is **this repo**, so the skill is issue-focused: it watches for external contributors or the maintainer opening, reopening, or commenting on issues, and surfaces those events as a liaison-proxy dispatch so the in-session liaison can decide how to react.
 
 ## Project
 
 - Slug: `garden`
-- Upstream: `kriskowal/garden` (https://github.com/kriskowal/garden)
+- Upstream: `dckc/garden-of-bits` (https://github.com/dckc/garden-of-bits)
 - Default branch: `main`
 - Daemon cadence: 60s.
 
@@ -23,7 +23,7 @@ The garden is **this repo**. The maintainer and the in-session liaison drive non
 
 The steward dispatches a `liaison` subagent on a `NEW` line from this daemon, not a `monitor` subagent. The dispatch shape is the same as any other monitor wake (a per-dispatch worktree triple, no project worktree, the daemon's log tail as the event source) but the role is `liaison` and the purpose slug is `react-to-garden-issue-<N>` rather than `react-to-<repo>-events`. Concretely the steward's `Dispatch` step calls `skills/dispatch-worktree/dispatch-prepare.sh liaison react-to-garden-issue-<N>` and passes the resulting dispatch root to `Agent` with the liaison's standing instructions.
 
-The reason for the asymmetry: issue activity on `kriskowal/garden` is meta-evolution work, and the liaison is the only role with the authority to act on it (revise roles or skills, edit top-level docs, originate cross-repo authorizations, decide whether to dispatch a gardener). A monitor subagent would have to immediately escalate to a liaison-addressed `message` anyway; routing the dispatch straight to the liaison collapses that round trip and keeps the meta-evolution decision in the role that holds it. This skill is sibling-but-distinct from the other four standing-monitor reaction skills (`monitor-endo`, `monitor-endo-but-for-bots`, `monitor-agoric-sdk`, `monitor-cosgov`), all of which dispatch the `monitor` role on a `NEW` line.
+The reason for the asymmetry: issue activity on `dckc/garden-of-bits` is meta-evolution work, and the liaison is the only role with the authority to act on it (revise roles or skills, edit top-level docs, originate cross-repo authorizations, decide whether to dispatch a gardener). A monitor subagent would have to immediately escalate to a liaison-addressed `message` anyway; routing the dispatch straight to the liaison collapses that round trip and keeps the meta-evolution decision in the role that holds it. This skill is sibling-but-distinct from the other four standing-monitor reaction skills (`monitor-endo`, `monitor-endo-but-for-bots`, `monitor-agoric-sdk`, `monitor-cosgov`), all of which dispatch the `monitor` role on a `NEW` line.
 
 ## Reactions per event class
 
@@ -48,4 +48,4 @@ The reason for the asymmetry: issue activity on `kriskowal/garden` is meta-evolu
 
 - 2026-05-13 — Initial skill landed by the gardener dispatch at `journal/entries/2026/05/13/045631Z-dispatch-liaison-266ec2.md`. The garden gets its first standing monitor at the same time as this skill, so all per-class rows are first-pass: issue-loud, non-issue-silent, with the liaison-proxy dispatch as the only loud routing. The asymmetric `liaison` dispatch role (the steward dispatches a liaison subagent, not a monitor) is the distinguishing feature among the five standing monitors and is documented in *Dispatch role asymmetry* above.
 - 2026-05-13 — Collected per the monitoring safety constraint sweep (`journal/entries/2026/05/13/053822Z-dispatch-liaison-44e029.md`). Daemon stopped, worktree index entry marked `collected`, DORMANT banner added at the top of this file; reaction rules preserved verbatim.
-- 2026-05-14 — Re-activated. The maintainer authorized re-enabling the monitor in the liaison session at ~21:58Z; the steward recorded the authorization at `journal/entries/2026/05/14/220015Z-message-steward-d3e810.md` (the per-skill protocol the DORMANT banner specified). The gardener removed the banner, re-added the standing-monitor row to `roles/steward/AGENT.md`, and restored the active mapping in `roles/monitor/AGENT.md` in the same engagement (`journal/entries/2026/05/14/221128Z-dispatch-liaison-7d4081.md`). The maintainer's framing: `kriskowal/garden` is in practice a low-traffic repo whose external-contributor volume is small enough that the prompt-injection exposure from monitor log lines is tolerable. The liaison re-validates that judgment on any sustained increase in external-contributor activity.
+- 2026-05-14 — Re-activated. The maintainer authorized re-enabling the monitor in the liaison session at ~21:58Z; the steward recorded the authorization at `journal/entries/2026/05/14/220015Z-message-steward-d3e810.md` (the per-skill protocol the DORMANT banner specified). The gardener removed the banner, re-added the standing-monitor row to `roles/steward/AGENT.md`, and restored the active mapping in `roles/monitor/AGENT.md` in the same engagement (`journal/entries/2026/05/14/221128Z-dispatch-liaison-7d4081.md`). The maintainer's framing: `dckc/garden-of-bits` is in practice a low-traffic repo whose external-contributor volume is small enough that the prompt-injection exposure from monitor log lines is tolerable. The liaison re-validates that judgment on any sustained increase in external-contributor activity.

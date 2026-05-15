@@ -85,7 +85,7 @@ check_daemon() {
     fi
 }
 
-MON_GARDEN=$(check_daemon "/tmp/garden-monitor-kriskowal-garden.pid" "kriskowal/garden")
+MON_GARDEN=$(check_daemon "/tmp/garden-monitor-dckc-garden-of-bits.pid" "dckc/garden-of-bits")
 MON_RQ=$(check_daemon "/tmp/garden-review-queue.pid" "review-queue")
 MONITOR_STATE="garden=$MON_GARDEN review-queue=$MON_RQ"
 

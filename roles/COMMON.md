@@ -1,6 +1,6 @@
 ---
 created: 2026-05-12
-updated: 2026-05-14
+updated: 2026-05-15
 author: gardener, liaison
 ---
 
@@ -62,7 +62,7 @@ The journal does **not** use this frontmatter. Entries already carry `ts:` and `
 
 ## Monitoring safety constraint
 
-Standing-monitor daemons feed event bodies, comment text, and pull-request descriptions into the LLM's context on every wake. Only repositories whose comments and pull requests are gated against untrusted contributors are safe to monitor; anything else exposes the role on the receiving end to text an untrusted actor can write, which is a prompt-injection hazard. As of 2026-05-15 only `kriskowal/garden` meets this bar in the active set (the `endojs/endo-but-for-bots` monitor was collected per the maintainer's directive to focus on `dctinybrain/jesc24`), and the review-queue daemon (polling kriskowal's pending-review set against trusted GitHub state) is safe by construction. Re-enabling another monitor requires explicit maintainer authorization recorded in a journal `message` entry; until that authorization is on record, the gardener and any other role-author leaves the dormant-banner skills as documentation only and does not propose adding rows to `roles/steward/AGENT.md` § Standing monitors. This is a standing constraint, not a one-time decision. See `CLAUDE.md` § Monitoring safety constraint for the same rule with the orchestrator's framing.
+Standing-monitor daemons feed event bodies, comment text, and pull-request descriptions into the LLM's context on every wake. Only repositories whose comments and pull requests are gated against untrusted contributors are safe to monitor; anything else exposes the role on the receiving end to text an untrusted actor can write, which is a prompt-injection hazard. As of 2026-05-15 only `dckc/garden-of-bits` meets this bar in the active set (the `endojs/endo-but-for-bots` monitor was collected per the maintainer's directive to focus on `dctinybrain/jesc24`), and the review-queue daemon (polling kriskowal's pending-review set against trusted GitHub state) is safe by construction. Re-enabling another monitor requires explicit maintainer authorization recorded in a journal `message` entry; until that authorization is on record, the gardener and any other role-author leaves the dormant-banner skills as documentation only and does not propose adding rows to `roles/steward/AGENT.md` § Standing monitors. This is a standing constraint, not a one-time decision. See `CLAUDE.md` § Monitoring safety constraint for the same rule with the orchestrator's framing.
 
 ## External-repo etiquette
 

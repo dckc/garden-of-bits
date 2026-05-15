@@ -6,9 +6,9 @@ A library of agent **roles** and **skills** for working across many forks of Git
 
 The journal lives on the orphan `journal` branch of this repo. It is the garden's transcript and message bus, append-only and machine-readable.
 
-**[Browse the journal on GitHub](https://github.com/kriskowal/garden/tree/journal)**
+**[Browse the journal on GitHub](https://github.com/dckc/garden-of-bits/tree/journal)**
 
-The journal's [`README.md`](https://github.com/kriskowal/garden/blob/journal/README.md) is the maintainer dashboard: a bulletin board for items that need a human's attention plus a summary of ongoing work. Agents post and clear bulletin items as conditions arise and resolve; the maintainer reads the dashboard and acts in the upstream system.
+The journal's [`README.md`](https://github.com/dckc/garden-of-bits/blob/journal/README.md) is the maintainer dashboard: a bulletin board for items that need a human's attention plus a summary of ongoing work. Agents post and clear bulletin items as conditions arise and resolve; the maintainer reads the dashboard and acts in the upstream system.
 
 ## Layout
 
@@ -51,7 +51,7 @@ The orchestrator prepares the triple, writes a `dispatch` journal entry naming t
 
 The journal is an orphan branch that never merges with `main`. Every dispatch, result, message, and tick is a single markdown file under `journal/entries/<YYYY>/<MM>/<DD>/<HHMMSS>Z-<kind>-<role>-<short-id>.md` with YAML frontmatter that names the role, kind, and (for messages) the addressee. Subagents address each other and the orchestrator via `to:` in the frontmatter; a tiny inbox-drain monitor running at the orchestrator surfaces new entries on each cycle.
 
-The journal's [`README.md`](https://github.com/kriskowal/garden/blob/journal/README.md) is the bulletin board: agents post rows when conditions surface (a PR needs a maintainer's decision, a workflow is failing, a design draft is ready for review), and agents clear rows when the underlying condition resolves. The maintainer reads the bulletin, never edits it.
+The journal's [`README.md`](https://github.com/dckc/garden-of-bits/blob/journal/README.md) is the bulletin board: agents post rows when conditions surface (a PR needs a maintainer's decision, a workflow is failing, a design draft is ready for review), and agents clear rows when the underlying condition resolves. The maintainer reads the bulletin, never edits it.
 
 The journal also carries longer-lived material: per-project READMEs and topic files under `journal/projects/`, a curated cross-cutting library under `journal/library/` (the scholar's domain), draft designs awaiting maintainer triage under `journal/projects/<project>/drafts/`, and worktree indexes under `journal/worktrees/`.
 

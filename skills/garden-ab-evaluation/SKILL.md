@@ -1,6 +1,6 @@
 ---
 created: 2026-05-14
-updated: 2026-05-14
+updated: 2026-05-15
 author: gardener
 ---
 
@@ -23,8 +23,8 @@ Do not run this skill on a design under active development. The procedure requir
 The dispatching liaison gathers these before invoking the skill:
 
 - **Design under test.** A `designs/<slug>.md` file (in the consuming project) plus the PR that ultimately landed implementing it. The landed PR's body, the maintainer's review threads, and any follow-up commits are the reference truth.
-- **Historical garden ref.** A git sha or tag on `kriskowal/garden@main` that predates the meta-evolution being evaluated. Picked so that the replay subagent's library, when checked out at this ref, is the version that existed *before* the change under test.
-- **Current or variant garden ref.** A second git sha or tag on `kriskowal/garden@main` that includes the meta-evolution. Typically `main@HEAD`, but a feature branch tip works when the evaluation is for a not-yet-landed change.
+- **Historical garden ref.*A git sha or tag on `dckc/garden-of-bits@main` that predates the meta-evolution being evaluated. Picked so that the replay subagent's library, when checked out at this ref, is the version that existed *before* the change under test.
+- **Current or variant garden ref.*A second git sha or tag on `dckc/garden-of-bits@main` that includes the meta-evolution. Typically `main@HEAD`, but a feature branch tip works when the evaluation is for a not-yet-landed change.
 - **Maintainer's notes on user-interest fidelity (optional).** A short paragraph from the dispatcher's brief naming what "user interest" meant for this design (a performance bound, an API shape, a doc readability target). When absent, the evaluator infers from the landed PR's review history.
 
 These flow into the skill via the liaison's dispatch prompts to the two replay subagents and to the evaluator.
