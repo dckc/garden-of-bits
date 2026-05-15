@@ -429,6 +429,72 @@ Cycle <N> quiet; state unchanged since [<prior-result-entry-path>](<prior-result
 
 The `refs:` entry points at the prior cycle's `result` (the head of the streak, not the immediately prior `tick`). Including the cycle number in the body is recommended for grep-ability. The breaking cycle's `result` entry then `refs:` the most recent quiet tick so the chain is traversable in both directions.
 
-## Notes from the field
+## Opencode adaptation
+
+This file was designed for a Claude Code harness (the 'original garden'). Below are the concrete differences when the steward runs under the **opencode** harness (using the `Task` tool instead of `Agent`, and cron instead of `ScheduleWakeup`). Every section above this one applies literally except for the mapping in this table.
+
+### Tool mapping
+
+| Original (Claude Code)  | Opencode equivalent    | Notes |
+|-------------------------|------------------------|-------|
+| `Agent` tool            | `Task` tool            | Same purpose (launch a focused subagent with its own LLM session). The dispatch prompt template from `CLAUDE.md` § Dispatch prompt template adapts verbatim; replace `Agent` with `Task`. The per-dispatch worktree triple and the `dispatch-prepare.sh`/`dispatch-teardown.sh` scripts work unchanged. |
+| `ScheduleWakeup`        | `cron` + `opencode run`| Opencode does not have a built-in wakeup tool. Instead, `run-steward-cycle.sh` is called from cron. It runs the deterministic pre-work (journal sync, monitor liveness, inbox drain) inline, then invokes `opencode run --dir <garden-root> <steward-prompt>` for the LLM-driven parts. |
+| `Monitor` tool (parent-context) | Inline check per cycle | Opencode does not have a persistent `Monitor` tool that stays alive across ticks. The steward checks daemon log files manually each cycle (`tail -200` on each daemon log and grep for `NEW`/`ADD`/`REMOVE`). The bash daemons (monitor-poll.sh, review-queue-poll.sh) run continuously via nohup as in the original. |
+| `CronCreate`            | `crontab`              | Cron entries are managed via `crontab -e`. The steward does not edit cron itself (that is outside its authority bounds). |
+| `TaskList` (for parent-context Monitor verification) | N/A | No parent-context Monitors exist; no liveness check needed per cycle for them. |
+
+### Dispatch differences
+
+- **The dispatch contract is the same** as `CLAUDE.md` § Dispatch contract: `dispatch-prepare.sh` → write journal dispatch entry → `Task` → write result → `dispatch-teardown.sh`. The `Task` tool in opencode accepts a `description` and `prompt` parameter. The dispatch prompt from `CLAUDE.md` § Dispatch prompt template is passed verbatim as the `prompt` parameter.
+- **`gh` is available** and authenticated as a bot identity (`dctinybrain` as of 2026-05-15). This matters for the boatman's identity-switch preconditions.
+- **No Docker container.** The steward runs on the bare host. There is no `garden` container entrypoint. `CLAUDE.md` § Host environment (Docker) does not apply.
+- **Git identity** is `dctinybrain` — a bot identity. `dispatch-prepare.sh` pins it into sub-worktrees per the identity-pinning mechanism in `CLAUDE.md` § Host environment.
+
+### Loop differences
+
+The steward does not schedule its own next wakeup. Instead:
+
+1. `run-steward-cycle.sh` is installed as a cron job.
+2. Each cron fire runs one cycle: sync journal → check monitors → drain inbox → invoke `opencode run` with the steward cycle prompt.
+3. The opencode session runs the *Per-cycle procedure* above (Survey → Dispatch → Aggregate → Housekeep → Self-improvement), writes its journal entries, and exits.
+4. The next cron fire starts a fresh session. There is no carry-over context between cycles; the journal is the only memory.
+
+This means:
+- **Step 7 (Schedule next)** is omitted. The cron cadence replaces it.
+- **Parent-context Monitors** (§ *Parent-context Monitor invariants*) do not exist. The bash daemons still run; the steward checks their logs each cycle.
+- **Quiet-cycle consolidation** still works (the cycle writes a `tick` entry instead of a full `result`), but it is journal-noise reduction only; no wakeup delay is affected.
+
+### Per-cycle procedure adaptations
+
+Steps 1-3 and 5 of the per-cycle procedure (sync, survey, housekeep) are partially handled by `run-steward-cycle.sh` before opencode starts:
+
+| Step | Pre-work by `run-steward-cycle.sh` | LLM-driven in opencode session |
+|------|------------------------------------|--------------------------------|
+| 1 (Sync journal) | `git fetch && git reset --hard origin/journal` | — |
+| 2 (Survey) | Inbox drain (`inbox-drain.sh steward --no-fetch`), kill -0 on monitors, compile pre-flight state | Read recent journal entries, understudy presence, worktree inventory |
+| 3 (Dispatch) | — | Read daemon logs for NEW/ADD/REMOVE, run PR-creation-flow scan, dispatch subagents via Task |
+| 4 (Aggregate) | — | Read subagent Task results, write result entries |
+| 5 (Housekeep) | — | Collect worktrees, update bulletin, maintain journal |
+| 6 (Self-improve) | — | Write self-improvement in cycle-summary |
+| 7 (Schedule next) | Cron handles this | Omitted |
+
+### Running the steward
+
+```sh
+# Manual invocation (from garden root):
+./run-steward-cycle.sh
+
+# Dry-run (prepares state file, skips LLM):
+./run-steward-cycle.sh --dry-run
+
+# Set model:
+OPENCODE_MODEL="deepseek/deepseek-v4-flash-free" ./run-steward-cycle.sh
+
+# From cron (every 30 minutes):
+*/30 * * * * /home/<user>/garden/run-steward-cycle.sh --quiet
+```
+
+### Notes from the field
 
 - _2026-05-14_: the *Understudy presence and shunting* section was added by gardener dispatch `12fdbf` per the amendments at `entries/2026/05/14/225012Z-message-understudy-c89e16.md`. The precipitating observation: the prior gardener bundle (`entries/2026/05/14/222100Z-result-gardener-7d4081.md`) carved the understudy role but left the steward's per-cycle procedure unchanged, so a present understudy had no consumer-side discipline naming what the steward would shunt or how it would detect presence. The first-heads-up entry that motivated the carving is `entries/2026/05/14/214954Z-message-understudy-c124ea.md`.
+- _2026-05-15_: the *Opencode adaptation* section was added per user request. The steward was set up on host `bldbox` under the `dctinybrain` identity. Key files: `run-steward-cycle.sh` (cron entry point), `roles/steward/AGENT.md` § Opencode adaptation.
