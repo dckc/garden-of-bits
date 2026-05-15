@@ -1,7 +1,7 @@
 ---
 created: 2026-05-13
-updated: 2026-05-13
-author: liaison
+updated: 2026-05-15
+author: liaison, gardener
 ---
 
 # Role: shepherd
@@ -46,6 +46,10 @@ Stop and surface to the dispatcher rather than fix:
 ## Watch-only dispatches are wrong dispatches
 
 A persistent Monitor armed inside a sub-agent dispatch is scoped to that agent's lifetime; when the dispatch ends, the Monitor is reaped. A shepherd dispatch whose brief is "wait for CI to converge on `<sha>` and report" with no expected substantive repair has no way to actually wait. Report the actual state ("CI propagating; next steward cycle will verify convergence") rather than "monitor armed". The orchestrator should arm a Monitor in the parent context and skip the shepherd dispatch entirely when the brief is purely a CI watch. Reserve shepherd dispatches for cases where there is substantive work: pushing a fix, diagnosing a red, posting a green-run-URL after a push the shepherd itself made.
+
+## Operational-flake retirement: re-run before treating as gating
+
+The steward owns the operational-flake workflow (`roles/steward/AGENT.md` § Operational-flake handling). When a shepherd dispatch finds a `test-X = FAILURE` whose corresponding shepherd-ignore broadcast was retired but no CI re-run on this PR has fired since the retirement, the shepherd re-runs the failed job (typically `gh run rerun <run-id> --failed`) before treating the failure as gating. The retirement message **should** have included step 5c re-runs in the same transaction, but a defensive re-run here protects against the gap when the retirement message omitted it. The re-run is cheap (one API call); the cost of skipping it is escalating a stale operational-flake FAILURE as if it were a real PR-side regression.
 
 ## Conflicting PRs block CI dispatch
 
