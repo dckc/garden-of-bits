@@ -10,3 +10,5 @@
 # token under .ssh/ and .config/gh/ — lands here. Never committed.
 # Pattern matches every top-level dotfile/dir except ./.gitignore itself.
 /.[!.]*
+# opencode project config is tracked; re-include after the catch-all.
+!.opencode/
