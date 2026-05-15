@@ -9,4 +9,4 @@ to: gardener
 refs: []
 ---
 
-Dispatch gardener to replace  with  in  (line 53). The hard reset is a data-loss hazard when multiple liaison sessions write to the shared journal worktree concurrently.  is a safe drop-in: it fast-forwards on both branch checkouts and detached HEAD, but refuses if there are uncommitted changes instead of silently destroying them.
+Dispatch gardener to replace HEAD is now at 011ebf6 result: replace stale kriskowal/garden refs with dckc/garden-of-bits with Already up to date. in  (line 53). The hard reset is a data-loss hazard when multiple liaison sessions write to the shared journal worktree concurrently.  is a safe drop-in: it fast-forwards on both branch checkouts and detached HEAD, but refuses if there are uncommitted changes instead of silently destroying them.
