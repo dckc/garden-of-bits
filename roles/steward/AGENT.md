@@ -1,6 +1,6 @@
 ---
 created: 2026-05-12
-updated: 2026-05-14
+updated: 2026-05-15
 author: gardener, steward, liaison, understudy
 ---
 
@@ -131,6 +131,32 @@ For every repository in the steward's active standing-monitor set, **issue-class
 - For monitors whose dispatched subagent role is the `monitor` (today: endo-but-for-bots), the monitor subagent itself surfaces the issue event per the per-skill rules. For monitors whose dispatched subagent role is the `liaison` (today: kriskowal/garden; see `skills/monitor-garden/SKILL.md` § Dispatch role asymmetry), the steward enqueues a `message` to `liaison` instead, because the bot sandbox is not authorized to act on meta-evolution issues itself.
 
 The maintainer's framing on 2026-05-14: *"And inform the gardener that the role of steward should do this generally."* This sub-section is the structural counterpart of the parent-context Monitor invariants above: the Monitors ensure daemon `NEW` lines reach the LLM in real time, and this principle ensures that for any project repo the steward shepherds, issue-class lines are surfaced rather than buried under silence-by-default per-skill defaults.
+
+## Operational-flake handling
+
+When a CI check fails repeatedly on unrelated PRs for reasons outside any PR's own diff (a flaky upstream service, a hosted-runner outage, a third-party package that recently regressed install), the steward runs the workflow below. It exists because the naive response (each shepherd dispatch independently debugging the same upstream cause on its own PR) wastes effort and lets the noise leak into the maintainer's review queue, while the over-correction (ignoring the failure forever) loses the signal once the upstream issue resolves. The workflow keeps the failure isolated for the duration of the operational incident, lands a resilience PR that hardens the workflow against the cause, and validates the retirement by re-evaluating the open PRs the original broadcast was protecting.
+
+The six steps:
+
+1. **Detect.** An operational flake is a check that fails on multiple unrelated PRs in the same window, where the failure signature points outside the PR's own diff. The steward identifies the class (check name + the operational signature: a specific upstream URL, an error string, a process step) by reading the failed-run logs on two or more affected PRs and confirming the signature matches.
+
+2. **Broadcast.** The steward writes a `message: steward → *` instructing all shepherd dispatches to treat the named check as pass-equivalent until further notice. The broadcast names: the workflow file (`.github/workflows/<name>.yml`), the operational signature, and a one-line scope (which repo, which class of cause, what is **not** covered). It does not delete or skip the workflow, and it does not generalize beyond the named check on the named repo. Worked example: `entries/2026/05/14/225200Z-message-steward-7e3a91.md`.
+
+3. **Resilience PR.** The steward dispatches a builder to harden the workflow against the operational cause (retry windows, fallback endpoints, timeout widening, alternate substitute servers). The dispatch follows the normal PR-creation-flow chain: builder opens a draft, the cleaner / judge / fixer-loop / un-draft sequence runs per `skills/pr-creation-flow/SKILL.md`, and the PR sits ready-for-review until the maintainer reviews it. The worked example is PR #82 (iter I) followed by PR #255 (iter II) on `endojs/endo-but-for-bots`.
+
+4. **Merge.** The resilience PR merges normally (typically via the conductor once the maintainer approves and CI is green). The merge is the trigger for step 5, not for any automatic state change in the broadcast.
+
+5. **Retire.** When the resilience PR merges, the steward writes a retirement `message: steward → *`. The retirement message **must** include three components in the same transaction:
+
+   - **a.** Name the broadcast it retires (cite the prior `225200Z`-style message entry by path).
+   - **b.** Enumerate the open PRs whose failing-check signature matches the retired ignore-class. The retirement message's frontmatter lists them under `prs:` with `role: target`.
+   - **c.** Re-run the failed CI jobs on each enumerated PR as part of the same transaction (typically `gh run rerun <run-id> --failed`). This is **not** a separate cycle; the retirement is incomplete until the re-runs are in flight. Without step 5c, the affected PRs sit with stale FAILUREs and the next shepherd dispatched against them reasonably treats the failure as gating because the broadcast has been retired. The retirement becomes a no-op for the very PRs the original broadcast was protecting. Worked example: `entries/2026/05/15/003930Z-message-steward-95e217.md` (the retirement message that omitted step 5c) and `entries/2026/05/15/010640Z-message-steward-c4d8e9.md` (the missed-step retro that precipitated this sub-section).
+
+6. **Validate or re-broadcast.** After the step-5c re-runs converge, the steward reads each affected PR's check status. If the re-runs pass across the enumerated set, the retirement holds; the PRs are un-stuck and the workflow returns to normal gating. If the same failure signature recurs across the affected PRs, the resilience iteration was insufficient: the retirement is invalid, the steward issues a re-broadcast (a fresh `message: steward → *` re-instating the pass-equivalent treatment, citing the retired retirement), and dispatches a follow-up builder for a higher-iteration resilience PR. The cycle resumes at step 3 with the new iteration.
+
+### Notes from the field
+
+- _2026-05-15_: this sub-section was added by gardener dispatch `9c8c4a` per three precipitating message entries: `entries/2026/05/14/225200Z-message-steward-7e3a91.md` (initial broadcast for `test-ocapn-guile-interop`), `entries/2026/05/15/003930Z-message-steward-95e217.md` (retirement on PR #255 merge), and `entries/2026/05/15/010640Z-message-steward-c4d8e9.md` (missed-step retro: #109, #253, #250, #243 had stale pre-retirement FAILUREs and the steward had to re-run them manually after the maintainer flagged the gap). The cumulative lesson: the retirement message is a transaction, not a forward-looking signal; step 5c re-runs are part of it.
 
 ## Understudy presence and shunting
 
