@@ -47,12 +47,13 @@ Full index at [`worktrees/README.md`](worktrees/README.md). Host `yolo1`:
 
 | Fork | Bare clone | Worktrees |
 |---|---|---|
-| `dctinybrain/jesc24` | `worktrees/dctinybrain-jesc24.git/` | none |
+| `dctinybrain/jesc24` | `worktrees/dctinybrain-jesc24.git/` | 1 monitor worktree (active) |
 | `dckc/garden-of-bits` | `worktrees/dckc-garden-of-bits.git/` | 1 monitor worktree (active) |
 
 ### Monitors
 
 - **garden** (dckc/garden-of-bits): RUNNING (pid 2672, cadence 60s). Respawned by steward at 2026-05-16T23:12Z. Two stale worktrees cleaned up.
+- **jesc24** (dctinybrain/jesc24): RUNNING (pid 3769, cadence 60s). Started 2026-05-16T23:26Z to monitor PR #1 for issue comments and review activity.
 
 ### Recent activity
 
