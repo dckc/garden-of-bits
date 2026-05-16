@@ -81,7 +81,8 @@ The active set is constrained by the safety rule in `roles/COMMON.md` § Monitor
 
 | Slug              | Upstream                                  | Worktree directory (`worktrees/<owner>-<repo>/watch-<slug>--monitor--*`) | Cadence |
 | ----------------- | ----------------------------------------- | ------------------------------------------------------------------------ | ------- |
-| garden            | dckc/garden-of-bits                          | dckc-garden-of-bits                                                         | 60s     |
+| garden            | dckc/garden-of-bits                       | dckc-garden-of-bits                                                      | 60s     |
+| jesc24            | dctinybrain/jesc24                        | dctinybrain-jesc24                                                       | 60s     |
 | review-queue      | (kriskowal's pending review-request set)  | (no worktree; state under `/tmp/garden-review-queue/`)                   | 120s (PAUSED) |
 
 The exact worktree basename is `watch-<slug>--monitor--<UTC-YYYYMMDD-HHMMSS>`; the timestamp is created once per worktree and persists for that worktree's lifetime. Look it up from the journal index at `journal/worktrees/<host>/` rather than guessing.
