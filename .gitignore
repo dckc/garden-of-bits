@@ -12,3 +12,6 @@
 /.[!.]*
 # opencode project config is tracked; re-include after the catch-all.
 !.opencode/
+
+# Python bytecode cache
+__pycache__/
