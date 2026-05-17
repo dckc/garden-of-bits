@@ -13,7 +13,7 @@
 # default in CLAUDE.md so the agent acts as the steward.
 #
 # Environment:
-#   OPENCODE_MODEL   Model to use (default: deepseek/deepseek-v4-flash-free)
+#   OPENCODE_MODEL   Model to use (default: opencode/deepseek-v4-flash-free)
 #   STEWARD_DRY      If set, skip the opencode invocation
 #   STEWARD_QUIET    If set, suppress non-error output
 
@@ -144,7 +144,7 @@ if ! command -v opencode &>/dev/null; then
     exit 1
 fi
 
-MODEL="${OPENCODE_MODEL:-deepseek/deepseek-v4-flash-free}"
+MODEL="${OPENCODE_MODEL:-opencode/deepseek-v4-flash-free}"
 
 log "=== Invoking opencode for steward cycle ==="
 log "  model: $MODEL"
