@@ -86,8 +86,8 @@ check_daemon() {
 }
 
 MON_GARDEN=$(check_daemon "/tmp/garden-monitor-dckc-garden-of-bits.pid" "dckc/garden-of-bits")
-# MON_RQ=$(check_daemon "/tmp/garden-review-queue.pid" "review-queue")  # PAUSED 2026-05-15
-MONITOR_STATE="garden=$MON_GARDEN"
+MON_JESC24=$(check_daemon "/tmp/garden-monitor-dctinybrain-jesc24.pid" "dctinybrain/jesc24")
+MONITOR_STATE="garden=$MON_GARDEN jesc24=$MON_JESC24"
 
 # Check daemon logs for NEW/ADD/REMOVE lines
 check_log_lines() {
@@ -100,7 +100,7 @@ check_log_lines() {
 }
 
 LOG_GARDEN_LINES=$(check_log_lines "/tmp/garden-monitor-dckc-garden-of-bits.log")
-# LOG_RQ_LINES=$(check_log_lines "/tmp/garden-review-queue.log")  # PAUSED 2026-05-15
+LOG_JESC24_LINES=$(check_log_lines "/tmp/garden-monitor-dctinybrain-jesc24.log")
 
 # --- Step 3: Inbox drain ---
 log "--- Draining steward inbox ---"
@@ -164,7 +164,7 @@ The liaison is not present. There is no user in the loop.
 PRE-FLIGHT STATE:
 - Host: $HOST
 - Journal HEAD: ${CUR_HEAD:0:12}
-- Monitors: garden=$MON_GARDEN, review-queue=$MON_RQ
+- Monitors: $MONITOR_STATE
 - Inbox messages: $INBOX_COUNT
 - Pending dispatch worktrees: $DISPATCH_COUNT
 
