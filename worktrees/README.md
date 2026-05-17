@@ -49,9 +49,9 @@ Lifecycle:
 
 | Host | Worktree | Repo | Branch | Role | Status |
 |------|----------|------|--------|------|--------|
-| kmkmbp2021 | [integrate--liaison--20260512-194515](./kmkmbp2021/integrate--liaison--20260512-194515.md) | endojs/endo-but-for-bots | garden | liaison | idle |
+| kmkmbp2021 | [integrate--liaison--20260512-194515](./kmkmbp2021/integrate--liaison--20260512-194515.md) | endojs/endo-but-for-bots | garden | liaison | collected |
 | endolinbot | [watch-endo--monitor--20260512-233305](./endolinbot/watch-endo--monitor--20260512-233305.md) | endojs/endo | master | monitor | collected |
-| endolinbot | [watch-endo-but-for-bots--monitor--20260512-233307](./endolinbot/watch-endo-but-for-bots--monitor--20260512-233307.md) | endojs/endo-but-for-bots | llm | monitor | active |
+| endolinbot | [watch-endo-but-for-bots--monitor--20260512-233307](./endolinbot/watch-endo-but-for-bots--monitor--20260512-233307.md) | endojs/endo-but-for-bots | llm | monitor | collected |
 | endolinbot | [watch-agoric-sdk--monitor--20260512-233309](./endolinbot/watch-agoric-sdk--monitor--20260512-233309.md) | agoric/agoric-sdk | master | monitor | collected |
 | endolinbot | [watch-cosgov--monitor--20260512-233310](./endolinbot/watch-cosgov--monitor--20260512-233310.md) | dcfoundation/cosmos-proposal-builder | main | monitor | collected |
 | endolinbot | [watch-garden--monitor--20260513-045844](./endolinbot/watch-garden--monitor--20260513-045844.md) | kriskowal/garden | main | monitor | collected |

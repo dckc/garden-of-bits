@@ -5,9 +5,10 @@ path: /Users/kris/garden/dispatches/boatman--ferry-rank-order-tied-73--20260515-
 repo: endojs/endo
 branch: master
 role: boatman
-status: active
+status: collected
 created_at: 2026-05-15T03:43:42Z
 last_heartbeat: 2026-05-15T03:43:52Z
+collected_at: 2026-05-17T04:08:29Z
 task: "First-time ferry of endojs/endo-but-for-bots#73 (compareRankRemotablesTied salvaged from endojs/endo#2871) to a new non-draft PR on endojs/endo with two-author attribution preserved (erights + kriskowal)"
 prs:
   - repo: endojs/endo-but-for-bots
@@ -25,3 +26,5 @@ Per-dispatch worktree triple for the first-time ferry of #73. **Multi-author** f
 The user did not ask about draft vs ready-for-review; the liaison defaulted to non-draft based on the erights approval (strong readiness signal) and the substantive nature of the change.
 
 Identity authorization staged per the standing pattern (`identity_switch_authorized: true`). Strip the `(#73)` bot-internal source-PR-number suffix from commit 2's subject; drop the `/ bots#57` fragment from commit 1's body. PR body rewrite per `pr-formation` drops bot bookkeeping (the `🤖 Generated with [Claude Code]` trailer on the source PR body, the bot-internal `(fork's #57)` references, the test-plan checklists).
+
+**Collected 2026-05-17** per maintainer directive. First-time ferry dispatch never completed (target PR is `null` in the journal record). The per-dispatch worktree triple on kmkmbp2021 was left in place; teardown via `skills/dispatch-worktree/dispatch-teardown.sh` from that host if cleanup is wanted.
