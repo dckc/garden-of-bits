@@ -1,6 +1,6 @@
 ---
 created: 2026-05-12
-updated: 2026-05-16
+updated: 2026-05-17
 author: liaison, gardener
 ---
 
@@ -36,7 +36,7 @@ The garden was designed for a **single liaison or steward** dispatching one suba
 
 ### dctinybrain/jesc24
 
-- **PR #1** ([refactor/parser-grammar](https://github.com/dctinybrain/jesc24/pull/1), draft): improve PEG grammar readability in `quasi_jessie.v`. Builder created, fixer addressed all dckc review feedback (code readability, PR title, description). CI is green on the `refactor/parser-grammar` branch (build passes under Nix dev shell with Coq 8.9.1).
+- **PR #1** ([refactor/parser-grammar](https://github.com/dctinybrain/jesc24/pull/1), draft): improve PEG grammar readability in `quasi_jessie.v`. Two rounds of fixer work completed addressing dckc review feedback (PR title, description, code style, Section blocks, PNT index comments). dckc has reviewed twice with multiple COMMENTED reviews; latest round of 4 inline comments addressed by fixer commit 20874ba8. CI FAILURE is pre-existing (quasi_json.v line 77 "Syntax Error: Lexer: Undefined token" on base branch).
 - **CI workflow** exists on `dc-ci` branch (opam-based, Coq 8.9.1) but not on `main` — CI never fires on PRs. Needs landing.
 
 ## Ongoing work
