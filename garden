@@ -8,7 +8,7 @@ set -euo pipefail
 
 IMAGE_NAME="${GARDEN_IMAGE:-garden}"
 CONTAINER_NAME="${GARDEN_CONTAINER:-garden}"
-HOSTNAME_NAME="${GARDEN_HOSTNAME:-endolinbot}"
+HOSTNAME_NAME="${GARDEN_HOSTNAME:-$(hostname -s)}"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 usage() {
@@ -27,7 +27,7 @@ Environment:
   ANTHROPIC_API_KEY   Forwarded to the container for Claude Code auth.
   GARDEN_IMAGE        Override image name (default: garden).
   GARDEN_CONTAINER    Override container name (default: garden).
-  GARDEN_HOSTNAME     Override container hostname (default: endolinbot).
+  GARDEN_HOSTNAME     Override container hostname (default: $(hostname -s)).
   OPENCODE_MODEL      Model for steward cycles (opencode adaptation).
   STEWARD_DRY         Set to 1 for dry-run mode.
 
@@ -37,7 +37,8 @@ Notes (original garden):
   so that an agent-forwarded human identity cannot leak into bot actions.
 
 Notes (opencode adaptation):
-  On this host (bldbox), the Docker commands are not typically used. Use
+  The Docker container commands are Kris's workflow (host → container).
+  On yolo1 (dctinybrain), the steward runs directly. Use
   \`garden dispatch-steward\` to run a steward cycle, or \`garden cron\`
   to manage periodic scheduling.
 EOF
@@ -87,6 +88,7 @@ cmd_dispatch_steward() {
         echo "run-steward-cycle.sh not found or not executable. Create it first." >&2
         exit 1
     fi
+    export OPENCODE_MODEL="${OPENCODE_MODEL:-opencode/deepseek-v4-flash-free}"
     exec bash "$SCRIPT_DIR/run-steward-cycle.sh" "$@"
 }
 
