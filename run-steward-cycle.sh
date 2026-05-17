@@ -2,12 +2,16 @@
 # run-steward-cycle.sh — one steward cycle for the opencode harness.
 #
 # Usage:
-#   ./run-steward-cycle.sh [--dry-run] [--quiet]
+#   ./run-steward-cycle.sh [--dry-run] [--quiet] [--triggered-by=SOURCE]
 #
 # This is the cron entry point. It runs the deterministic parts of one
 # steward cycle inline (journal sync, monitor liveness, inbox drain) and
 # then invokes `opencode run` for the LLM-driven parts (dispatch decisions,
 # subagent orchestration, journaling).
+#
+# --triggered-by=SOURCE  Source that triggered this cycle: cron (default)
+#                        or watcher. The watcher daemon passes this so the
+#                        cycle can log the trigger source.
 #
 # The opencode session starts with a prompt that overrides the liaison
 # default in CLAUDE.md so the agent acts as the steward.
@@ -27,17 +31,23 @@ DATE_UTC="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 DATE_YMD="$(date -u +%Y/%m/%d)"
 CYCLE_FILE="/tmp/garden-steward-cycle-${HOST}.txt"
 
-DRY_RUN="${STEWARD_DRY:-${1:-}}"
-[ "$DRY_RUN" = "--dry-run" ] && DRY_RUN=1 || DRY_RUN=0
+TRIGGERED_BY="cron"
+DRY_RUN="${STEWARD_DRY:-0}"
 QUIET="${STEWARD_QUIET:-0}"
-if [ "${1:-}" = "--quiet" ] || [ "${2:-}" = "--quiet" ]; then
-    QUIET=1
-fi
+
+# Parse arguments. Positional: --dry-run, --quiet, --triggered-by=SOURCE
+for arg in "$@"; do
+    case "$arg" in
+        --dry-run) DRY_RUN=1 ;;
+        --quiet) QUIET=1 ;;
+        --triggered-by=*) TRIGGERED_BY="${arg#*=}" ;;
+    esac
+done
 
 log() { [ "$QUIET" -eq 0 ] && echo "$*"; }
 err() { echo "$*" >&2; }
 
-log "=== Steward cycle starting at $DATE_UTC on $HOST ==="
+log "=== Steward cycle starting at $DATE_UTC on $HOST (trigger: $TRIGGERED_BY) ==="
 
 # --- Step 1: Journal sync ---
 log "--- Syncing journal ---"
@@ -102,6 +112,23 @@ check_log_lines() {
 LOG_GARDEN_LINES=$(check_log_lines "/tmp/garden-monitor-dckc-garden-of-bits.log")
 LOG_JESC24_LINES=$(check_log_lines "/tmp/garden-monitor-dctinybrain-jesc24.log")
 
+# Check steward watcher daemon liveness
+WATCHER_STATE=""
+WATCHER_PID_FILE="/tmp/garden-steward-watcher-${HOST}.pid"
+if [ -f "$WATCHER_PID_FILE" ]; then
+    WPID=$(cat "$WATCHER_PID_FILE" 2>/dev/null || echo "")
+    if [ -n "$WPID" ] && kill -0 "$WPID" 2>/dev/null; then
+        WATCHER_STATE="alive (pid $WPID)"
+        log "  steward-watcher: alive (pid $WPID)"
+    else
+        WATCHER_STATE="dead"
+        log "  steward-watcher: DEAD (pid $WPID stale)"
+    fi
+else
+    WATCHER_STATE="not-started"
+    log "  steward-watcher: not started"
+fi
+
 # --- Step 3: Inbox drain ---
 log "--- Draining steward inbox ---"
 INBOX_OUTPUT=""
@@ -123,8 +150,10 @@ fi
 cat > "$CYCLE_FILE" <<PREFLIGHT
 steward_cycle_ts: $DATE_UTC
 host: $HOST
+triggered_by: $TRIGGERED_BY
 journal_head: ${CUR_HEAD:0:12}
 monitors: $MONITOR_STATE
+watcher: $WATCHER_STATE
 inbox_count: $INBOX_COUNT
 dispatch_worktrees: $DISPATCH_COUNT
 inbox_lines: |
@@ -156,15 +185,17 @@ log "  dispatches: $DISPATCH_COUNT pending"
 # per-cycle procedure the original steward uses.
 STEWARD_PROMPT="You are operating as role=steward in the garden at $SCRIPT_DIR.
 
-This is an autonomous steward cycle started by cron on $HOST at $DATE_UTC.
+This is an autonomous steward cycle started by $TRIGGERED_BY on $HOST at $DATE_UTC.
 
 IMPORTANT: Despite what CLAUDE.md says, you are the STEWARD, not the liaison.
 The liaison is not present. There is no user in the loop.
 
 PRE-FLIGHT STATE:
 - Host: $HOST
+- Trigger: $TRIGGERED_BY
 - Journal HEAD: ${CUR_HEAD:0:12}
 - Monitors: $MONITOR_STATE
+- Watcher: $WATCHER_STATE
 - Inbox messages: $INBOX_COUNT
 - Pending dispatch worktrees: $DISPATCH_COUNT
 
@@ -177,7 +208,7 @@ Read garden/roles/COMMON.md first, then garden/roles/steward/AGENT.md.
 OPencode ADAPTATION NOTES (this is opencode, not Claude Code):
 1. Use the \`Task\` tool to dispatch subagents, NOT the \`Agent\` tool (it does not exist).
 2. There is no ScheduleWakeup tool. This cycle runs once and exits; cron handles the next cycle.
-3. There are no parent-context Monitor tasks. Check daemon logs inline.
+3. The steward-watcher daemon (run-steward-watcher.sh) replaces the old parent-context Monitor tasks. Check daemon logs inline and verify the watcher is alive.
 4. Use \`bash\` to run shell commands (git, gh, journal operations).
 5. Use \`bash\` to call dispatch-prepare.sh / dispatch-teardown.sh for worktree management.
 6. The \`garden\` worktree is at $SCRIPT_DIR, the \`journal\` worktree is at $SCRIPT_DIR/journal.

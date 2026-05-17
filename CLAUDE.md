@@ -1,6 +1,6 @@
 ---
 created: 2026-05-12
-updated: 2026-05-15
+updated: 2026-05-17
 author: gardener, liaison
 ---
 
@@ -133,9 +133,9 @@ This garden was designed for a Claude Code harness but has been adapted to run u
 Key differences when working in opencode:
 - Use `Task` tool instead of `Agent` for subagent dispatch
 - No `ScheduleWakeup` — the steward runs via `run-steward-cycle.sh` from cron
-- No parent-context `Monitor` tools — the steward checks daemon logs inline each cycle
-- The `garden` script at the garden root has been extended with `dispatch-steward` and `cron` commands
-- See `roles/steward/AGENT.md` § Opencode adaptation for the full mapping
+- No parent-context `Monitor` tools — a `run-steward-watcher.sh` bash daemon replaces them, polling daemon logs and draining the inbox to trigger steward cycles at ~15-90s latency
+- The `garden` script at the garden root has been extended with `dispatch-steward`, `cron`, and `watcher` commands
+- See `roles/steward/AGENT.md` § Steward watcher daemon and § Opencode adaptation for the full mapping
 
 ```sh
 # Run one steward cycle manually:
@@ -148,6 +148,12 @@ Key differences when working in opencode:
 ./garden cron install   # every 30 minutes
 ./garden cron remove
 ./garden cron show
+
+# Manage the steward watcher daemon:
+./garden watcher start    # reduces latency to ~15-90s
+./garden watcher stop
+./garden watcher status
+./garden watcher restart
 ```
 
 ## Current inventory

@@ -22,6 +22,7 @@ Commands:
 
   dispatch-steward    Run one steward cycle (opencode adaptation).
   cron                Install or show the steward cron job.
+  watcher             Manage the steward watcher daemon (start|stop|status|restart).
 
 Environment:
   ANTHROPIC_API_KEY   Forwarded to the container for Claude Code auth.
@@ -92,6 +93,25 @@ cmd_dispatch_steward() {
     exec bash "$SCRIPT_DIR/run-steward-cycle.sh" "$@"
 }
 
+cmd_watcher() {
+    local watcher_script="$SCRIPT_DIR/run-steward-watcher.sh"
+    if [ ! -x "$watcher_script" ]; then
+        echo "run-steward-watcher.sh not found or not executable." >&2
+        exit 1
+    fi
+    local action="${1:-status}"
+    case "$action" in
+        start)   exec bash "$watcher_script" --daemon ;;
+        stop)    exec bash "$watcher_script" --stop ;;
+        status)  exec bash "$watcher_script" --status ;;
+        restart) exec bash "$watcher_script" --restart ;;
+        *)
+            echo "Usage: $(basename "$0") watcher {start|stop|status|restart}" >&2
+            exit 1
+            ;;
+    esac
+}
+
 cmd_cron() {
     local action="${1:-show}"
     case "$action" in
@@ -134,6 +154,8 @@ case "$1" in
     reset) shift; cmd_reset "$@" ;;
     dispatch-steward) shift; cmd_dispatch_steward "$@" ;;
     cron) shift; cmd_cron "$@" ;;
-    -h|--help|help) usage ;;
-    *) usage ;;
+    watcher) shift; cmd_watcher "$@" ;;
+  -h|--help|help) usage ;;
+  start|stop|status|restart) cmd_watcher "$@" ;;
+  *) usage ;;
 esac

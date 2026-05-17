@@ -1,6 +1,6 @@
 ---
 created: 2026-05-12
-updated: 2026-05-15
+updated: 2026-05-17
 author: gardener, steward, liaison, understudy
 ---
 
@@ -100,21 +100,59 @@ echo $! > /tmp/garden-monitor-<owner>-<name>.pid
 
 Event consumption per cycle: for each daemon, `tail -200 /tmp/garden-monitor-<owner>-<name>.log` and find any `NEW` line newer than the prior cycle's close timestamp. For the dckc/garden-of-bits monitor, invoke `Agent` for the **liaison** role instead (issue activity on the garden is meta-evolution work and only the liaison can act on it; the steward's role is to enqueue the dispatch via a `message` to `liaison` so the liaison-dispatched gardener cycle picks it up). Empty tails are silent (no dispatch, no journal entry). The per-skill reaction rules at `skills/monitor-<slug>/SKILL.md` decide whether a given event class is loud or silent; the steward consults the per-skill table on each `NEW` line.
 
-### Parent-context Monitor invariants
+### Steward watcher daemon
 
-Beyond the long-lived bash daemons above (which run in the harness, write logs to `/tmp/garden-monitor-*.log`, and survive across LLM ticks), the steward keeps **two parent-context `Monitor` task instances** running continuously inside its own LLM session so that daemon-log lines and addressed-to-`steward` inbox entries arrive as `<task-notification>`s in real time rather than waiting for the next per-cycle survey to surface them:
+In the original Claude Code garden, the steward kept **two parent-context `Monitor` task instances** running inside its LLM session so daemon-log lines and inbox entries surfaced in real time. Under opencode, no parent-context LLM session exists. The **`run-steward-watcher.sh`** bash daemon replaces both Monitors:
 
-1. **Daemon-log tail Monitor.** A `Monitor` task running `tail -F /tmp/garden-monitor-*.log` (glob expanded to every active daemon's log) filtered for `NEW|daemon stopping|ERROR`. Today that includes `/tmp/garden-monitor-dckc-garden-of-bits.log`; the glob picks up any future log automatically.
-2. **Inbox-drain Monitor.** A `Monitor` task running `while sleep 90; do bash skills/inbox-drain/inbox-drain.sh steward; done` so addressed-to-`steward` journal entries surface within ~90 seconds of being written, instead of waiting up to one full cycle for the per-cycle survey's drain.
+1. **Daemon-log watcher.** Every `$POLL_INTERVAL` (default 15s), the watcher checks every `/tmp/garden-monitor-*.log` file for new content containing `NEW|daemon stopping|ERROR` signal lines. It tracks file sizes in a per-daemon state file under `/tmp/garden-steward-watcher-<host>.d/` and only reacts to newly-grown content, not the entire tail on each wake.
+2. **Periodic inbox drain.** Every `$INBOX_INTERVAL` (default 90s), the watcher runs `skills/inbox-drain/inbox-drain.sh steward` and triggers a steward cycle if new messages are found.
 
-Without both Monitors, the steward operates blind between cycles: daemon `NEW` lines pile up unprocessed, and `message` entries from subagents and from the liaison sit unread for tens of minutes. Two observed gaps motivated this invariant (2026-05-14):
+When either watcher detects a signal, it invokes `run-steward-cycle.sh --triggered-by=watcher` after a cooldown period (default 60s) to prevent rapid re-triggering. The watcher replaces the tight coupling of the original Monitor approach with a bash daemon that needs no LLM session at all.
 
-- Three forwarded `to: steward` messages from boatman and liaison (`060250Z`, `060538Z`, `061330Z`) sat in the inbox for ~50 minutes because the steward's prior inbox-drain Monitor had been stopped (deferring to a liaison-targeted drain Monitor instead, which routed to the liaison session rather than the steward).
-- An understudy session's `to: steward` message at `214954Z` waited ~5 minutes for the per-cycle drain to catch it; the user had to prompt the steward to re-arm.
+#### Management
 
-The directive (verbatim from the maintainer): *"Please inform the gardener to make sure the steward knows to arm all of its monitors."*
+```sh
+# Start (background via nohup):
+./run-steward-watcher.sh --daemon
 
-Operational rule: each cycle's *Survey* step verifies both Monitors are still running via `TaskList`; re-arm any that have been `TaskStop`'d. If one is missing at cycle start, re-arm it and journal the re-arm in the cycle-summary entry. Re-arming is cheap; the cost of not doing it is invisible inbox lag.
+# Stop:
+./run-steward-watcher.sh --stop
+
+# Status:
+./run-steward-watcher.sh --status
+
+# Or via the garden script:
+./garden watcher start
+./garden watcher stop
+./garden watcher status
+./garden watcher restart
+```
+
+The watcher writes its log to `/tmp/garden-steward-watcher-<host>.log`. PID at `/tmp/garden-steward-watcher-<host>.pid`; state at `/tmp/garden-steward-watcher-<host>.d/`.
+
+#### Liveness check
+
+Each steward cycle verifies the watcher is alive by checking the PID file. The `run-steward-cycle.sh` script includes this check automatically during its pre-flight phase. If the watcher is dead, the cycle logs it and continues (the cron fallback ensures the steward still runs); the cycle's survey step may choose to respawn it.
+
+#### Design rationale
+
+- **No LLM session required.** The watcher is pure bash, matching the existing monitor-poll daemon pattern. It does not consume API budget or LLM context.
+- **Cooldown prevents thrashing.** A burst of `NEW` lines (e.g. multiple issues filed in quick succession) triggers at most one steward cycle per cooldown window, preventing overlapping cycles.
+- **Cron is the safety net.** Even without the watcher, the cron-triggered steward cycle (default every 30 min) catches everything. The watcher improves latency from 30 min to ~15-90s for signal events.
+- **Inbox-drain cadence matches the original.** 90s was the original Monitor cadence and remains the watcher's default inbox interval.
+- **Poll interval balances reactivity and churn.** 15s is fast enough to catch most events within a minute while producing negligible I/O.
+
+#### Tradeoffs vs. the original Monitor system
+
+| Aspect | Original (Claude Code Monitor) | Watcher daemon |
+|--------|-------------------------------|----------------|
+| Latency on NEW lines | Real-time (parent-context notification) | ~15s (poll interval) |
+| Latency on inbox messages | ~90s (sleep loop) | ~90s (same) |
+| LLM context consumed | Yes (Monitor runs inside parent LLM) | Zero (pure bash) |
+| Survives across cycles | Yes (Monitor is parent-context, outlives LLM ticks) | Yes (nohup daemon, same approach) |
+| Cooldown | None (LLM handles pacing) | Explicit 60s cooldown |
+
+The watcher trades real-time notification (which required a persistent LLM session) for ~15s latency on log events while maintaining identical inbox-drain latency. This is acceptable because the steward's cron cadence was already 30 min; 15s vs. real-time is immaterial in practice.
 
 ### Issue surveillance on project repos
 
@@ -124,7 +162,7 @@ For every repository in the steward's active standing-monitor set, **issue-class
 - New project-repo monitors added in the future inherit this discipline by default; the per-skill skill author sets the per-class table on top of this principle, not in place of it.
 - For monitors whose dispatched subagent role is the `monitor` (today: none active; all previously active are dormant per the standing-monitors table above), the monitor subagent itself surfaces the issue event per the per-skill rules. For monitors whose dispatched subagent role is the `liaison` (today: dckc/garden-of-bits; see `skills/monitor-garden/SKILL.md` § Dispatch role asymmetry), the steward enqueues a `message` to `liaison` instead, because the bot sandbox is not authorized to act on meta-evolution issues itself.
 
-The maintainer's framing on 2026-05-14: *"And inform the gardener that the role of steward should do this generally."* This sub-section is the structural counterpart of the parent-context Monitor invariants above: the Monitors ensure daemon `NEW` lines reach the LLM in real time, and this principle ensures that for any project repo the steward shepherds, issue-class lines are surfaced rather than buried under silence-by-default per-skill defaults.
+The maintainer's framing on 2026-05-14: *"And inform the gardener that the role of steward should do this generally."* This sub-section is the structural counterpart of the *Steward watcher daemon* section above: the watcher ensures daemon `NEW` lines trigger a steward cycle in ~15-90s, and this principle ensures that for any project repo the steward shepherds, issue-class lines are surfaced rather than buried under silence-by-default per-skill defaults.
 
 ## Operational-flake handling
 
@@ -372,7 +410,7 @@ Each invocation is one cycle. Wake, survey, dispatch, journal, schedule, exit. N
 
 1. **Sync the journal.** Run step 1 of journal-sync (fetch / rebase if a remote is configured) so the cycle reads current state.
 2. **Survey.**
-   - **Verify the parent-context Monitors** (see *Parent-context Monitor invariants* above). Run `TaskList` and confirm both the daemon-log tail Monitor and the inbox-drain Monitor are still running; re-arm any that have been `TaskStop`'d and note the re-arm in the cycle-summary entry.
+   - **Verify the steward watcher daemon** (see *Steward watcher daemon* above). Check `kill -0 $(cat /tmp/garden-steward-watcher-$(hostname -s).pid 2>/dev/null) 2>/dev/null`. If the watcher has died, respawn it via `nohup bash run-steward-watcher.sh --daemon` and note the re-spawn in the cycle-summary entry. The watcher is the replacement for the original parent-context Monitors and keeps event-to-cycle latency at ~15-90s instead of the cron cadence.
    - **Drain the inbox** via `skills/inbox-drain/inbox-drain.sh steward --no-fetch` (step 1 already fetched). One line per addressed-to-`steward` or broadcast-`*` entry since the prior cycle's drain. Read each. The continuous inbox-drain Monitor surfaces most messages during the cycle, but the explicit per-cycle drain catches any entries the Monitor missed (a `TaskStop` between cycles, a brief network hiccup).
    - **Check understudy presence** per *Understudy presence and shunting* above. Walk `journal/presence/*/understudy.md`; any file with `status: present` and `last_heartbeat` within the 5-minute staleness threshold counts as a present understudy. Record the count (typically 0 or 1) in the cycle's mental scratch; the *Dispatch* step uses it to decide whether to shunt eligible work.
    - Recent journal entries since the prior steward cycle (use `kind:` filters: tick, result, message, worktree). Complements the inbox drain by surfacing context the inbox does not (your own prior cycle's results, other ticks worth glancing at).
@@ -433,9 +471,9 @@ This file was designed for a Claude Code harness (the 'original garden'). Below 
 |-------------------------|------------------------|-------|
 | `Agent` tool            | `Task` tool            | Same purpose (launch a focused subagent with its own LLM session). The dispatch prompt template from `CLAUDE.md` § Dispatch prompt template adapts verbatim; replace `Agent` with `Task`. The per-dispatch worktree triple and the `dispatch-prepare.sh`/`dispatch-teardown.sh` scripts work unchanged. |
 | `ScheduleWakeup`        | `cron` + `opencode run`| Opencode does not have a built-in wakeup tool. Instead, `run-steward-cycle.sh` is called from cron. It runs the deterministic pre-work (journal sync, monitor liveness, inbox drain) inline, then invokes `opencode run --dir <garden-root> <steward-prompt>` for the LLM-driven parts. |
-| `Monitor` tool (parent-context) | Inline check per cycle | Opencode does not have a persistent `Monitor` tool that stays alive across ticks. The steward checks daemon log files manually each cycle (`tail -200` on each daemon log and grep for `NEW`/`ADD`/`REMOVE`). The bash daemons (monitor-poll.sh, review-queue-poll.sh) run continuously via nohup as in the original. |
+| `Monitor` tool (parent-context) | Watcher daemon (`run-steward-watcher.sh`) | A bash daemon replaces both Monitors: it polls daemon logs for signal lines (15s) and drains the inbox (90s), triggering a steward cycle on detection. See *Steward watcher daemon* above. The bash poll daemons (monitor-poll.sh) run continuously via nohup as in the original. |
 | `CronCreate`            | `crontab`              | Cron entries are managed via `crontab -e`. The steward does not edit cron itself (that is outside its authority bounds). |
-| `TaskList` (for parent-context Monitor verification) | N/A | No parent-context Monitors exist; no liveness check needed per cycle for them. |
+| `TaskList` (for parent-context Monitor verification) | `kill -0` on watcher PID | Check the watcher daemon's PID file: `kill -0 $(cat /tmp/garden-steward-watcher-<host>.pid)`. Respawn if dead. |
 
 ### Dispatch differences
 
@@ -455,7 +493,7 @@ The steward does not schedule its own next wakeup. Instead:
 
 This means:
 - **Step 7 (Schedule next)** is omitted. The cron cadence replaces it.
-- **Parent-context Monitors** (§ *Parent-context Monitor invariants*) do not exist. The bash daemons still run; the steward checks their logs each cycle.
+- **Parent-context Monitors** are replaced by the **steward watcher daemon** (`run-steward-watcher.sh`). The watcher runs continuously alongside the bash poll daemons, monitoring daemon logs for signal lines and draining the inbox periodically. When it detects a signal, it invokes a steward cycle. See *Steward watcher daemon* above.
 - **Quiet-cycle consolidation** still works (the cycle writes a `tick` entry instead of a full `result`), but it is journal-noise reduction only; no wakeup delay is affected.
 
 ### Per-cycle procedure adaptations
@@ -465,7 +503,7 @@ Steps 1-3 and 5 of the per-cycle procedure (sync, survey, housekeep) are partial
 | Step | Pre-work by `run-steward-cycle.sh` | LLM-driven in opencode session |
 |------|------------------------------------|--------------------------------|
 | 1 (Sync journal) | `git fetch && git reset --hard origin/journal` | — |
-| 2 (Survey) | Inbox drain (`inbox-drain.sh steward --no-fetch`), kill -0 on monitors, compile pre-flight state | Read recent journal entries, understudy presence, worktree inventory |
+| 2 (Survey) | Inbox drain (`inbox-drain.sh steward --no-fetch`), kill -0 on monitors, kill -0 on watcher, compile pre-flight state | Read recent journal entries, understudy presence, worktree inventory |
 | 3 (Dispatch) | — | Read daemon logs for NEW/ADD/REMOVE, run PR-creation-flow scan, dispatch subagents via Task |
 | 4 (Aggregate) | — | Read subagent Task results, write result entries |
 | 5 (Housekeep) | — | Collect worktrees, update bulletin, maintain journal |
@@ -486,9 +524,13 @@ OPENCODE_MODEL="deepseek/deepseek-v4-flash-free" ./run-steward-cycle.sh
 
 # From cron (every 30 minutes):
 */30 * * * * /home/<user>/garden/run-steward-cycle.sh --quiet
+
+# Watcher daemon (reduces latency to ~15-90s):
+./run-steward-watcher.sh --daemon
 ```
 
 ### Notes from the field
 
 - _2026-05-14_: the *Understudy presence and shunting* section was added by gardener dispatch `12fdbf` per the amendments at `entries/2026/05/14/225012Z-message-understudy-c89e16.md`. The precipitating observation: the prior gardener bundle (`entries/2026/05/14/222100Z-result-gardener-7d4081.md`) carved the understudy role but left the steward's per-cycle procedure unchanged, so a present understudy had no consumer-side discipline naming what the steward would shunt or how it would detect presence. The first-heads-up entry that motivated the carving is `entries/2026/05/14/214954Z-message-understudy-c124ea.md`.
 - _2026-05-15_: the *Opencode adaptation* section was added per user request. The steward was set up on host `bldbox` under the `dctinybrain` identity. Key files: `run-steward-cycle.sh` (cron entry point), `roles/steward/AGENT.md` § Opencode adaptation.
+- _2026-05-17_: the *Parent-context Monitor invariants* section was replaced with *Steward watcher daemon* per the maintainer's directive to close the event-to-cycle latency gap under opencode. The `run-steward-watcher.sh` bash daemon replaces both parent-context Monitor tasks, polling daemon logs (15s) and draining the inbox (90s) and triggering a steward cycle on detection. The cron fallback at `*/30` remains as a safety net. The `garden` script gained `watcher start|stop|status|restart` commands.
