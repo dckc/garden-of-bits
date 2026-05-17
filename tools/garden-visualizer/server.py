@@ -35,12 +35,14 @@ MAX_ENTRIES = 500
 class MarkdownRenderer:
     """Stdlib-only Markdown→HTML renderer for garden journal prose.
 
-    Handles the subset actually used in journal entries: headings (##–####),
-    unordered/ordered lists, fenced code blocks, inline code, links, bold,
-    horizontal rules.  Strips YAML frontmatter.  HTML-escapes everything
-    before inserting tags, so it is safe by construction.
+    Handles the subset used in garden docs: headings (##–####), unordered/
+    ordered lists with task checkboxes, pipe tables, fenced code blocks,
+    inline code, links, bold, horizontal rules.  Strips YAML frontmatter
+    and HTML comments.  HTML-escapes everything before inserting tags, so
+    it is safe by construction.
     """
 
+    _COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
     _FRONTMATTER_RE = re.compile(r"^---\n.*?\n---\n", re.DOTALL | re.MULTILINE)
     _HEADING_RE = re.compile(r"^(#{2,4})\s+(.+)$")
     _UL_RE = re.compile(r"^(\s*)[-*]\s+(.+)$")
@@ -50,9 +52,83 @@ class MarkdownRenderer:
     _CODE_RE = re.compile(r"`(.+?)`")
     _LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
     _CODE_FENCE_RE = re.compile(r"^```")
+    _TABLE_ROW_RE = re.compile(r"^\|.+\|\s*$")
+    _TABLE_SEP_RE = re.compile(r"^\|[-:| ]+\|\s*$")
+    _HTML_TAG_RE = re.compile(r"^</?\w+")
+
+    def _render_tables(self, text):
+        """Convert pipe-table blocks to HTML tables."""
+        lines = text.split("\n")
+        out = []
+        i = 0
+        while i < len(lines):
+            if (
+                self._TABLE_ROW_RE.match(lines[i])
+                and i + 1 < len(lines)
+                and self._TABLE_SEP_RE.match(lines[i + 1])
+            ):
+                # Table starts at i
+                rows = [lines[i]]
+                i += 1
+                # separator
+                i += 1
+                while i < len(lines) and self._TABLE_ROW_RE.match(lines[i]):
+                    rows.append(lines[i])
+                    i += 1
+                out.append(self._build_table(rows))
+            else:
+                out.append(lines[i])
+                i += 1
+        return "\n".join(out)
+
+    def _build_table(self, rows):
+        """Turn list of | delimited rows into <table> HTML."""
+        # First row is header, rest are body
+        cells = []
+        for row in rows:
+            parts = [c.strip() for c in row.strip().strip("|").split("|")]
+            cells.append(parts)
+
+        html_parts = ["<table>"]
+        # Header
+        html_parts.append("<thead><tr>")
+        for cell in cells[0]:
+            html_parts.append(f"<th>{self._inline(html.escape(cell))}</th>")
+        html_parts.append("</tr></thead>")
+
+        if len(cells) > 1:
+            html_parts.append("<tbody>")
+            for row in cells[1:]:
+                html_parts.append("<tr>")
+                for cell in row:
+                    html_parts.append(f"<td>{self._inline(html.escape(cell))}</td>")
+                html_parts.append("</tr>")
+            html_parts.append("</tbody>")
+        html_parts.append("</table>")
+        return "\n".join(html_parts)
+
+    @staticmethod
+    def _render_checkboxes(text):
+        """Convert [x] and [ ] task markers to styled checkboxes."""
+        text = re.sub(
+            r"^\[x\]\s*",
+            '<span class="checkbox checked">&#x2611;</span> ',
+            text,
+        )
+        text = re.sub(
+            r"^\[ \]\s*",
+            '<span class="checkbox unchecked">&#x2610;</span> ',
+            text,
+        )
+        return text
 
     def render(self, text):
+        # Strip HTML comments (bulletin uses <!-- BEGIN/END --> markers)
+        text = self._COMMENT_RE.sub("", text)
+        # Strip YAML frontmatter
         text = self._FRONTMATTER_RE.sub("", text)
+        # Convert pipe tables to HTML
+        text = self._render_tables(text)
         lines = text.split("\n")
         out = []
         in_code = False
@@ -107,6 +183,7 @@ class MarkdownRenderer:
                     in_list = True
                     list_tag = "ul"
                 content = self._inline(html.escape(m.group(2)))
+                content = self._render_checkboxes(content)
                 out.append(f"<li>{content}</li>")
                 continue
 
@@ -118,7 +195,16 @@ class MarkdownRenderer:
                     in_list = True
                     list_tag = "ol"
                 content = self._inline(html.escape(m.group(2)))
+                content = self._render_checkboxes(content)
                 out.append(f"<li>{content}</li>")
+                continue
+
+            # Already-rendered HTML (e.g. from _render_tables) — pass through
+            if self._HTML_TAG_RE.match(line):
+                if in_list:
+                    out.append(f"</{list_tag}>")
+                    in_list = False
+                out.append(line)
                 continue
 
             # Paragraph
@@ -663,6 +749,17 @@ def _page_head(title, hostname, active_nav):
   .content ul, .content ol {{ padding-left: 20px; }}
   .content li {{ margin: 4px 0; }}
   .content hr {{ border: none; border-top: 1px solid #2d3a2d; }}
+  .checkbox {{ font-size: 16px; vertical-align: middle; }}
+  .checkbox.checked {{ color: #66bb6a; }}
+  .checkbox.unchecked {{ color: #5a6a5a; }}
+  .content table {{ width: 100%; border-collapse: collapse; font-size: 13px;
+                   margin: 8px 0; }}
+  .content th {{ text-align: left; padding: 6px 12px; background: #243224;
+                color: #8aaa8a; font-weight: 600; border-bottom: 1px solid #2d3a2d; }}
+  .content td {{ padding: 4px 12px; border-bottom: 1px solid #2a382a; }}
+  .content tr:hover {{ background: #243224; }}
+  .content blockquote {{ margin: 8px 0; padding: 8px 16px; border-left: 3px solid #2d5a2d;
+                        color: #8aaa8a; background: #1e2a1e; }}
   .range {{ display: flex; gap: 4px; padding: 8px 20px; }}
   .range a {{ padding: 4px 12px; border-radius: 4px; font-size: 13px; color: #8aaa8a;
             text-decoration: none; border: 1px solid #2d3a2d; }}
