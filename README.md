@@ -36,7 +36,7 @@ The garden was designed for a **single liaison or steward** dispatching one suba
 
 ### dctinybrain/jesc24
 
-- **PR #1** ([refactor/parser-grammar](https://github.com/dctinybrain/jesc24/pull/1), draft): factor PEG grammar into `jessie_grammar.v`. Builder created, fixer addressed single-quoted string comment. Pre-existing build failure (`collections.vo` missing + Coq stdlib deprecation) blocks CI.
+- **PR #1** ([refactor/parser-grammar](https://github.com/dctinybrain/jesc24/pull/1), draft): improve PEG grammar readability in `quasi_jessie.v`. Builder created, fixer addressed all dckc review feedback (code readability, PR title, description). CI is green on the `refactor/parser-grammar` branch (build passes under Nix dev shell with Coq 8.9.1).
 - **CI workflow** exists on `dc-ci` branch (opam-based, Coq 8.9.1) but not on `main` — CI never fires on PRs. Needs landing.
 
 ## Ongoing work
