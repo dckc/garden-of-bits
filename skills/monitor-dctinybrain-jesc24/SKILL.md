@@ -4,7 +4,7 @@ updated: 2026-05-17
 author: gardener
 ---
 
-# Skill: monitor-jesc24
+# Skill: monitor-dctinybrain-jesc24
 
 Per-event-class reaction rules for the [monitor](../../roles/monitor/AGENT.md) when dispatched against `dctinybrain/jesc24`. The base role and its polling discipline live in `roles/monitor/AGENT.md` and `skills/github-activity-poll/SKILL.md`; this skill is consulted on each `NEW`-line wake to decide whether and how to react.
 
