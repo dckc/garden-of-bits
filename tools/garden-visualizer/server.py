@@ -332,6 +332,10 @@ def _parse_schedule_event(filepath, content):
 
 
 def _fmt_age(seconds):
+    if seconds < 0 or seconds > 1_000_000:
+        return "?"
+    if seconds < 5:
+        return "now"
     if seconds < 60:
         return f"{int(seconds)}s ago"
     minutes = seconds // 60
@@ -346,13 +350,18 @@ def _fmt_size(bytes_):
     return f"{bytes_ / 1024:.1f} KB"
 
 
-_TS_RE = re.compile(r"(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})Z")
+# ISO-8601: 2026-05-17T03:14:30Z, 2026-05-17T03:14:30.123Z, 2026-05-17T03:14:30+00:00
+_TS_RE = re.compile(
+    r"(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})"
+    r"(?:\.\d+)?"       # optional fractional seconds
+    r"(?:Z|[+-]\d{2}:?\d{2})?"  # Z or timezone offset
+)
 
 
 def _ts_to_epoch(ts_str):
     m = _TS_RE.match(ts_str)
     if not m:
-        return 0
+        return -1  # distinguish "not parseable" from epoch-zero
     try:
         return datetime(
             int(m.group(1)), int(m.group(2)), int(m.group(3)),
@@ -360,7 +369,7 @@ def _ts_to_epoch(ts_str):
             tzinfo=timezone.utc,
         ).timestamp()
     except (ValueError, OSError):
-        return 0
+        return -1
 
 
 # ── Poll Loops ─────────────────────────────────────────────────────────
@@ -606,58 +615,59 @@ def _page_head(title, hostname, active_nav):
 <style>
   * {{ box-sizing: border-box; }}
   body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-         margin: 0; background: #0d1117; color: #c9d1d9; }}
-  nav {{ display: flex; gap: 4px; padding: 8px 20px; background: #0d1117;
-        border-bottom: 1px solid #21262d; }}
-  nav a {{ padding: 4px 12px; border-radius: 4px; font-size: 13px; color: #8b949e;
+         margin: 0; background: #1a241a; color: #d6e6d6; }}
+  nav {{ display: flex; gap: 4px; padding: 8px 20px; background: #1a241a;
+        border-bottom: 1px solid #2d3a2d; }}
+  nav a {{ padding: 4px 12px; border-radius: 4px; font-size: 13px; color: #8aaa8a;
           text-decoration: none; }}
-  nav a:hover {{ background: #1c2128; color: #c9d1d9; }}
-  nav a.active {{ background: #1f6feb33; color: #58a6ff; }}
-  .header {{ background: #161b22; border-bottom: 1px solid #30363d;
+  nav a:hover {{ background: #2a3a2a; color: #d6e6d6; }}
+  nav a.active {{ background: #2a5a2a40; color: #81c784; }}
+  .header {{ background: #1e2a1e; border-bottom: 1px solid #2d3a2d;
             padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }}
-  .header h1 {{ margin: 0; font-size: 18px; color: #58a6ff; }}
-  .header .meta {{ font-size: 13px; color: #8b949e; }}
-  .panel {{ margin: 12px 20px; background: #161b22; border: 1px solid #30363d;
+  .header h1 {{ margin: 0; font-size: 18px; color: #81c784; }}
+  .header .meta {{ font-size: 13px; color: #8aaa8a; }}
+  .panel {{ margin: 12px 20px; background: #1e2a1e; border: 1px solid #2d3a2d;
            border-radius: 6px; overflow: hidden; }}
-  .panel h2 {{ margin: 0; padding: 10px 16px; font-size: 14px; background: #1c2128;
-              border-bottom: 1px solid #30363d; color: #8b949e;
+  .panel h2 {{ margin: 0; padding: 10px 16px; font-size: 14px; background: #243224;
+              border-bottom: 1px solid #2d3a2d; color: #8aaa8a;
               text-transform: uppercase; letter-spacing: 0.5px; }}
   .panel-body {{ padding: 8px 0; }}
-  .row {{ padding: 6px 16px; font-size: 13px; border-bottom: 1px solid #21262d;
+  .row {{ padding: 6px 16px; font-size: 13px; border-bottom: 1px solid #2a382a;
          display: flex; align-items: center; gap: 8px; }}
   .row:last-child {{ border-bottom: none; }}
   .badge {{ display: inline-block; padding: 1px 6px; border-radius: 3px;
            font-size: 11px; font-weight: 600; }}
-  .badge-dispatch {{ background: #1f6feb33; color: #58a6ff; }}
-  .badge-result {{ background: #23863633; color: #3fb950; }}
-  .badge-monitor {{ background: #d2992233; color: #d29922; }}
+  .badge-dispatch {{ background: #2a5a2a40; color: #81c784; }}
+  .badge-result {{ background: #3a6a3a40; color: #a5d6a7; }}
+  .badge-monitor {{ background: #5a4a2a40; color: #d4a843; }}
   .status-dot {{ display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }}
-  .dot-alive {{ background: #3fb950; }}
-  .dot-stale {{ background: #d29922; }}
-  .dot-dead {{ background: #f85149; }}
-  .age {{ color: #8b949e; font-size: 11px; margin-left: auto; white-space: nowrap; }}
-  .mono {{ font-family: 'SFMono-Regular', Consolas, monospace; font-size: 11px; color: #8b949e; }}
-  a {{ color: #58a6ff; text-decoration: none; }}
-  a:hover {{ text-decoration: underline; }}
+  .dot-alive {{ background: #66bb6a; }}
+  .dot-stale {{ background: #d4a843; }}
+  .dot-dead {{ background: #e57373; }}
+  .age {{ color: #8aaa8a; font-size: 11px; margin-left: auto; white-space: nowrap; }}
+  .mono {{ font-family: 'SFMono-Regular', Consolas, monospace; font-size: 11px; color: #8aaa8a; }}
+  a {{ color: #81c784; text-decoration: none; }}
+  a:hover {{ text-decoration: underline; color: #a5d6a7; }}
   table {{ width: 100%; border-collapse: collapse; font-size: 13px; }}
-  th {{ text-align: left; padding: 8px 16px; background: #1c2128; color: #8b949e;
-       font-weight: 600; border-bottom: 1px solid #30363d; }}
-  td {{ padding: 6px 16px; border-bottom: 1px solid #21262d; }}
-  tr:hover {{ background: #1c2128; }}
+  th {{ text-align: left; padding: 8px 16px; background: #243224; color: #8aaa8a;
+       font-weight: 600; border-bottom: 1px solid #2d3a2d; }}
+  td {{ padding: 6px 16px; border-bottom: 1px solid #2a382a; }}
+  tr:hover {{ background: #243224; }}
   .content {{ padding: 20px; }}
-  .content h1, .content h2, .content h3, .content h4 {{ color: #58a6ff; }}
-  .content h1 {{ border-bottom: 1px solid #30363d; padding-bottom: 8px; }}
-  .content pre {{ background: #1c2128; padding: 12px; border-radius: 6px; overflow-x: auto; }}
-  .content code {{ background: #1c2128; padding: 2px 6px; border-radius: 3px; font-size: 13px; }}
-  .content pre code {{ padding: 0; }}
+  .content h1, .content h2, .content h3, .content h4 {{ color: #81c784; }}
+  .content h1 {{ border-bottom: 1px solid #2d3a2d; padding-bottom: 8px; }}
+  .content pre {{ background: #1a241a; padding: 12px; border-radius: 6px; overflow-x: auto;
+                 border: 1px solid #2d3a2d; }}
+  .content code {{ background: #243224; padding: 2px 6px; border-radius: 3px; font-size: 13px; }}
+  .content pre code {{ padding: 0; background: transparent; }}
   .content ul, .content ol {{ padding-left: 20px; }}
   .content li {{ margin: 4px 0; }}
-  .content hr {{ border: none; border-top: 1px solid #30363d; }}
+  .content hr {{ border: none; border-top: 1px solid #2d3a2d; }}
   .range {{ display: flex; gap: 4px; padding: 8px 20px; }}
-  .range a {{ padding: 4px 12px; border-radius: 4px; font-size: 13px; color: #8b949e;
-            text-decoration: none; border: 1px solid #30363d; }}
-  .range a:hover {{ background: #1c2128; }}
-  .range a.active {{ background: #1f6feb33; color: #58a6ff; border-color: #1f6feb; }}
+  .range a {{ padding: 4px 12px; border-radius: 4px; font-size: 13px; color: #8aaa8a;
+            text-decoration: none; border: 1px solid #2d3a2d; }}
+  .range a:hover {{ background: #2a3a2a; }}
+  .range a.active {{ background: #2a5a2a40; color: #81c784; border-color: #2d5a2d; }}
 </style>
 </head>
 <body>
@@ -701,7 +711,7 @@ def render_dashboard(data, hostname):
                 f'<span class="age">{_fmt_age(r["age_seconds"])}</span></div>'
             )
     else:
-        html_ += '<div class="row" style="color:#8b949e">No active dispatches.</div>'
+        html_ += '<div class="row" style="color:#8aaa8a">No active dispatches.</div>'
     html_ += "</div></div>"
 
     # Recent results
@@ -713,12 +723,12 @@ def render_dashboard(data, hostname):
                 f'<div class="row">'
                 f'<span class="badge {kind_class}">{html.escape(e["kind"])}</span>'
                 f'{html.escape(e["role"])} <code>{html.escape(e["short_id"])}</code>'
-                f'<span style="color:#8b949e;font-size:11px;margin-left:8px;overflow:hidden;text-overflow:ellipsis;max-width:400px;white-space:nowrap">'
+                f'<span style="color:#8aaa8a;font-size:11px;margin-left:8px;overflow:hidden;text-overflow:ellipsis;max-width:400px;white-space:nowrap">'
                 f'{html.escape(e["body_preview"][:100])}</span>'
-                f'<span class="age">{_fmt_age(_ts_to_epoch(e["ts"]))}</span></div>'
+                f'<span class="age">{_fmt_age(time.time() - _ts_to_epoch(e["ts"]))}</span></div>'
             )
     else:
-        html_ += '<div class="row" style="color:#8b949e">No entries yet.</div>'
+        html_ += '<div class="row" style="color:#8aaa8a">No entries yet.</div>'
     html_ += "</div></div>"
 
     # Running monitors
@@ -732,7 +742,7 @@ def render_dashboard(data, hostname):
                 f'<div class="row">'
                 f'<span class="status-dot {dot}"></span>'
                 f'<span class="badge badge-monitor">{html.escape(m["slug"])}</span>'
-                f'<span style="color:#8b949e;font-size:11px">'
+                f'<span style="color:#8aaa8a;font-size:11px">'
                 f'{"PID " + str(m["pid"]) if m["pid"] else ""}</span>'
                 f'<span class="age">{_fmt_age(m["last_event_ago"])}</span></div>'
             )
@@ -742,7 +752,7 @@ def render_dashboard(data, hostname):
                     f'{html.escape(m["last_line"][:150])}</div>'
                 )
     else:
-        html_ += '<div class="row" style="color:#8b949e">No monitors found.</div>'
+        html_ += '<div class="row" style="color:#8aaa8a">No monitors found.</div>'
     html_ += "</div></div>"
 
     html_ += _page_end()
@@ -779,7 +789,7 @@ def render_timeline(data, since_seconds=3600):
                 f'{html.escape(e["body_preview"][:200])}</div></div>'
             )
     else:
-        html_ += '<div class="row" style="color:#8b949e">No entries in this window.</div>'
+        html_ += '<div class="row" style="color:#8aaa8a">No entries in this window.</div>'
     html_ += '</div>'
 
     html_ += _page_end()
@@ -807,7 +817,7 @@ def render_state(data, hostname):
                 f"<td style='font-size:11px'>{html.escape(w['heartbeat'])}</td></tr>"
             )
     else:
-        html_ += '<tr><td colspan="5" style="color:#8b949e;text-align:center">No worktrees found.</td></tr>'
+        html_ += '<tr><td colspan="5" style="color:#8aaa8a;text-align:center">No worktrees found.</td></tr>'
     html_ += "</table></div>"
 
     # Daemon health
@@ -824,7 +834,7 @@ def render_state(data, hostname):
                 f"<td>{_fmt_size(m['log_size'])}</td></tr>"
             )
     else:
-        html_ += '<tr><td colspan="5" style="color:#8b949e;text-align:center">No monitors found.</td></tr>'
+        html_ += '<tr><td colspan="5" style="color:#8aaa8a;text-align:center">No monitors found.</td></tr>'
     html_ += "</table></div>"
 
     # Schedule
@@ -839,7 +849,7 @@ def render_state(data, hostname):
                 f"<td>{html.escape(e['recurrence'])}</td></tr>"
             )
     else:
-        html_ += '<tr><td colspan="4" style="color:#8b949e;text-align:center">No scheduled events.</td></tr>'
+        html_ += '<tr><td colspan="4" style="color:#8aaa8a;text-align:center">No scheduled events.</td></tr>'
     html_ += "</table></div>"
 
     html_ += _page_end()
@@ -852,7 +862,7 @@ def render_bulletin(data, md_renderer):
     html_ = _page_head("Bulletin", "", "/bulletin")
 
     if not raw:
-        html_ += '<div class="row" style="color:#8b949e">Waiting for first journal fetch…</div>'
+        html_ += '<div class="row" style="color:#8aaa8a">Waiting for first journal fetch…</div>'
     else:
         html_ += f'<div class="content">{md_renderer.render(raw)}</div>'
 
