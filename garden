@@ -23,6 +23,7 @@ Commands:
   dispatch-steward    Run one steward cycle (opencode adaptation).
   cron                Install or show the steward cron job.
   watcher             Manage the steward watcher daemon (start|stop|status|restart).
+  visualizer          Manage the garden visualizer web server (start|stop|status|restart).
 
 Environment:
   ANTHROPIC_API_KEY   Forwarded to the container for Claude Code auth.
@@ -112,6 +113,59 @@ cmd_watcher() {
     esac
 }
 
+cmd_visualizer() {
+    local server="$SCRIPT_DIR/tools/garden-visualizer/server.py"
+    local pidfile="/tmp/garden-visualizer.pid"
+    local logfile="/tmp/garden-visualizer.log"
+
+    if [ ! -f "$server" ]; then
+        echo "Visualizer server not found at $server" >&2
+        exit 1
+    fi
+
+    local action="${1:-status}"
+    case "$action" in
+        start)
+            if [ -f "$pidfile" ] && kill -0 "$(cat "$pidfile")" 2>/dev/null; then
+                echo "Visualizer already running (PID $(cat "$pidfile"))."
+                exit 0
+            fi
+            nohup python3 "$server" \
+                --port "${GARDEN_VISUALIZER_PORT:-2804}" \
+                --garden-root "$SCRIPT_DIR" \
+                --host "${GARDEN_VISUALIZER_HOST:-0.0.0.0}" \
+                >> "$logfile" 2>&1 &
+            echo $! > "$pidfile"
+            echo "Visualizer started (PID $(cat "$pidfile")). http://$(hostname -s):${GARDEN_VISUALIZER_PORT:-2804}"
+            ;;
+        stop)
+            if [ -f "$pidfile" ]; then
+                kill "$(cat "$pidfile")" 2>/dev/null && echo "Visualizer stopped." || echo "Visualizer not running."
+                rm -f "$pidfile"
+            else
+                echo "No PID file found."
+            fi
+            ;;
+        status)
+            if [ -f "$pidfile" ] && kill -0 "$(cat "$pidfile")" 2>/dev/null; then
+                echo "Visualizer RUNNING (PID $(cat "$pidfile"))."
+            else
+                echo "Visualizer STOPPED."
+                [ -f "$pidfile" ] && rm -f "$pidfile"
+            fi
+            ;;
+        restart)
+            cmd_visualizer stop
+            sleep 1
+            cmd_visualizer start
+            ;;
+        *)
+            echo "Usage: $(basename "$0") visualizer {start|stop|status|restart}" >&2
+            exit 1
+            ;;
+    esac
+}
+
 cmd_cron() {
     local action="${1:-show}"
     case "$action" in
@@ -155,6 +209,7 @@ case "$1" in
     dispatch-steward) shift; cmd_dispatch_steward "$@" ;;
     cron) shift; cmd_cron "$@" ;;
     watcher) shift; cmd_watcher "$@" ;;
+    visualizer) shift; cmd_visualizer "$@" ;;
   -h|--help|help) usage ;;
   start|stop|status|restart) cmd_watcher "$@" ;;
   *) usage ;;
