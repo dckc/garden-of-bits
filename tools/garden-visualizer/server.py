@@ -796,7 +796,7 @@ def render_timeline(data, since_seconds=3600):
     return html_
 
 
-def render_state(data, hostname):
+def render_state(data, hostname, show_all=False):
     s = data.get_snapshot()
     worktrees = s["worktrees"]
     monitors = s["monitors"]
@@ -805,12 +805,33 @@ def render_state(data, hostname):
     html_ = _page_head("Garden State", hostname, "/state")
 
     # Worktrees
-    html_ += '<div class="panel"><h2>Worktrees</h2><table>'
-    html_ += "<tr><th>Host</th><th>Name</th><th>Role</th><th>Status</th><th>Heartbeat</th></tr>"
-    if worktrees:
-        for w in sorted(worktrees, key=lambda x: (x["host"], x["name"])):
+    collected_count = sum(1 for w in worktrees if w["status"] == "collected")
+    shown = worktrees if show_all else [w for w in worktrees if w["status"] != "collected"]
+
+    html_ += '<div class="panel"><h2>Worktrees</h2>'
+    if collected_count:
+        if not show_all:
             html_ += (
-                f"<tr><td>{html.escape(w['host'])}</td>"
+                f'<div style="padding:8px 16px;font-size:12px;color:#8aaa8a">'
+                f'{collected_count} collected worktree(s) hidden.'
+                f' <a href="/state?show=all" style="color:#81c784">show all</a>'
+                f'</div>'
+            )
+        else:
+            html_ += (
+                f'<div style="padding:8px 16px;font-size:12px;color:#8aaa8a">'
+                f'Showing all {len(worktrees)} worktrees (including collected).'
+                f' <a href="/state" style="color:#81c784">hide collected</a>'
+                f'</div>'
+            )
+    html_ += '<table>'
+    html_ += "<tr><th>Host</th><th>Name</th><th>Role</th><th>Status</th><th>Heartbeat</th></tr>"
+    if shown:
+        for w in sorted(shown, key=lambda x: (x["host"], x["name"])):
+            row_style = ' style="opacity:0.5"' if w["status"] == "collected" else ""
+            html_ += (
+                f"<tr{row_style}>"
+                f"<td>{html.escape(w['host'])}</td>"
                 f"<td>{html.escape(w['name'])}</td>"
                 f"<td>{html.escape(w['role'])}</td>"
                 f"<td>{html.escape(w['status'])}</td>"
@@ -897,7 +918,8 @@ class VisualizerHandler(http.server.BaseHTTPRequestHandler):
                 since = int(params.get("since", "3600"))
                 self._html(render_timeline(self.data, since))
             elif path == "/state":
-                self._html(render_state(self.data, self.hostname))
+                show_all = params.get("show") == "all"
+                self._html(render_state(self.data, self.hostname, show_all))
             elif path == "/bulletin":
                 self._html(render_bulletin(self.data, self.md_renderer))
             elif path == "/events":
