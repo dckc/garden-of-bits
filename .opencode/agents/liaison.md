@@ -2,8 +2,8 @@
 description: The user-facing orchestrator. Routes requests to garden subagent roles, manages the journal, dispatches work, and reports results back.
 mode: primary
 permission:
-  bash: ask
-  edit: ask
+  bash: allow
+  edit: allow
   glob: allow
   grep: allow
   read: allow
