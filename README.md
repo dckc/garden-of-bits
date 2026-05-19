@@ -37,7 +37,7 @@ The garden was designed for a **single liaison or steward** dispatching one suba
 ### dctinybrain/jesc24
 
 - **PR #1** ([refactor/parser-grammar](https://github.com/dctinybrain/jesc24/pull/1), draft): improve PEG grammar readability in `quasi_jessie.v`. Two rounds of fixer work completed addressing dckc review feedback (PR title, description, code style, Section blocks, PNT index comments). dckc has reviewed with multiple COMMENTED reviews; latest round of 4 inline comments addressed by fixer commit 20874ba8. PR awaiting dckc resolution of addressed comments. CI FAILURE is pre-existing (quasi_json.v line 77 "Syntax Error: Lexer: Undefined token" on base branch).
-- **PR #4** ([readme/repo-scope-ocpl-to-jesc](https://github.com/dctinybrain/jesc24/pull/4), draft): docs-only PR reorienting README from OCPL to Jessie Escrow scope. 166 additions, 83 deletions across 2 files (README -> README.md). CI FAILURE is pre-existing. Created 2026-05-19 per design doc.
+- **PR #4** ([readme/repo-scope-ocpl-to-jesc](https://github.com/dctinybrain/jesc24/pull/4), draft): docs-only PR reorienting README from OCPL to Jessie Escrow scope. 166 additions, 83 deletions across 2 files (README -> README.md). CI FAILURE is pre-existing. Judge dispatched at 2026-05-19T22:29Z for design panel review. Awaiting judge result.
 - **CI workflow** exists on `dc-ci` branch (opam-based, Coq 8.9.1) but not on `main` — CI never fires on PRs. Needs landing.
 
 ## Ongoing work
@@ -53,8 +53,8 @@ Full index at [`worktrees/README.md`](worktrees/README.md). Host `yolo1`:
 
 ### Monitors
 
-- **garden** (dckc/garden-of-bits): RUNNING (pid 39778, cadence 60s). Respawned by steward at 2026-05-19T22:10Z after being down since ~2026-05-17.
-- **jesc24** (dctinybrain/jesc24): RUNNING (pid 38961, cadence 60s). Respawned by steward at 2026-05-19T22:08Z after being down since ~2026-05-17. Now monitoring PR #4 in addition to PR #1.
+- **garden** (dckc/garden-of-bits): RUNNING (pid 47679, cadence 60s). Respawned by pre-flight at 2026-05-19T22:30Z.
+- **jesc24** (dctinybrain/jesc24): RUNNING (pid 47680, cadence 60s). Respawned by pre-flight at 2026-05-19T22:30Z. Monitoring PR #1 and PR #4.
 
 ### Recent activity
 
