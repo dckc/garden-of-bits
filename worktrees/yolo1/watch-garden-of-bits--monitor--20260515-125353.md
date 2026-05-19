@@ -7,10 +7,10 @@ branch: main
 role: monitor
 status: active
 created_at: 2026-05-15T12:53:53Z
-last_heartbeat: 2026-05-16T23:12:57Z
+last_heartbeat: 2026-05-19T22:10:00Z
 task: "Monitor dckc/garden-of-bits events feed; per-project reactions in skills/monitor-garden/SKILL.md; NEW lines dispatch a liaison subagent (asymmetric among the standing monitors)"
 prs: []
-daemon_pid: 2672
+daemon_pid: 39778
 ---
 
 Standing monitor for `dckc/garden-of-bits` (slug `garden`) on host yolo1. Polling daemon at /tmp/garden-monitor-dckc-garden-of-bits.{pid,log,err}, pid 2672, respawned by the steward per-cycle procedure. Per-project reaction rules in skills/monitor-garden/SKILL.md.
