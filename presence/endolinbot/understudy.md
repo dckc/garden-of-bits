@@ -1,9 +1,10 @@
 ---
 hostname: endolinbot
 role: understudy
-status: present
+status: ended
 session_started: 2026-05-15T00:45:43Z
 last_heartbeat: 2026-05-15T01:37:27Z
+ended_at: 2026-05-19T22:20:00Z
 cadence_seconds: 90
 ---
 
