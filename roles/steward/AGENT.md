@@ -1,6 +1,6 @@
 ---
 created: 2026-05-12
-updated: 2026-05-17
+updated: 2026-05-19
 author: gardener, steward, liaison, understudy
 ---
 
@@ -344,6 +344,11 @@ Run the scan once per cycle, after the standing-monitor dispatches and before th
 ### Procedure
 
 For each monitored upstream repo (the active set per the *Standing monitors* table above):
+
+Note: jesc24 (dctinybrain/jesc24) is a full-flow repo. The steward already
+scans it as a monitored repo; judge dispatch proceeds for garden-authored
+draft PRs on this repo per the standard chain, including the judge's
+review submission and un-draft.
 
 ```sh
 gh pr list -R <owner>/<repo> --author dctinybrain --draft --state open \

@@ -129,6 +129,29 @@ else
     log "  steward-watcher: not started"
 fi
 
+# --- Unconditional monitor respawn ---
+if [ "$MON_GARDEN" != "alive" ]; then
+    log "  respawning dckc/garden-of-bits monitor (was $MON_GARDEN)"
+    nohup bash "$SCRIPT_DIR/skills/github-activity-poll/monitor-poll.sh" dckc/garden-of-bits \
+      "$SCRIPT_DIR/worktrees/dckc-garden-of-bits/watch-garden-of-bits--monitor--20260515-125353" 60s \
+      > /tmp/garden-monitor-dckc-garden-of-bits.log \
+      2> /tmp/garden-monitor-dckc-garden-of-bits.err &
+    echo $! > /tmp/garden-monitor-dckc-garden-of-bits.pid
+    MON_GARDEN="alive"
+fi
+
+if [ "$MON_JESC24" != "alive" ]; then
+    log "  respawning dctinybrain/jesc24 monitor (was $MON_JESC24)"
+    nohup bash "$SCRIPT_DIR/skills/github-activity-poll/monitor-poll.sh" dctinybrain/jesc24 \
+      "$SCRIPT_DIR/worktrees/dctinybrain-jesc24/watch-jesc24--monitor--20260516-232644" 60s \
+      > /tmp/garden-monitor-dctinybrain-jesc24.log \
+      2> /tmp/garden-monitor-dctinybrain-jesc24.err &
+    echo $! > /tmp/garden-monitor-dctinybrain-jesc24.pid
+    MON_JESC24="alive"
+fi
+
+MONITOR_STATE="garden=$MON_GARDEN jesc24=$MON_JESC24"
+
 # --- Step 3: Inbox drain ---
 log "--- Draining steward inbox ---"
 INBOX_OUTPUT=""
@@ -169,8 +192,13 @@ fi
 
 # Check that opencode is available
 if ! command -v opencode &>/dev/null; then
-    err "opencode not found in PATH"
-    exit 1
+    NVM_OPENCODE="$HOME/.nvm/versions/node/v22.22.2/bin/opencode"
+    if [ -x "$NVM_OPENCODE" ]; then
+        export PATH="$(dirname "$NVM_OPENCODE"):$PATH"
+    else
+        err "opencode not found in PATH"
+        exit 1
+    fi
 fi
 
 MODEL="${OPENCODE_MODEL:-opencode/deepseek-v4-flash-free}"
