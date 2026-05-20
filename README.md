@@ -38,7 +38,7 @@ The garden was designed for a **single liaison or steward** dispatching one suba
 
 - **PR #1** ([refactor/parser-grammar](https://github.com/dctinybrain/jesc24/pull/1), draft): improve PEG grammar readability in `quasi_jessie.v`. Three rounds of fixer/shepherd work completed: fixer addressed dckc review feedback and extracted PEG notation; shepherd #1 fixed `star` import in `peg_notation.v`; shepherd #2 fixed `Z vs nat` type error in `quasi_jessie.v` (annotated PNT index constants with `: nat`). CI is **GREEN** as of 2026-05-20T01:16Z. dckc's prior COMMENTED reviews from before the refactoring remain; awaiting dckc re-review.
 - **PR #4** ([readme/repo-scope-ocpl-to-jesc](https://github.com/dctinybrain/jesc24/pull/4), OPEN, not draft): docs-only PR reorienting README from OCPL to Jessie Escrow scope. Design panel (critic, skeptic, copyeditor, pedant, novice) rendered COMMENTED verdict at 2026-05-19T23:04Z: 0 must-fix, 3 should-fix. PR un-drafted (`gh pr ready 4`). Awaiting maintainer review.
-- **PR #5** ([design/repo-org](https://github.com/dctinybrain/jesc24/pull/5), draft): design document proposing repo reorganization to vendor Iris and OCPL materials. Design panel judge dispatched at 2026-05-20T00:30Z (judge--275856); verdict pending.
+- **PR #5** ([design/repo-org](https://github.com/dctinybrain/jesc24/pull/5), draft): design document proposing repo reorganization to vendor Iris and OCPL materials. Design panel judge dispatched at 2026-05-20T00:30Z (judge--275856) did not return a result; the PR was re-classified as not design-only (includes vendored sources and build config). Shepherd dispatched at 2026-05-20T02:05Z (shepherd--235901) for CI fix; CI IN_PROGRESS as of 02:30Z. Cleaner and code-panel judge to follow once CI is green.
 - **PR #6** ([design/repo-org](https://github.com/dctinybrain/jesc24/pull/6), draft): **duplicate** of PR #5 (same branch, same title, same body). Steward messaged liaison to close.
 - **CI workflow** exists on `dc-ci` branch (opam-based, Coq 8.9.1) but not on `main` — CI never fires on PRs. Needs landing.
 
@@ -55,8 +55,8 @@ Full index at [`worktrees/README.md`](worktrees/README.md). Host `yolo1`:
 
 ### Monitors
 
-- **garden** (dckc/garden-of-bits): RUNNING (pid 108593, cadence 60s). No events.
-- **jesc24** (dctinybrain/jesc24): RUNNING (pid 108594, cadence 60s). PushEvents and CI activity on refactor/parser-grammar (PR #1 shepherd rounds).
+- **garden** (dckc/garden-of-bits): RUNNING (pid 149444, cadence 60s). No events.
+- **jesc24** (dctinybrain/jesc24): RUNNING (pid 149445, cadence 60s). PushEvent on design/repo-org (shepherd PR #5 CI fix, 02:30Z).
 
 ### Recent activity
 
