@@ -1,13 +1,24 @@
 ---
 created: 2026-05-12
 updated: 2026-05-20
-author: liaison, gardener, steward
-author: liaison, gardener
+author: liaison
 ---
 
 # Garden journal
 
 ## Bulletin board
+
+### Pending reviews
+
+| PR | Title | State | CI | Notes |
+|----|-------|-------|----|-------|
+| [#4](https://github.com/dctinybrain/jesc24/pull/4) | docs: reorient README from OCPL to jesc (Jessie Escrow) scope | **OPEN** (not draft) | ✅ GREEN | Design panel COMMENTED (0 must-fix, 3 should-fix). Ready for your review. |
+
+PRs #1 and #5 are still in draft — not ready for your review yet.
+
+### ⚠ Monitor process sprawl
+
+Each steward cron cycle spawns fresh monitor processes without killing the old ones. There are dozens of duplicate `monitor-poll.sh` processes for both `dctinybrain/jesc24` and `dckc/garden-of-bits`. The steward-watcher (pid 1772) is alive but the duplicates are wasting resources. **Needs fixing.**
 
 ### ⚠ Parallel liaison sessions
 
@@ -29,19 +40,20 @@ The garden was designed for a **single liaison or steward** dispatching one suba
 - [x] journal worktree exists on `journal` branch
 - [x] PR #1 (refactor/parser-grammar) opened on `dctinybrain/jesc24`
 - [x] steward cycle runs (model name fixed)
-- [ ] CI workflow landed on `main` (currently only on `dc-ci` branch)
+- [x] steward cron installed (`./garden cron install`) — firing every 30 min
+- [x] CI workflow landed on `main` (`.github/workflows/ci.yml`, active)
 - [ ] pre-existing build failure fixed (collections.vo ordering, Coq stdlib deprecation)
-- [ ] steward cron installed (`./garden cron install`)
 - [ ] bootstrap checklist encoded as a proper doc so agents can track it
+- [ ] `dc-ci` branch on dctinybrain/jesc24 closed (irrelevant)
 <!-- END bootstrap-checklist -->
 
 ### dctinybrain/jesc24
 
-- **PR #1** ([refactor/parser-grammar](https://github.com/dctinybrain/jesc24/pull/1), draft): improve PEG grammar readability in `quasi_jessie.v`. Three rounds of fixer/shepherd work completed: fixer addressed dckc review feedback and extracted PEG notation; shepherd #1 fixed `star` import in `peg_notation.v`; shepherd #2 fixed `Z vs nat` type error in `quasi_jessie.v` (annotated PNT index constants with `: nat`). CI is **GREEN** as of 2026-05-20T01:16Z. dckc's prior COMMENTED reviews from before the refactoring remain; awaiting dckc re-review.
-- **PR #4** ([readme/repo-scope-ocpl-to-jesc](https://github.com/dctinybrain/jesc24/pull/4), OPEN, not draft): docs-only PR reorienting README from OCPL to Jessie Escrow scope. Design panel (critic, skeptic, copyeditor, pedant, novice) rendered COMMENTED verdict at 2026-05-19T23:04Z: 0 must-fix, 3 should-fix. PR un-drafted (`gh pr ready 4`). Awaiting maintainer review.
-- **PR #5** ([design/repo-org](https://github.com/dctinybrain/jesc24/pull/5), draft): repo reorganization to vendor Iris and OCPL materials. Judge (design panel) mis-dispatched at 00:30Z failed (no result); re-classified as code-touching PR. Shepherd fixed 3 cascading build failures (quasi_json, quasi_justin, quasi_jessie) at commit 44f29383; CI GREEN. Cleaner added 29 integration tests across 5 Coq files at commit 92bf0d48; CI GREEN (3/3). Next stage: judge (code panel, 12 seats).
-- **PR #6** ([design/repo-org](https://github.com/dctinybrain/jesc24/pull/6), draft): **duplicate** of PR #5 (same branch, same title, same body). Steward messaged liaison to close.
-- **CI workflow** exists on `dc-ci` branch (opam-based, Coq 8.9.1) but not on `main` — CI never fires on PRs. Needs landing.
+- **PR #4** ([readme/repo-scope-ocpl-to-jesc](https://github.com/dctinybrain/jesc24/pull/4), OPEN, not draft): docs-only PR reorienting README from OCPL to Jessie Escrow scope. Design panel (critic, skeptic, copyeditor, pedant, novice) rendered COMMENTED verdict at 2026-05-19T23:04Z: 0 must-fix, 3 should-fix. PR un-drafted. CI GREEN. Ready for maintainer review.
+- **PR #5** ([design/repo-org](https://github.com/dctinybrain/jesc24/pull/5), draft): repo reorganization to vendor Iris and OCPL materials. Shepherd fixed 3 cascading build failures (quasi_json, quasi_justin, quasi_jessie); CI GREEN. Cleaner added 29 integration tests across 5 Coq files; CI GREEN (3/3). Next stage: judge (code panel, 12 seats). Not ready for review.
+- **PR #6** ([design/repo-org](https://github.com/dctinybrain/jesc24/pull/6)): **CLOSED** — was a duplicate of PR #5.
+- **PR #1** ([refactor/parser-grammar](https://github.com/dctinybrain/jesc24/pull/1), draft, base: `dc-jessie`): improve PEG grammar readability in `quasi_jessie.v`. Three rounds of fixer/shepherd work completed. CI GREEN. dckc's prior COMMENTED reviews predate the refactoring; awaiting re-review. Not ready for review.
+- **CI**: `.github/workflows/ci.yml` on `main`, active and passing. The `dc-ci` branch is irrelevant and should be closed.
 
 ## Ongoing work
 
@@ -56,8 +68,10 @@ Full index at [`worktrees/README.md`](worktrees/README.md). Host `yolo1`:
 
 ### Monitors
 
-- **garden** (dckc/garden-of-bits): RUNNING (pid 167412, cadence 60s). No events.
-- **jesc24** (dctinybrain/jesc24): RUNNING (pid 167413, cadence 60s). PushEvents on design/repo-org (shepherd CI fix + cleaner coverage pass, 02:00-03:20Z).
+- **garden** (dckc/garden-of-bits): RUNNING. No events.
+- **jesc24** (dctinybrain/jesc24): RUNNING. PushEvents on design/repo-org (shepherd CI fix + cleaner coverage pass).
+
+> **Note**: Dozens of duplicate monitor processes exist. Each cron cycle spawns new ones without killing old ones. Needs fixing.
 
 ### Recent activity
 
