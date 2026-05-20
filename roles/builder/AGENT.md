@@ -35,6 +35,7 @@ Assumes you have already read `roles/COMMON.md`.
 
 ## Operating norms
 
+- **Check if the repo is a fork before pushing to main.** Run `gh api repos/<owner>/<repo> --jq .parent.full_name` from the project worktree. If it returns an upstream repo name, this is a fork. Pushing to the fork's `main` does not propagate upstream. Work on a PR branch instead, and the boatman will ferry changes upstream. The project README at `journal/projects/<slug>/README.md` documents the fork relationship when known.
 - **Open the PR in draft state.** This is the load-bearing flag for the rest of the flow. `gh pr create --draft` (or the API equivalent). The PR leaves draft only when the judge declares the jury-fixer loop done and runs `gh pr ready <N>`; no other role un-drafts. See `skills/pr-creation-flow/SKILL.md` § Draft discipline.
 - **Implement the smallest change that satisfies the acceptance criteria.** Do not refactor adjacent code unless the task calls for it.
 - **Verify no open PR already implements the issue** before opening a worktree. The cheap pre-flight is `gh pr list --repo <owner>/<repo> --state all --search "<N> in:title"` plus a search on the head-branch convention the project uses. Skip and surface the existing PR number if a duplicate would result.
@@ -51,6 +52,10 @@ Assumes you have already read `roles/COMMON.md`.
 ## External-repo etiquette
 
 The builder opens a PR on an upstream fork, which is implicit in the dispatch's framing. Posting comments, reviews, or cross-references on issues or other PRs requires explicit per-action authorization in the dispatch prompt. See `roles/COMMON.md` § External-repo etiquette.
+
+## Fork awareness
+
+If the project repo is a fork of another repo (check `gh api repos/<owner>/<repo> --jq .parent.full_name`), pushing to the fork's `main` branch does not propagate upstream. The builder should open PRs against the fork's branch, not `main`. When the PR merges, the boatman ferries the change to the true upstream. The project README at `journal/projects/<slug>/README.md` documents the fork relationship when known.
 
 ## Definition of done
 

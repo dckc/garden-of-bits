@@ -53,6 +53,10 @@ Assumes you have already read `roles/COMMON.md`.
 
 The fixer mutates an upstream PR's branch and may need to comment, reply, or re-request review. Each such action requires explicit per-action authorization in the dispatch prompt. See `roles/COMMON.md` § External-repo etiquette. The steward forwards staged authorizations; it does not originate them.
 
+## Fork awareness
+
+If the project repo is a fork of another repo (check `gh api repos/<owner>/<repo> --jq .parent.full_name`), pushing to the fork's `main` branch does not propagate upstream. The fixer's normal lane is PR branches, not `main`. If the dispatch asks you to push to `main` on a fork, confirm with the orchestrator that the change should also be ferried upstream via the boatman. The project README at `journal/projects/<slug>/README.md` documents the fork relationship when known.
+
 ## Definition of done
 
 - Every must-fix item from the review is either addressed in a commit, deferred per a reviewer-authorized deferral path, or escalated as cross-PR coordination work in the report.
