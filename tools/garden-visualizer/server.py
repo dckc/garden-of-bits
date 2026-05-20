@@ -44,7 +44,7 @@ class MarkdownRenderer:
 
     _COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
     _FRONTMATTER_RE = re.compile(r"^---\n.*?\n---\n", re.DOTALL | re.MULTILINE)
-    _HEADING_RE = re.compile(r"^(#{2,4})\s+(.+)$")
+    _HEADING_RE = re.compile(r"^(#{1,4})\s+(.+)$")
     _UL_RE = re.compile(r"^(\s*)[-*]\s+(.+)$")
     _OL_RE = re.compile(r"^(\s*)\d+\.\s+(.+)$")
     _HR_RE = re.compile(r"^-{3,}$")
@@ -503,11 +503,6 @@ def poll_journal(garden_root, data, pubsub, stop_event):
                     if entries:
                         data.update_entries(entries)
                         pubsub.publish("entries", {"count": len(entries)})
-
-                # ── Bulletin ───────────────────────────────────────────
-                r = git(["show", "origin/journal:README.md"])
-                if r.returncode == 0:
-                    data.update_bulletin(r.stdout)
 
                 # ── Worktrees ──────────────────────────────────────────
                 r = git(["ls-tree", "-r", "--name-only", "origin/journal", "worktrees/"])
@@ -975,14 +970,15 @@ def render_state(data, hostname, show_all=False):
 
 
 def render_bulletin(data, md_renderer):
-    s = data.get_snapshot()
-    raw = s.get("bulletin", "")
+    bulletin_path = os.path.join(data.garden_root, "journal", "README.md")
     html_ = _page_head("Bulletin", "", "/bulletin")
 
-    if not raw:
-        html_ += '<div class="row" style="color:#8aaa8a">Waiting for first journal fetch…</div>'
-    else:
+    if os.path.isfile(bulletin_path):
+        with open(bulletin_path, "r") as f:
+            raw = f.read()
         html_ += f'<div class="content">{md_renderer.render(raw)}</div>'
+    else:
+        html_ += '<div class="row" style="color:#8aaa8a">Bulletin file not found.</div>'
 
     html_ += _page_end()
     return html_
@@ -1095,6 +1091,7 @@ def main():
     garden_root = os.path.abspath(args.garden_root)
 
     data = GardenData()
+    data.garden_root = garden_root
     md_renderer = MarkdownRenderer()
     pubsub = PubSub()
     stop_event = threading.Event()
