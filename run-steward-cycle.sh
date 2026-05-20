@@ -83,14 +83,14 @@ check_daemon() {
         local pid
         pid=$(cat "$pid_file" 2>/dev/null || echo "")
         if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
-            log "  $name: alive (pid $pid)"
+            log "  $name: alive (pid $pid)" >&2
             echo "alive"
         else
-            log "  $name: DEAD (pid $pid stale)"
+            log "  $name: DEAD (pid $pid stale)" >&2
             echo "dead"
         fi
     else
-        log "  $name: not started"
+        log "  $name: not started" >&2
         echo "not-started"
     fi
 }
