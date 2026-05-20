@@ -25,4 +25,5 @@ JavaScript to Coq compilation target for the JES MOOC (c20). The garden engages 
 
 - Repo: <https://github.com/dctinybrain/jesc24>
 - Default branch: `main`
+- Roadmap branch: `main` (design PRs target this branch directly).
 - No standing monitor; dispatches are one-off fixer or weaver runs.
