@@ -1,6 +1,6 @@
 ---
 created: 2026-05-12
-updated: 2026-05-19
+updated: 2026-05-20
 author: liaison, gardener
 ---
 
@@ -36,8 +36,10 @@ The garden was designed for a **single liaison or steward** dispatching one suba
 
 ### dctinybrain/jesc24
 
-- **PR #1** ([refactor/parser-grammar](https://github.com/dctinybrain/jesc24/pull/1), draft): improve PEG grammar readability in `quasi_jessie.v`. Two rounds of fixer work completed addressing dckc review feedback (PR title, description, code style, Section blocks, PNT index comments). dckc has reviewed with multiple COMMENTED reviews; dckc's latest review (2026-05-17T03:33Z) is still COMMENTED. Third fixer round dispatched at 2026-05-19T23:02Z; fixer pushed 5 commits at 2026-05-20T00:00-00:01Z (extract peg notation into shared module, fix Coq 8.9 escape syntax, refactor). CI now IN_PROGRESS. Fixer result pending.
+- **PR #1** ([refactor/parser-grammar](https://github.com/dctinybrain/jesc24/pull/1), draft): improve PEG grammar readability in `quasi_jessie.v`. Three rounds of fixer/shepherd work completed: fixer addressed dckc review feedback and extracted PEG notation; shepherd #1 fixed `star` import in `peg_notation.v`; shepherd #2 fixed `Z vs nat` type error in `quasi_jessie.v` (annotated PNT index constants with `: nat`). CI is **GREEN** as of 2026-05-20T01:16Z. dckc's prior COMMENTED reviews from before the refactoring remain; awaiting dckc re-review.
 - **PR #4** ([readme/repo-scope-ocpl-to-jesc](https://github.com/dctinybrain/jesc24/pull/4), OPEN, not draft): docs-only PR reorienting README from OCPL to Jessie Escrow scope. Design panel (critic, skeptic, copyeditor, pedant, novice) rendered COMMENTED verdict at 2026-05-19T23:04Z: 0 must-fix, 3 should-fix. PR un-drafted (`gh pr ready 4`). Awaiting maintainer review.
+- **PR #5** ([design/repo-org](https://github.com/dctinybrain/jesc24/pull/5), draft): design document proposing repo reorganization to vendor Iris and OCPL materials. Design panel judge dispatched at 2026-05-20T00:30Z (judge--275856); verdict pending.
+- **PR #6** ([design/repo-org](https://github.com/dctinybrain/jesc24/pull/6), draft): **duplicate** of PR #5 (same branch, same title, same body). Steward messaged liaison to close.
 - **CI workflow** exists on `dc-ci` branch (opam-based, Coq 8.9.1) but not on `main` — CI never fires on PRs. Needs landing.
 
 ## Ongoing work
@@ -53,8 +55,8 @@ Full index at [`worktrees/README.md`](worktrees/README.md). Host `yolo1`:
 
 ### Monitors
 
-- **garden** (dckc/garden-of-bits): RUNNING (pid 80119, cadence 60s). No events.
-- **jesc24** (dctinybrain/jesc24): RUNNING (pid 80120, cadence 60s). One PushEvent on refactor/parser-grammar (PR #1 fixer activity).
+- **garden** (dckc/garden-of-bits): RUNNING (pid 108593, cadence 60s). No events.
+- **jesc24** (dctinybrain/jesc24): RUNNING (pid 108594, cadence 60s). PushEvents and CI activity on refactor/parser-grammar (PR #1 shepherd rounds).
 
 ### Recent activity
 
