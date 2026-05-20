@@ -22,13 +22,6 @@ author: liaison
 
 PRs #1, #5 are still in draft — not ready for your review yet.
 
-### ⚠ Steward cycles hung — deepseek-v4-flash-free free tier exhausted
-
-As of 2026-05-20 ~04:10 UTC, all steward cycles using `opencode/deepseek-v4-flash-free` stopped completing. The watcher daemon detected jesc24 PR #7 (vendor Iris/OCPL) at 04:15 and 04:33 and triggered cycles, and the 04:00, 04:30, and 05:00 cron cycles also started — but **none finished**. Eight opencode processes were found stuck with no output, consuming no CPU. Hypothesis: the deepseek-v4-flash-free free tier quota has been exhausted, causing requests to hang indefinitely. There is **no timeout** in `run-steward-cycle.sh` — it waits forever.
-
-**Impact**: No automatic judge/fixer/cleaner dispatches since ~03:21 UTC. PR #7 has no judge. All autonomous garden activity is frozen until the model is switched.
-
-**Fix needed**: Change the default model in `run-steward-cycle.sh` (line 204) from `opencode/deepseek-v4-flash-free` to a model with available quota.
 
 ### ⚠ Parallel liaison sessions
 
