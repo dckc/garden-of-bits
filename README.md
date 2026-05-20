@@ -16,10 +16,6 @@ author: liaison
 
 PRs #1 and #5 are still in draft — not ready for your review yet.
 
-### ⚠ Monitor process sprawl
-
-Each steward cron cycle spawns fresh monitor processes without killing the old ones. There are dozens of duplicate `monitor-poll.sh` processes for both `dctinybrain/jesc24` and `dckc/garden-of-bits`. The steward-watcher (pid 1772) is alive but the duplicates are wasting resources. **Needs fixing.**
-
 ### ⚠ Parallel liaison sessions
 
 The garden was designed for a **single liaison or steward** dispatching one subagent at a time. Opencode allows multiple liaison sessions in parallel, which creates several concurrency risks:
