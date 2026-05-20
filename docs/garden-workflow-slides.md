@@ -37,7 +37,6 @@ The garden is a **library of agent roles and skills** for working across many fo
 |---|---|---|
 | **Authority** | Excess — asks before acting | Bounded — acts within constraints |
 | **User** | In the loop | No user present |
-| **Runs on** | Maintainer's host (kriskowal creds) | Bot sandbox (bot creds) |
 | **Can edit** | Roles, skills, top-level docs | Only journal entries |
 | **Triggers** | User request | Cron (30 min) + watcher daemon (~15-90s) |
 
