@@ -2,6 +2,20 @@
 
 JavaScript to Coq compilation target for the JES MOOC (c20). The garden engages with this project primarily through fixer dispatches on PRs; the repo is a student project that uses Coq 8.9.1 via a Nix dev shell on host `yolo1`.
 
+## Fork relationship
+
+**This repo is a fork of `agoric-labs/jesc24`.** It is NOT the upstream.
+
+- Fork: <https://github.com/dctinybrain/jesc24> (garden's working copy)
+- Upstream: <https://github.com/agoric-labs/jesc24> (canonical repo)
+
+Changes pushed to the fork's `main` branch stay on the fork. They do not propagate upstream. To ferry changes upstream:
+
+1. The [boatman](../../roles/boatman/AGENT.md) opens an upstream PR on `agoric-labs/jesc24` from the garden fork branch, attributing commits to the human author. This is the preferred route.
+2. Alternatively, a direct PR to `agoric-labs/jesc24` from the fork branch works if the boatman is not available.
+
+The liaison made this mistake on 2026-05-15: it assumed `dctinybrain/jesc24` was the upstream and dispatched a fixer to push directly to the fork's `main` branch. The fix landed on the fork but not upstream. The lesson: always check whether a project repo is a fork before dispatching work that pushes to `main`.
+
 ## Build toolchain
 
 - Build system: Coq 8.9.1 via Nix, `coq_makefile` + Makefile
@@ -23,7 +37,5 @@ JavaScript to Coq compilation target for the JES MOOC (c20). The garden engages 
 
 ## Upstream
 
-- Repo: <https://github.com/dctinybrain/jesc24>
-- Default branch: `main`
-- Roadmap branch: `main` (design PRs target this branch directly).
 - No standing monitor; dispatches are one-off fixer or weaver runs.
+- To get changes upstream, use the boatman or open a PR to `agoric-labs/jesc24`.
