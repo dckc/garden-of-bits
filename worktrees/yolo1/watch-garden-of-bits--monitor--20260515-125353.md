@@ -7,7 +7,7 @@ branch: main
 role: monitor
 status: active
 created_at: 2026-05-15T12:53:53Z
-last_heartbeat: 2026-05-19T22:30:00Z
+last_heartbeat: 2026-05-20T00:02:29Z
 task: "Monitor dckc/garden-of-bits events feed; per-project reactions in skills/monitor-garden/SKILL.md; NEW lines on this daemon dispatch a liaison subagent"
 prs: []
 ---
