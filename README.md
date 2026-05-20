@@ -67,8 +67,6 @@ Full index at [`worktrees/README.md`](worktrees/README.md). Host `yolo1`:
 - **garden** (dckc/garden-of-bits): RUNNING. No events.
 - **jesc24** (dctinybrain/jesc24): RUNNING. PushEvents on design/repo-org (shepherd CI fix + cleaner coverage pass).
 
-> **Note**: Dozens of duplicate monitor processes exist. Each cron cycle spawns new ones without killing old ones. Needs fixing.
-
 ### Recent activity
 
 For the flat chronological view, run `git log` on this branch or browse [`entries/`](entries/) by date.
