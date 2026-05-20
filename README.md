@@ -14,7 +14,23 @@ author: liaison
 |----|-------|-------|----|-------|
 | [#4](https://github.com/dctinybrain/jesc24/pull/4) | docs: reorient README from OCPL to jesc (Jessie Escrow) scope | **OPEN** (not draft) | ✅ GREEN | Design panel COMMENTED (0 must-fix, 3 should-fix). Ready for your review. |
 
-PRs #1 and #5 are still in draft — not ready for your review yet.
+PRs #1, #5, and #7 are still in draft — not ready for your review yet.
+
+### ⚠ Steward cycles hung — deepseek-v4-flash-free free tier exhausted
+
+As of 2026-05-20 ~04:10 UTC, all steward cycles using `opencode/deepseek-v4-flash-free` stopped completing. The watcher daemon detected jesc24 PR #7 (vendor Iris/OCPL) at 04:15 and 04:33 and triggered cycles, and the 04:00, 04:30, and 05:00 cron cycles also started — but **none finished**. Eight opencode processes were found stuck with no output, consuming no CPU. Hypothesis: the deepseek-v4-flash-free free tier quota has been exhausted, causing requests to hang indefinitely. There is **no timeout** in `run-steward-cycle.sh` — it waits forever.
+
+**Impact**: No automatic judge/fixer/cleaner dispatches since ~03:21 UTC. PR #7 has no judge. All autonomous garden activity is frozen until the model is switched.
+
+**Fix needed**: Change the default model in `run-steward-cycle.sh` (line 204) from `opencode/deepseek-v4-flash-free` to a model with available quota.
+
+### ⚠ Steward cycles hung — deepseek-v4-flash-free free tier exhausted
+
+As of 2026-05-20 ~04:10 UTC, all steward cycles using `opencode/deepseek-v4-flash-free` stopped completing. The watcher daemon detected jesc24 PR #7 (vendor Iris/OCPL) at 04:15 and 04:33 and triggered cycles, and the 04:00, 04:30, and 05:00 cron cycles also started — but **none finished**. Eight opencode processes were found stuck with no output, consuming no CPU. Hypothesis: the deepseek-v4-flash-free free tier quota has been exhausted, causing requests to hang indefinitely. There is **no timeout** in `run-steward-cycle.sh` — it waits forever.
+
+**Impact**: No automatic judge/fixer/cleaner dispatches since ~03:21 UTC. PR #7 has no judge. All autonomous garden activity is frozen until the model is switched.
+
+**Fix needed**: Change the default model in `run-steward-cycle.sh` (line 204) from `opencode/deepseek-v4-flash-free` to a model with available quota.
 
 ### ⚠ Parallel liaison sessions
 
@@ -46,8 +62,9 @@ The garden was designed for a **single liaison or steward** dispatching one suba
 ### dctinybrain/jesc24
 
 - **PR #4** ([readme/repo-scope-ocpl-to-jesc](https://github.com/dctinybrain/jesc24/pull/4), OPEN, not draft): docs-only PR reorienting README from OCPL to Jessie Escrow scope. Design panel (critic, skeptic, copyeditor, pedant, novice) rendered COMMENTED verdict at 2026-05-19T23:04Z: 0 must-fix, 3 should-fix. PR un-drafted. CI GREEN. Ready for maintainer review.
-- **PR #5** ([design/repo-org](https://github.com/dctinybrain/jesc24/pull/5), draft): repo reorganization to vendor Iris and OCPL materials. Shepherd fixed 3 cascading build failures (quasi_json, quasi_justin, quasi_jessie); CI GREEN. Cleaner added 29 integration tests across 5 Coq files; CI GREEN (3/3). Next stage: judge (code panel, 12 seats). Not ready for review.
+- **PR #5** ([design/repo-org](https://github.com/dctinybrain/jesc24/pull/5), draft): design doc proposing repo reorganization to vendor Iris and OCPL materials. Design resolved (tests move down, docs move down, `-Q` stays `iris`). Not ready for review.
 - **PR #6** ([design/repo-org](https://github.com/dctinybrain/jesc24/pull/6)): **CLOSED** — was a duplicate of PR #5.
+- **PR #7** ([feat/vendor-iris-coq](https://github.com/dctinybrain/jesc24/pull/7), draft): implementation of PR #5's design — moves Iris/OCPL materials to `vendor/iris-coq/`, updates `_CoqProject` and `README` paths. Build verified. Next stage: judge (code panel, 12 seats). **BLOCKED** — steward cycles hung (see bulletin), no judge dispatched.
 - **PR #1** ([refactor/parser-grammar](https://github.com/dctinybrain/jesc24/pull/1), draft, base: `dc-jessie`): improve PEG grammar readability in `quasi_jessie.v`. Three rounds of fixer/shepherd work completed. CI GREEN. dckc's prior COMMENTED reviews predate the refactoring; awaiting re-review. Not ready for review.
 - **CI**: `.github/workflows/ci.yml` on `main`, active and passing. The `dc-ci` branch is irrelevant and should be closed.
 
@@ -65,7 +82,7 @@ Full index at [`worktrees/README.md`](worktrees/README.md). Host `yolo1`:
 ### Monitors
 
 - **garden** (dckc/garden-of-bits): RUNNING. No events.
-- **jesc24** (dctinybrain/jesc24): RUNNING. PushEvents on design/repo-org (shepherd CI fix + cleaner coverage pass).
+- **jesc24** (dctinybrain/jesc24): RUNNING. Caught PR #7 open at 04:43 UTC. Watcher triggered steward cycles but they hung (see bulletin above).
 
 ### Recent activity
 
