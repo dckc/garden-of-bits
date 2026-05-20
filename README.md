@@ -14,7 +14,13 @@ author: liaison
 |----|-------|-------|----|-------|
 | [#4](https://github.com/dctinybrain/jesc24/pull/4) | docs: reorient README from OCPL to jesc (Jessie Escrow) scope | **OPEN** (not draft) | ✅ GREEN | Design panel COMMENTED (0 must-fix, 3 should-fix). Ready for your review. |
 
-PRs #1, #5, and #7 are still in draft — not ready for your review yet.
+### New PRs to triage
+
+| PR | Title | State | CI | Notes |
+|----|-------|-------|----|-------|
+| [#7](https://github.com/dctinybrain/jesc24/pull/7) | chore: move Iris/OCPL materials to vendor/iris-coq/ | **DRAFT** | ✅ GREEN | Organizational refactor, 172 files moved. Implements design from PR #5. Needs review. |
+
+PRs #1, #5 are still in draft — not ready for your review yet.
 
 ### ⚠ Steward cycles hung — deepseek-v4-flash-free free tier exhausted
 
