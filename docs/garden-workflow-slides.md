@@ -161,7 +161,7 @@ The loop iterates until no in-scope must-fix remains.
 ## The Boatman
 
 - Carries the bot-side PR **upstream** to the real repo
-- Requires `identity_switch_authorized: true` (kriskowal credentials)
+- Requires `identity_switch_authorized: true` (maintainer credentials)
 - Opens the upstream PR and **cross-links** it with the garden PR
 - Only role authorized to use the maintainer's git identity
 - Must run on the **credentialed host** (`kmkmbp2021`)
@@ -376,7 +376,7 @@ Agents **own** the bulletin: they post when items arise, clear when conditions r
 |---|---|
 | **Monitoring** | Only repos gated against untrusted contributors are safe to monitor (prompt-injection hazard) |
 | **External repos** | Subagents cannot comment, cross-link, or react on upstream repos without per-action authorization |
-| **Identity** | Only the boatman can use kriskowal credentials; all other commits are bot-identity |
+| **Identity** | Only the boatman can use maintainer credentials; all other commits are bot-identity |
 | **Meta-evolution** | Only the liaison can edit roles, skills, and top-level docs |
 | **Boatman host** | Must run on the credentialed host; liaison refuses to dispatch from wrong host |
 
